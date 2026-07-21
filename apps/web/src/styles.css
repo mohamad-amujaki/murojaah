@@ -1,6 +1,6 @@
 @import "tailwindcss";
-:root{--green:#106b55;--deep:#084b3c;--mint:#e8f4ef;--cream:#f8f7f2;--gold:#e7aa33;--ink:#18332c;--muted:#5c6b66;--line:#e2e9e5;--surface:#fff;font-family:Manrope,system-ui,sans-serif;color:var(--ink);background:var(--cream);font-synthesis:none}
-[data-theme="dark"]{--green:#2fa885;--deep:#0a3f32;--mint:#123128;--cream:#0e1613;--gold:#e7aa33;--ink:#eef3f0;--muted:#8ea59c;--line:#25352f;--surface:#182420}
+:root{--green:#106b55;--deep:#084b3c;--mint:#e8f4ef;--cream:#f8f7f2;--gold:#e7aa33;--ink:#18332c;--muted:#42524c;--line:#d3ddd7;--surface:#fff;font-family:Manrope,system-ui,sans-serif;color:var(--ink);background:var(--cream);font-synthesis:none}
+[data-theme="dark"]{--green:#2fa885;--deep:#0a3f32;--mint:#123128;--cream:#0e1613;--gold:#e7aa33;--ink:#eef3f0;--muted:#8ea59c;--line:#2e4039;--surface:#182420}
 [data-theme="dark"] .sidebar-tip{background:#22321f;border-color:#3a4d33;color:#e3d6ab}
 [data-theme="dark"] .streak>span,[data-theme="dark"] .badge-card span.orange,[data-theme="dark"] .count,[data-theme="dark"] .attention{background:#3a2418;color:#f0a683}
 [data-theme="dark"] .goal-icon.gold,[data-theme="dark"] .badge-card span.gold{background:#3a2f14;color:#e7c25f}
