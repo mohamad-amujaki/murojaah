@@ -20,7 +20,7 @@
 .join-code-box{text-align:center;background:var(--mint);border:1.5px dashed var(--green);border-radius:12px;padding:18px;font-family:monospace;font-size:26px;font-weight:800;letter-spacing:4px;color:var(--green)}
 .assignment-modal{max-width:420px}
 .modal-surah-list{grid-template-columns:1fr;max-height:260px;overflow-y:auto}
-.selected-surah .link-btn{margin-left:auto}.auth-error{color:#b8583d;font-size:10px;margin:0;background:#fff5f1;border:1px solid #f3d2c4;border-radius:8px;padding:8px 10px}.google-btn{text-decoration:none;gap:8px}.auth-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:9px}.auth-divider:before,.auth-divider:after{content:"";flex:1;height:1px;background:var(--line)}
+.selected-surah .link-btn{margin-left:auto}.auth-error{color:#b8583d;font-size:10px;margin:0;background:#fff5f1;border:1px solid #f3d2c4;border-radius:8px;padding:8px 10px}.google-btn{text-decoration:none;gap:8px;justify-content:center}.auth-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:9px}.auth-divider:before,.auth-divider:after{content:"";flex:1;height:1px;background:var(--line)}
 .auth-modal-backdrop{position:fixed;inset:0;background:#0f2b21b3;backdrop-filter:blur(2px);display:grid;place-items:center;padding:24px;z-index:80;animation:fade-in .18s ease}
 .auth-modal{position:relative;width:100%;max-width:630px;max-height:90vh;overflow-y:auto;animation:modal-in .22s cubic-bezier(.2,.8,.2,1)}
 .auth-modal-close{position:absolute;top:10px;right:10px;background:#f4f7f5}
@@ -69,3 +69,33 @@
 @media(max-width:900px){.landing-hero{flex-direction:column;text-align:center}.landing-hero-copy{max-width:none}.landing-cta-row{justify-content:center;flex-wrap:wrap}.landing-features{grid-template-columns:1fr 1fr}.landing-steps{grid-template-columns:1fr}}
 @media(max-width:560px){.landing-hero h1{font-size:28px}.landing-features{grid-template-columns:1fr}.landing-nav-actions .link-btn{display:none}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.auth-page{min-height:100vh;display:flex;background:var(--cream)}
+.auth-visual{flex:0 0 42%;min-height:100vh;position:relative;background:linear-gradient(140deg,#0c735b,#08503f);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:44px;overflow:hidden}
+.auth-visual-brand{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;z-index:2}
+.auth-visual-brand span:last-of-type span{color:#a9e6cf}
+.auth-visual-brand .brandmark{background:#ffffff26}
+.auth-visual-art{flex:1;position:relative;display:grid;place-items:center}
+.auth-visual-art .moon{position:absolute;width:220px;height:220px;border-radius:50%;background:#faeac4;color:#e2b958;box-shadow:0 0 0 22px #ffffff0d}
+.auth-visual-art .quran{z-index:2;width:130px;height:84px;background:#ddb464;clip-path:polygon(50% 25%,100% 0,92% 78%,50% 100%,8% 78%,0 0);display:grid;place-items:center;color:#4c735e}
+.auth-visual-art .quran svg{width:56px;height:56px}
+.auth-visual-art .star{position:absolute;color:#ffe196;font-style:normal}
+.auth-visual-art .s1{left:16%;top:20%;font-size:20px}
+.auth-visual-art .s2{right:14%;top:14%;font-size:13px}
+.auth-visual-copy{z-index:2}
+.auth-visual-copy p{font-size:20px;line-height:1.5;font-weight:600;max-width:340px;margin:0}
+.auth-form-panel{flex:1;display:flex;flex-direction:column;justify-content:center;padding:44px 8vw;position:relative;min-height:100vh}
+.auth-form-panel .back-link{position:absolute;top:32px;left:8vw}
+.auth-form-panel .auth-card{max-width:420px;margin:0 auto;width:100%;padding:0;gap:14px}
+.auth-form-panel .auth-card h1{font-size:26px;margin:0 0 2px;letter-spacing:-.5px}
+.auth-form-panel .auth-subtitle{font-size:12px;color:var(--muted);margin:0 0 8px}
+.auth-form-panel .auth-fields{min-height:300px;display:grid;gap:12px}
+@media(max-width:860px){
+  .auth-page{flex-direction:column}
+  .auth-visual{flex:none;min-height:0;height:220px;padding:26px 28px;border-radius:0 0 28px 28px}
+  .auth-visual-art{display:none}
+  .auth-visual-copy p{font-size:15px}
+  .auth-form-panel{min-height:0;padding:28px 24px 48px;margin-top:-24px}
+  .auth-form-panel .back-link{position:static;margin-bottom:10px}
+  .auth-form-panel .auth-card{background:var(--surface);border-radius:20px;padding:24px 20px;box-shadow:0 -8px 30px #0000000d}
+}

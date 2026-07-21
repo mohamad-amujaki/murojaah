@@ -42,10 +42,8 @@ export function App() {
   }, [auth.user]);
   if (auth.loading) return <main className="auth-shell"><span className="brandmark"><BookOpen /></span></main>;
   if (!auth.user) {
-    return <>
-      <LandingPage onLogin={() => setAuthView("login")} onRegister={() => setAuthView("register")} />
-      {authView && <AuthDialog initialMode={authView} onClose={() => setAuthView(null)} />}
-    </>;
+    if (authView) return <AuthDialog initialMode={authView} onClose={() => setAuthView(null)} />;
+    return <LandingPage onLogin={() => setAuthView("login")} onRegister={() => setAuthView("register")} />;
   }
   return <AuthenticatedApp />;
 }

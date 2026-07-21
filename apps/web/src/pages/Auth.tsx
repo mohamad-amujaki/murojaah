@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ChevronLeft } from "lucide-react";
 import type { UserRole } from "@murojaah/shared";
 import { useAuth } from "../lib/auth-context";
-import { Modal } from "../components/Modal";
 
 const ROLE_OPTIONS: { value: Exclude<UserRole, "admin">; label: string }[] = [
   { value: "student", label: "Murid" },
@@ -41,21 +40,38 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: "
     }
   };
 
-  return <Modal onClose={onClose}>
-    <form className="card auth-card" aria-label={mode==="login"?"Masuk":"Daftar"} onSubmit={submit}>
-      <div className="brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span></div>
-      <div className="auth-tabs">
-        <button type="button" className={mode==="login"?"active":""} onClick={()=>setMode("login")}>Masuk</button>
-        <button type="button" className={mode==="register"?"active":""} onClick={()=>setMode("register")}>Daftar</button>
+  return <div className="auth-page">
+    <div className="auth-form-panel">
+      <button type="button" className="back-link" onClick={onClose}><ChevronLeft /> Kembali</button>
+      <form className="auth-card" aria-label={mode==="login"?"Masuk":"Daftar"} onSubmit={submit}>
+        <h1>{mode==="login" ? "Selamat datang kembali" : "Buat akun baru"}</h1>
+        <p className="auth-subtitle">{mode==="login" ? "Masuk ke akun Murojaah kamu" : "Mulai perjalanan hafalanmu bersama Murojaah"}</p>
+        <div className="auth-tabs">
+          <button type="button" className={mode==="login"?"active":""} onClick={()=>setMode("login")}>Masuk</button>
+          <button type="button" className={mode==="register"?"active":""} onClick={()=>setMode("register")}>Daftar</button>
+        </div>
+        <div className="auth-fields">
+          {mode==="register" && <label>Nama tampilan<input required value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Nama kamu" /></label>}
+          <label>Email<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nama@email.com" /></label>
+          <label>Kata sandi<input required type="password" minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimal 8 karakter" /></label>
+          {mode==="register" && <label>Peran<select value={role} onChange={e=>setRole(e.target.value as typeof role)}>{ROLE_OPTIONS.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}</select></label>}
+          {error && <p className="auth-error">{error}</p>}
+          <button className="primary full" disabled={busy} type="submit">{busy?"Memproses...":mode==="login"?"Masuk":"Buat akun"}</button>
+          <div className="auth-divider"><span>atau</span></div>
+          <a className="outline full google-btn" href={`/api/auth/google/start?intent=${mode}`}><GoogleIcon/> {mode==="login"?"Masuk":"Daftar"} dengan Google</a>
+        </div>
+      </form>
+    </div>
+    <div className="auth-visual">
+      <div className="auth-visual-brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span></div>
+      <div className="auth-visual-art">
+        <div className="moon">✦</div>
+        <div className="quran"><BookOpen /></div>
+        <i className="star s1">✦</i><i className="star s2">✦</i>
       </div>
-      <a className="outline full google-btn" href={`/api/auth/google/start?intent=${mode}`}><GoogleIcon/> {mode==="login"?"Masuk":"Daftar"} dengan Google</a>
-      <div className="auth-divider"><span>atau dengan email</span></div>
-      {mode==="register" && <label>Nama tampilan<input required value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Nama kamu" /></label>}
-      <label>Email<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nama@email.com" /></label>
-      <label>Kata sandi<input required type="password" minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimal 8 karakter" /></label>
-      {mode==="register" && <label>Peran<select value={role} onChange={e=>setRole(e.target.value as typeof role)}>{ROLE_OPTIONS.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}</select></label>}
-      {error && <p className="auth-error">{error}</p>}
-      <button className="primary full" disabled={busy} type="submit">{busy?"Memproses...":mode==="login"?"Masuk":"Buat akun"}</button>
-    </form>
-  </Modal>;
+      <div className="auth-visual-copy">
+        <p>Muraja'ah Al-Qur'an, sedikit demi sedikit, setiap hari.</p>
+      </div>
+    </div>
+  </div>;
 }
