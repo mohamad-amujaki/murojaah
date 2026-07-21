@@ -7,6 +7,7 @@ import mysql from "mysql2/promise";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -33,20 +34,11 @@ try {
 }
 
 // ——— Auto-migrations ———
-// Applies each packages/db/migrations/*.sql exactly once (tracked in mu__migrations),
-// then the full-Quran seed. Statements are split on drizzle-kit's own
-// "--> statement-breakpoint" marker since mysql2 doesn't run multi-statement
-// strings by default outside of an explicit `multipleStatements` connection.
 const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR ?? resolve(__dirname, "migrations");
 const SEED_FILES = [resolve(__dirname, "seeds", "quran-full.mysql.sql")];
 
 async function runSqlFile(path) {
   const text = readFileSync(path, "utf8");
-  // drizzle-kit migrations separate statements with an explicit marker (safe to
-  // split on, since it never appears inside a string literal); seed files are
-  // generated one full INSERT per line instead — naively splitting either kind
-  // on every ";" breaks as soon as a value (e.g. ayah translation text) contains
-  // one.
   const rawStatements = text.includes("--> statement-breakpoint")
     ? text.split("--> statement-breakpoint")
     : text.split("\n");
@@ -66,8 +58,6 @@ try {
       await pool.query("INSERT INTO mu__migrations (name) VALUES (?)", [file]);
       console.log(`✓ Migration applied: ${file}`);
     }
-  } else {
-    console.warn(`⚠ Migrations dir not found: ${MIGRATIONS_DIR}`);
   }
 
   for (const seedPath of SEED_FILES) {
@@ -157,7 +147,32 @@ const MIME = {
   ".ttf": "font/ttf",
 };
 
-function serveStatic(urlPath, res) {
+// Text-based formats compress well (often 70-80% smaller); binary formats
+// (images, fonts) are already compressed and gzipping them again just burns
+// CPU for no size benefit.
+const COMPRESSIBLE_EXT = new Set([".html", ".js", ".mjs", ".css", ".json", ".svg"]);
+
+function sendFile(res, acceptEncoding, filePath, ext, stat, cacheControl) {
+  const body = readFileSync(filePath);
+  const headers = {
+    "Content-Type": MIME[ext] ?? "application/octet-stream",
+    "Cache-Control": cacheControl,
+    "ETag": `"${stat.mtimeMs}"`,
+  };
+  if (COMPRESSIBLE_EXT.has(ext) && acceptEncoding.includes("gzip")) {
+    const compressed = gzipSync(body);
+    headers["Content-Encoding"] = "gzip";
+    headers["Content-Length"] = compressed.length;
+    res.writeHead(200, headers);
+    res.end(compressed);
+  } else {
+    headers["Content-Length"] = stat.size;
+    res.writeHead(200, headers);
+    res.end(body);
+  }
+}
+
+function serveStatic(urlPath, acceptEncoding, res) {
   // path.resolve() treats a leading "/" as absolute and discards STATIC_DIR
   // entirely, so it must be stripped before joining; the startsWith check
   // then blocks "../" traversal outside STATIC_DIR.
@@ -168,22 +183,17 @@ function serveStatic(urlPath, res) {
     const stat = statSync(filePath);
     if (!stat.isFile()) throw new Error("Not a file");
     const ext = "." + filePath.split(".").pop();
-    const body = readFileSync(filePath);
-    res.writeHead(200, {
-      "Content-Type": MIME[ext] ?? "application/octet-stream",
-      "Content-Length": stat.size,
-      "Cache-Control": "public, max-age=86400",
-      "ETag": `"${stat.mtimeMs}"`,
-    });
-    res.end(body);
+    // Vite fingerprints everything under /assets/ with a content hash, so those
+    // can be cached forever; index.html (and anything else) must stay
+    // revalidate-able or a redeploy would keep serving stale asset references.
+    const cacheControl = relPath.startsWith("assets/") ? "public, max-age=31536000, immutable" : "no-cache";
+    sendFile(res, acceptEncoding, filePath, ext, stat, cacheControl);
   } catch {
     // Try index.html fallback for SPA
     try {
       const indexPath = resolve(STATIC_DIR, "index.html");
       const stat = statSync(indexPath);
-      const body = readFileSync(indexPath);
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Content-Length": stat.size });
-      res.end(body);
+      sendFile(res, acceptEncoding, indexPath, ".html", stat, "no-cache");
     } catch {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Not found" }));
@@ -208,9 +218,11 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  const acceptEncoding = req.headers["accept-encoding"] ?? "";
+
   // Static files (non-API)
   if (!url.pathname.startsWith("/api/")) {
-    serveStatic(url.pathname, res);
+    serveStatic(url.pathname, acceptEncoding, res);
     return;
   }
 
@@ -242,9 +254,17 @@ const server = createServer(async (req, res) => {
       else headers[k] = [headers[k], v];
     });
 
-    res.writeHead(cfResp.status, headers);
     const respBody = await cfResp.text();
-    res.end(respBody);
+    if (respBody && acceptEncoding.includes("gzip")) {
+      const compressed = gzipSync(respBody);
+      headers["content-encoding"] = "gzip";
+      headers["content-length"] = compressed.length;
+      res.writeHead(cfResp.status, headers);
+      res.end(compressed);
+    } else {
+      res.writeHead(cfResp.status, headers);
+      res.end(respBody);
+    }
   } catch (err) {
     console.error("Worker error:", err.message);
     res.writeHead(500, { "Content-Type": "application/json" });
