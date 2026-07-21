@@ -7,7 +7,7 @@ import mysql from "mysql2/promise";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { gzipSync } from "node:zlib";
+import { brotliCompressSync, gzipSync } from "node:zlib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -159,7 +159,13 @@ function sendFile(res, acceptEncoding, filePath, ext, stat, cacheControl) {
     "Cache-Control": cacheControl,
     "ETag": `"${stat.mtimeMs}"`,
   };
-  if (COMPRESSIBLE_EXT.has(ext) && acceptEncoding.includes("gzip")) {
+  if (COMPRESSIBLE_EXT.has(ext) && acceptEncoding.includes("br")) {
+    const compressed = brotliCompressSync(body);
+    headers["Content-Encoding"] = "br";
+    headers["Content-Length"] = compressed.length;
+    res.writeHead(200, headers);
+    res.end(compressed);
+  } else if (COMPRESSIBLE_EXT.has(ext) && acceptEncoding.includes("gzip")) {
     const compressed = gzipSync(body);
     headers["Content-Encoding"] = "gzip";
     headers["Content-Length"] = compressed.length;
@@ -255,7 +261,13 @@ const server = createServer(async (req, res) => {
     });
 
     const respBody = await cfResp.text();
-    if (respBody && acceptEncoding.includes("gzip")) {
+    if (respBody && acceptEncoding.includes("br")) {
+      const compressed = brotliCompressSync(respBody);
+      headers["content-encoding"] = "br";
+      headers["content-length"] = compressed.length;
+      res.writeHead(cfResp.status, headers);
+      res.end(compressed);
+    } else if (respBody && acceptEncoding.includes("gzip")) {
       const compressed = gzipSync(respBody);
       headers["content-encoding"] = "gzip";
       headers["content-length"] = compressed.length;

@@ -14,14 +14,6 @@
     <link rel="dns-prefetch" href="https://equran.id" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@500;600&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@500;600&display=swap" /></noscript>
-    <script>
-      (function(){
-        try{
-          var t=localStorage.getItem('theme');
-          if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.setAttribute('data-theme','dark');
-        }catch(ignore){}
-      })();
-    </script>
     <style>
       html,body{margin:0;min-width:320px;min-height:100%;background:#f8f7f2}
       #root{min-height:100vh}
@@ -57,7 +49,17 @@
       html[data-theme="dark"] .brand span{color:#eef3f0}
       html[data-theme="dark"] .landing-hero h1{color:#eef3f0}
       html[data-theme="dark"] .icon-btn{color:#aabcba}
+      [data-boot-retry]{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border:0;border-radius:11px;background:#106b55;color:#fff;min-height:44px;padding:0 20px;font:700 13px system-ui,-apple-system,sans-serif;cursor:pointer;z-index:100}
     </style>
+    <script>
+      (function(){
+        try{
+          var t=localStorage.getItem('theme');
+          if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.setAttribute('data-theme','dark');
+        }catch(ignore){}
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
     <div id="root">
@@ -88,6 +90,7 @@
         </section>
       </div>
     </div>
+    <button data-boot-retry onclick="window.__hafizRetry()">Bersihkan cache &amp; muat ulang</button>
     <script>
       (function(){
         var version='hafizayat-v7';
@@ -100,10 +103,9 @@
         window.__hafizRetry=function(){
           try{if(window.caches)caches.keys().then(function(keys){return Promise.all(keys.map(function(key){return caches.delete(key)}))}).then(function(){location.replace('/?refresh='+Date.now())});else location.replace('/?refresh='+Date.now())}catch(ignore){location.reload()}
         };
-        window.__hafizBootTimer=setTimeout(function(){var root=document.getElementById('root');if(root&&root.querySelector('.landing')){var retry=document.querySelector('[data-boot-retry]');if(retry)retry.hidden=false}},8000);
+        window.__hafizBootTimer=setTimeout(function(){var retry=document.querySelector('[data-boot-retry]');if(retry&&document.getElementById('root')&&!document.querySelector('#root>:empty')){var appRoot=document.getElementById('root');if(appRoot&&appRoot.children.length===0)retry.hidden=false}else if(retry)retry.hidden=false},8000);
         window.addEventListener('error',function(event){if(event.target&&event.target.tagName==='SCRIPT'){var retry=document.querySelector('[data-boot-retry]');if(retry)retry.hidden=false}},true);
       })();
     </script>
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
