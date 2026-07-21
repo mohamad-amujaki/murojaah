@@ -1,0 +1,19 @@
+{
+  "name": "murojaah",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @murojaah/web dev",
+    "build": "pnpm --filter @murojaah/web build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "preview": "pnpm --filter @murojaah/web preview",
+    "db:generate": "pnpm --filter @murojaah/db generate",
+    "db:migrate:local": "pnpm --filter @murojaah/web db:migrate:local",
+    "db:migrate:remote": "pnpm --filter @murojaah/web db:migrate:remote",
+    "db:seed:local": "pnpm --filter @murojaah/web db:seed:local"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2"
+  }
+}

@@ -1,0 +1,112 @@
+# Murojaah — Nginx Configuration for VPS Deployment
+# Tested on Ubuntu 22.04 LTS with Nginx 1.24
+
+# ——— Rate Limiting Zones ———
+# By IP for auth endpoints (strict)
+limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/m;
+# By IP for general API (lenient)
+limit_req_zone $binary_remote_addr zone=general:10m rate=60r/m;
+# By IP for static assets (very lenient)
+limit_req_zone $binary_remote_addr zone=static:10m rate=300r/m;
+
+# ——— HTTP Server ———
+server {
+    listen 80;
+    server_name _;
+    return 301 https://$host$request_uri;
+}
+
+# ——— HTTPS Server ———
+server {
+    listen 443 ssl http2;
+    server_name _;
+
+    # ——— SSL Configuration ———
+    ssl_certificate     /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout  1d;
+
+    # ——— Security Headers ———
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # Content-Security-Policy is set by the Worker application
+
+    # ——— Gzip Compression ———
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
+    gzip_disable "MSIE [1-6]\.";
+
+    # ——— Static Assets Cache ———
+    location /assets/ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # ——— Service Worker ———
+    location /sw.js {
+        expires -1;
+        add_header Cache-Control "no-cache, must-revalidate";
+    }
+
+    # ——— SPA Fallback (Cloudflare Pages style) ———
+    location / {
+        limit_req zone=static burst=50 nodelay;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # ——— API Proxy to Worker (or direct Node.js server) ———
+    # OPTION A: Proxy to Cloudflare Worker (publicly accessible)
+    # location /api/ {
+    #     limit_req zone=auth burst=10 nodelay;
+    #     proxy_pass https://your-worker.workers.dev;
+    #     proxy_http_version 1.1;
+    #     proxy_set_header Host $host;
+    #     proxy_set_header X-Real-IP $remote_addr;
+    #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #     proxy_set_header X-Forwarded-Proto $scheme;
+    #     proxy_ssl_server_name on;
+    # }
+
+    # OPTION B: Direct to Node.js server on localhost (for self-hosted)
+    location /api/ {
+        limit_req zone=auth burst=10 nodelay;
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_request_buffering off;
+        proxy_read_timeout 30s;
+    }
+
+    # ——— Health Check ———
+    location /health {
+        access_log off;
+        return 200 "ok\n";
+        add_header Content-Type text/plain;
+    }
+
+    # ——— Rate Limiting Error Pages ———
+    error_page 429 = @rate_limit_error;
+    location @rate_limit_error {
+        default_type application/json;
+        return 429 '{"error":"Terlalu banyak permintaan. Coba lagi beberapa saat."}';
+    }
+
+    # ——— Access/Error Logs ———
+    access_log /var/log/nginx/murojaah_access.log;
+    error_log  /var/log/nginx/murojaah_error.log;
+}
+
+# ——— Let's Encrypt Auto-Renewal ———
+# Certbot will auto-add this when you run: sudo certbot --nginx -d YOUR_DOMAIN

@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN gender TEXT;
+ALTER TABLE users ADD COLUMN birth_date TEXT;
