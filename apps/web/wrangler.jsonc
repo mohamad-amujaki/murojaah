@@ -3,6 +3,18 @@
   "name": "murojaah",
   "compatibility_date": "2026-05-20",
   "main": "../worker/index.ts",
-  "assets": { "not_found_handling": "single-page-application", "run_worker_first": ["/api/*"] },
-  "d1_databases": [{ "binding": "DB", "database_name": "murojaah-db", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "../../packages/db/migrations" }]
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "murojaah-db",
+      "database_id": "a79435b5-cc26-477e-9277-6a1798fe2f2f",
+      "migrations_dir": "../../packages/db/migrations"
+    }
+  ]
 }
