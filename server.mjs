@@ -119,12 +119,47 @@ const d1 = {
   },
 };
 
+// ——— Redis (optional): shared rate-limit store ———
+// When REDIS_URL is set, rate-limit counters live in Redis so they survive
+// container restarts and stay consistent across replicas. Without it, the
+// worker's in-memory fallback is used (fine for a single container).
+let redis = null;
+let rateLimitStore = undefined;
+if (process.env.REDIS_URL) {
+  try {
+    const { createClient } = await import("redis");
+    redis = createClient({
+      url: process.env.REDIS_URL,
+      // Without this, commands queue forever while Redis is down and every
+      // rate-limited request hangs; with it they reject instantly and
+      // rateLimit() fails open (verified by killing Redis mid-run).
+      disableOfflineQueue: true,
+      socket: { reconnectStrategy: (retries) => Math.min(retries * 200, 5000) },
+    });
+    redis.on("error", (e) => console.error("Redis error:", e.message));
+    await redis.connect();
+    console.log(`✓ Redis: ${process.env.REDIS_URL}`);
+    rateLimitStore = {
+      async hit(key, windowMs) {
+        const count = await redis.incr(key);
+        if (count === 1) await redis.pExpire(key, windowMs);
+        const ttl = await redis.pTTL(key);
+        return { count, resetAt: Date.now() + (ttl > 0 ? ttl : windowMs) };
+      },
+    };
+  } catch (e) {
+    console.warn("⚠ Redis unavailable — rate limiting falls back to in-memory:", e.message);
+    redis = null;
+  }
+}
+
 // ——— Env ———
 const env = {
   DB: d1,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? "",
   NODE_ENV: process.env.NODE_ENV ?? "production",
+  RATE_LIMIT_STORE: rateLimitStore,
 };
 
 // ——— Load bundled worker ———
@@ -248,5 +283,6 @@ server.listen(PORT, "0.0.0.0", () => {
 
 process.on("SIGTERM", () => {
   db.close();
+  if (redis) redis.quit().catch(() => undefined);
   server.close(() => process.exit(0));
 });

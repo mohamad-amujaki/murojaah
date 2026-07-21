@@ -10,6 +10,7 @@ RUN apk add --no-cache python3 make g++ \
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY tsconfig.base.json ./
 COPY apps ./apps
 COPY packages ./packages
 COPY scripts ./scripts
@@ -18,7 +19,7 @@ RUN pnpm install --frozen-lockfile
 
 # Worker bundle (esbuild) + frontend static build (vite)
 RUN node scripts/build.mjs \
-  && pnpm --filter @murojaah/web build
+  && pnpm --filter @murojaah/web exec vite build --config vite.config.docker.ts
 
 # ---------- Runtime stage ----------
 FROM node:20-alpine

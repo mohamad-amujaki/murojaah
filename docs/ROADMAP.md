@@ -102,7 +102,7 @@ Progres level sudah ditampilkan di [Achievements.tsx](../apps/web/src/pages/Achi
 
 Ditemukan saat review, sengaja **tidak diprioritaskan** selama masih tahap eksplorasi — tapi dicatat di sini supaya tidak terlupa saat proyek ini akan dibuka ke pengguna sungguhan.
 
-- **Rate limiting login/register**: `POST /api/auth/login` dan `/register` saat ini tidak dibatasi — rawan brute-force. Cloudflare punya Rate Limiting Rules di level dashboard (tanpa kode) sebagai opsi paling murah, atau counter sederhana di D1/KV per-IP.
+- ~~**Rate limiting login/register**~~ ✅ **Selesai (2026-07-21)**: rate limiting terpasang di login/register/forgot-password/practice, dengan **Redis sebagai store bersama** di VPS (`REDIS_URL`, layanan `redis:7-alpine` di docker-compose) dan fallback in-memory saat Redis tidak dikonfigurasi. Diverifikasi nyata: percobaan login ke-6 kena 429, counter bertahan setelah restart server, dan saat Redis dimatikan sistem *fail-open* (login tetap dilayani, tidak menggantung).
 - **Lupa kata sandi**: belum ada alur reset password sama sekali — pengguna yang lupa sandi email/password akan terkunci permanen dari akunnya (Google OAuth tidak terpengaruh).
 - **Verifikasi email**: pendaftaran email/password tidak memverifikasi kepemilikan email — siapa pun bisa daftar pakai email siapa pun.
 - **Test otomatis**: nol test di seluruh repo (dikonfirmasi tidak ada `*.test.ts`, `vitest.config`, atau folder `tests/`). Minimal yang disarankan sebelum produksi: satu smoke test per alur kritis (register→login, practice→XP→badge, switch-profile guard).
@@ -112,6 +112,19 @@ Ditemukan saat review, sengaja **tidak diprioritaskan** selama masih tahap ekspl
 - **Service Worker update notification**: [App.tsx:70](../apps/web/src/App.tsx) mendaftarkan SW via `navigator.serviceWorker.register("/sw.js")` tetapi tidak ada listener `controllerchange` dan tidak ada banner "Versi baru tersedia — muat ulang". SW bisa berjalan dengan kode lama berhari-hari tanpa pengguna sadar. Tambah listener, simpan `registration.waiting` di state, tampilkan tombol reload yang panggil `registration.waiting.postMessage({action: "skipWaiting"})`.
 - **Pagination admin users**: [admin.ts:75](../apps/worker/routes/admin.ts) — `GET /api/admin/users` mengembalikan **semua** pengguna tanpa limit/offset. Akan bermasalah saat jumlah pengguna >100. Tambah parameter query `?offset=&limit=` (default 50).
 - **OAuth state cookie tidak dibersihkan saat error**: [oauth.ts:83,93](../apps/worker/routes/oauth.ts) — jika token exchange gagal atau klaim invalid, response redirect tidak menghapus `STATE_COOKIE`. Cookie tetap ada sampai TTL 10 menit. Meskipun bukan celah keamanan (sudah dilindungi SameSite=Lax + HttpOnly), bersihkan tetap baik untuk hygiene — tambah `set-cookie: murojaah_oauth_state=; ... Max-Age=0` di cabang error.
+
+## Fase 6 — Ide Fitur & UX Berikutnya (pasca-deploy VPS, 2026-07-21)
+
+Ide baru di luar Fase 4 (yang sebagian besar masih berlaku). Diurutkan berdasarkan rasio dampak/effort:
+
+1. **Muraja'ah cerdas (saran ayat otomatis)** — dampak paling tinggi, data sudah ada. `ayah_progress` sudah mencatat mastery + `last_practiced_at` per ayat; tinggal satu query "ayat berstatus *Perlu latihan* atau paling lama tidak diulang" untuk mengisi kartu hero Beranda ("Waktunya mengulang Al-Falaq ayat 3–5") dan tombol "Latihan yang disarankan" di Practice. Ini spaced-repetition versi paling sederhana — tanpa algoritma SM-2, cukup urutkan berdasarkan umur + status.
+2. **Dark mode** — murah karena seluruh warna sudah CSS variables di `:root` ([styles.css](../apps/web/src/styles.css)). Tambah blok `[data-theme="dark"]` + toggle di Profil (kolom `preferences` JSON sudah siap menampung `theme`). Default ikuti `prefers-color-scheme`.
+3. **Onboarding first-run** — setelah daftar, pengguna baru mendarat di Beranda yang serba kosong. Arahkan langsung ke Practice dengan surah pendek yang disarankan (An-Nas/Al-Ikhlas) + satu kalimat panduan; hilang setelah sesi pertama selesai.
+4. **Pilihan qari** — URL audio kini hardcode Misyari Rasyid ([quran.ts](../apps/worker/routes/quran.ts)); EQuran.id menyediakan beberapa qari di CDN yang sama. Simpan pilihan di `preferences`, endpoint audio menerima parameter qari. Catatan: cache audio offline per-qari akan membesar — tetap on-demand.
+5. **Pengingat harian (streak reminder)** — butuh SMTP diimplementasi dulu (stub [email.ts](../apps/worker/lib/email.ts) — prasyarat yang sama dengan reset password). Mulai dari email harian sederhana via cron (node-cron di server.mjs atau cron EasyPanel yang memanggil endpoint internal); Web Push (VAPID) nanti saja, infrastrukturnya jauh lebih berat.
+6. **Leaderboard kelas mingguan** — data sudah lengkap (XP per murid per kelas). Tampilkan top-3 XP minggu ini di dashboard murid & guru. Buat *opsional per kelas* (toggle guru) — kompetisi bisa memotivasi sebagian murid dan menekan sebagian lainnya.
+7. **Backup otomatis SQLite (ops, bukan fitur)** — begitu ada pengguna nyata, satu file `/app/data/murojaah.db` adalah seluruh datanya. Cron harian `sqlite3 /app/data/murojaah.db ".backup /app/data/backups/$(date +%F).db"` + retensi 7 hari + salin keluar VPS (rclone/S3). Ini hal pertama yang disesali kalau dilewati.
+8. **Redis untuk kebutuhan lain** — sengaja *belum*: session tetap di SQLite (lookup lokal sudah cepat), cache data Qur'an tidak perlu (SQLite lokal lebih cepat dari round-trip Redis). Baru relevan kalau nanti ada fitur realtime (notifikasi live) via pub/sub — jangan dipakai hanya karena sudah terpasang.
 
 ## Risiko & Keputusan yang Masih Menggantung
 

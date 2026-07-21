@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { BookOpen, Check, ChevronRight, Flame, Heart, Play, Repeat2, Target, Zap } from "lucide-react";
 import { Goal } from "../components/Goal";
 import type { StatsResponse } from "@murojaah/shared";
-import { getAssignments, getEncouragements, getMyStats, getSurahs, markEncouragementRead } from "../lib/api";
-import type { AssignmentResponse, EncouragementResponse, SurahResponse } from "../lib/api";
+import { getAssignments, getEncouragements, getMyStats, getSuggestion, getSurahs, markEncouragementRead } from "../lib/api";
+import type { AssignmentResponse, EncouragementResponse, Suggestion, SurahResponse } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import type { Page } from "../types";
 
@@ -16,11 +16,17 @@ export function HomePage({ go }: { go: (p: Page) => void }) {
   const [encouragements, setEncouragements] = useState<EncouragementResponse[]>([]);
   const [surahList, setSurahList] = useState<SurahResponse[]>([]);
   const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const surahName = (surahId: number) => surahList.find(s => s.id === surahId)?.latinName ?? `Surah #${surahId}`;
   useEffect(() => { getAssignments().then(res => setAssignments(res.assignments)).catch(() => setAssignments([])); }, []);
   useEffect(() => { getEncouragements().then(res => setEncouragements(res.encouragements)).catch(() => setEncouragements([])); }, []);
   useEffect(() => { getSurahs().then(setSurahList).catch(() => setSurahList([])); }, []);
   useEffect(() => { getMyStats().then(setStats).catch(() => setStats(null)); }, []);
+  useEffect(() => { getSuggestion().then(res => setSuggestion(res.suggestion)).catch(() => setSuggestion(null)); }, []);
+  const startSuggested = () => {
+    if (suggestion) sessionStorage.setItem("suggestedPractice", JSON.stringify(suggestion));
+    go("practice");
+  };
   const latestEncouragement = encouragements[0];
   useEffect(() => {
     if (latestEncouragement && !latestEncouragement.isRead) {
@@ -37,7 +43,8 @@ export function HomePage({ go }: { go: (p: Page) => void }) {
 
   return <>
     <section className="welcome"><div><span className="eyebrow">{todayLabel}</span><h1>Assalamu'alaikum, {firstName}! <span>👋</span></h1><p>Siap menambah hafalan hari ini? Kamu hebat karena terus berusaha.</p></div><div className="streak"><span><Flame /></span><div><b>{stats?.streak ?? 0} hari</b><small>Streak saat ini</small></div></div></section>
-    {stats?.lastSurahId ? <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> LANJUTKAN HAFALAN</span><h2>{lastSurahName}</h2><p>{stats.lastPracticedAt ? `Terakhir latihan ${lastDate}` : ""}</p><div className="progress-row"><div className="progress"><i style={{width:`${heroProgress}%`}} /></div><b>{heroProgress}%</b></div><button className="primary light" onClick={() => go("practice")}><Play /> Mulai Latihan</button></div><div className="hero-art"><div className="moon">✦</div><div className="quran"><BookOpen /></div><i className="star s1">✦</i><i className="star s2">✦</i></div></section> : <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> MULAI PERJALANAN</span><h2>Belum ada sesi latihan</h2><p>Ayat pertama dimulai dari satu langkah kecil. Ayo mulai!</p><button className="primary light" onClick={() => go("practice")}><Play /> Mulai Latihan Pertama</button></div><div className="hero-art"><div className="moon">✦</div><div className="quran"><BookOpen /></div><i className="star s1">✦</i><i className="star s2">✦</i></div></section>}
+    {suggestion ? <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> MURAJA'AH DISARANKAN</span><h2>{surahName(suggestion.surahId)}</h2><p>Ayat {suggestion.startAyah}–{suggestion.endAyah} • {suggestion.mastery}</p><button className="primary light" onClick={startSuggested}><Play /> Latihan yang Disarankan</button></div><div className="hero-art"><div className="moon">✦</div><div className="quran"><BookOpen /></div><i className="star s1">✦</i><i className="star s2">✦</i></div></section>
+    : stats?.lastSurahId ? <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> LANJUTKAN HAFALAN</span><h2>{lastSurahName}</h2><p>{stats.lastPracticedAt ? `Terakhir latihan ${lastDate}` : ""}</p><div className="progress-row"><div className="progress"><i style={{width:`${heroProgress}%`}} /></div><b>{heroProgress}%</b></div><button className="primary light" onClick={() => go("practice")}><Play /> Mulai Latihan</button></div><div className="hero-art"><div className="moon">✦</div><div className="quran"><BookOpen /></div><i className="star s1">✦</i><i className="star s2">✦</i></div></section> : <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> MULAI PERJALANAN</span><h2>Belum ada sesi latihan</h2><p>Ayat pertama dimulai dari satu langkah kecil. Ayo mulai!</p><button className="primary light" onClick={() => go("practice")}><Play /> Mulai Latihan Pertama</button></div><div className="hero-art"><div className="moon">✦</div><div className="quran"><BookOpen /></div><i className="star s1">✦</i><i className="star s2">✦</i></div></section>}
     <div className="section-title"><div><h2>Target hari ini</h2><p>Selesaikan targetmu dan dapatkan bonus XP!</p></div><button onClick={() => go("practice")}>Lihat semua <ChevronRight /></button></div>
     <section className="goals-grid">
       <Goal icon={BookOpen} color="green" title={`Hafalkan ${dailyTarget} menit`} subtitle={`Tercapai ${todayMinutes} menit hari ini`} value={Math.min(todayMinutes, dailyTarget)} max={dailyTarget} />

@@ -25,6 +25,9 @@ export const switchProfile = (userId: number) => api<{ user: PublicUser }>("/aut
 export const updateProfile = (payload: UpdateProfilePayload) => api<{ user: PublicUser }>("/me", { method:"PATCH", body:JSON.stringify(payload) });
 export const getMyStats = () => api<StatsResponse>("/me/stats");
 
+export interface Suggestion { surahId:number; startAyah:number; endAyah:number; mastery:string }
+export const getSuggestion = () => api<{ suggestion: Suggestion | null }>("/me/suggestion");
+
 export const saveAyahProgress = (surahId:number, number:number, mastery:string) => api<{ ok:boolean }>("/ayah-progress", { method:"POST", body:JSON.stringify({ surahId, number, mastery }) });
 
 export interface BadgeResponse { id:number; code:string; name:string; description:string; icon:string; earned:boolean; earnedAt:string|null }

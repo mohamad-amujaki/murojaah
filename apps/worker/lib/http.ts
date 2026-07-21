@@ -1,10 +1,13 @@
 import type { PublicUser } from "@murojaah/shared";
+import type { RateLimitStore } from "./rate-limit";
 
 export interface Env {
   DB: D1Database;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   NODE_ENV?: string;
+  /** Injected by server.mjs when REDIS_URL is configured (VPS); absent elsewhere. */
+  RATE_LIMIT_STORE?: RateLimitStore;
 }
 
 export type CurrentUser = PublicUser;

@@ -28,6 +28,18 @@ export function PracticePage({notify}:{notify:(s:string)=>void}) {
   useEffect(()=>{
     getSurahs().then(list=>{ if(list.length) setSurahList(list); }).catch(()=>undefined);
   },[]);
+  // ponytail: sessionStorage hand-off from Home's "Latihan yang disarankan" button — no router params to plumb.
+  const suggestedRange = useRef<{surahId:number;startAyah:number;endAyah:number}|null>(null);
+  useEffect(()=>{
+    const raw = sessionStorage.getItem("suggestedPractice");
+    if(!raw) return;
+    sessionStorage.removeItem("suggestedPractice");
+    try {
+      const s = JSON.parse(raw);
+      const target = surahList.find(x=>x.id===s.surahId) ?? FALLBACK_SURAH_LIST.find(x=>x.id===s.surahId);
+      if(target){ suggestedRange.current={surahId:s.surahId,startAyah:s.startAyah,endAyah:s.endAyah}; setSelectedSurah(target); }
+    } catch { /* ignore malformed */ }
+  },[surahList]);
   useEffect(()=>{
     const controller=new AbortController();
     setQuranSource("Memuat ayat…");
@@ -35,7 +47,11 @@ export function PracticePage({notify}:{notify:(s:string)=>void}) {
       if(!result.ayahs.length) throw new Error("Data ayat kosong");
       setAyahs(result.ayahs);
       setQuranSource(result.source==="D1"?"Ayat & audio tersimpan":"Ayat & audio • EQuran.id");
-      setStart(1);setEnd(result.ayahs.length);setIndex(0);
+      const pending = suggestedRange.current;
+      if(pending && pending.surahId===selectedSurah.id){
+        suggestedRange.current=null;
+        setStart(pending.startAyah);setEnd(Math.min(pending.endAyah,result.ayahs.length));setIndex(pending.startAyah-1);
+      } else { setStart(1);setEnd(result.ayahs.length);setIndex(0); }
     }).catch(()=>{
       if(selectedSurah.id===112){setAyahs(fallbackAyahs);setStart(1);setEnd(4);setIndex(0);setQuranSource("Mode offline • data tersimpan")}
       else setQuranSource("Gagal memuat ayat. Coba lagi saat online.");

@@ -12,7 +12,7 @@ export const handlePracticeComplete: RouteHandler = async (request, url, env, ct
   if (url.pathname !== "/api/practice/complete" || request.method !== "POST") return null;
   if (!ctx.currentUser) return json({ error: "Silakan masuk untuk menyimpan sesi latihan." }, 401, {}, "no-store");
   const ip = getClientIp(request);
-  const { allowed, retryAfterMs } = rateLimit(ip, "/api/practice/complete");
+  const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/practice/complete");
   if (!allowed) return rateLimitResponse(retryAfterMs);
   const userId = ctx.currentUser.id;
 

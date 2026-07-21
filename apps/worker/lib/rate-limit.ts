@@ -1,6 +1,10 @@
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
+// Pluggable rate limiting. The Node VPS entry (server.mjs) injects a Redis-backed
+// store via env.RATE_LIMIT_STORE; anywhere without one (local dev, Cloudflare
+// Workers) falls back to the in-memory store below. Worker code stays free of
+// any Redis import so the bundle remains platform-agnostic.
+export interface RateLimitStore {
+  /** Increment the counter for `key`, starting a `windowMs` window on first hit. */
+  hit(key: string, windowMs: number): Promise<{ count: number; resetAt: number }>;
 }
 
 interface RateLimitConfig {
@@ -8,32 +12,48 @@ interface RateLimitConfig {
   maxRequests: number;
 }
 
-const DEFAULT_AUTH_LIMITS: Record<string, RateLimitConfig> = {
+const LIMITS: Record<string, RateLimitConfig> = {
   "/api/auth/login": { windowMs: 15 * 60 * 1000, maxRequests: 5 },
   "/api/auth/register": { windowMs: 60 * 60 * 1000, maxRequests: 5 },
+  "/api/auth/forgot-password": { windowMs: 60 * 60 * 1000, maxRequests: 5 },
   "/api/practice/complete": { windowMs: 60 * 1000, maxRequests: 10 },
   default: { windowMs: 60 * 1000, maxRequests: 60 },
 };
 
-const inMemoryStore = new Map<string, RateLimitEntry>();
+const memory = new Map<string, { count: number; resetAt: number }>();
 
-export function rateLimit(ip: string, pathname: string): { allowed: boolean; retryAfterMs: number } {
-  const now = Date.now();
-  const config = DEFAULT_AUTH_LIMITS[pathname] ?? DEFAULT_AUTH_LIMITS.default;
-  const key = `${ip}:${pathname}`;
-  const entry = inMemoryStore.get(key);
+const memoryStore: RateLimitStore = {
+  async hit(key, windowMs) {
+    const now = Date.now();
+    const entry = memory.get(key);
+    if (!entry || now > entry.resetAt) {
+      const fresh = { count: 1, resetAt: now + windowMs };
+      memory.set(key, fresh);
+      return fresh;
+    }
+    entry.count++;
+    return entry;
+  },
+};
 
-  if (!entry || now > entry.resetAt) {
-    inMemoryStore.set(key, { count: 1, resetAt: now + config.windowMs });
+export async function rateLimit(
+  env: { RATE_LIMIT_STORE?: RateLimitStore },
+  ip: string,
+  pathname: string,
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const config = LIMITS[pathname] ?? LIMITS.default;
+  const store = env.RATE_LIMIT_STORE ?? memoryStore;
+  try {
+    const { count, resetAt } = await store.hit(`rl:${ip}:${pathname}`, config.windowMs);
+    if (count > config.maxRequests) {
+      return { allowed: false, retryAfterMs: Math.max(resetAt - Date.now(), 1000) };
+    }
+    return { allowed: true, retryAfterMs: 0 };
+  } catch {
+    // Store unreachable (e.g. Redis restarting) → fail open: keeping auth
+    // available beats strict limiting during an infra hiccup.
     return { allowed: true, retryAfterMs: 0 };
   }
-
-  if (entry.count >= config.maxRequests) {
-    return { allowed: false, retryAfterMs: entry.resetAt - now };
-  }
-
-  entry.count++;
-  return { allowed: true, retryAfterMs: 0 };
 }
 
 export function getClientIp(request: Request): string {
@@ -52,8 +72,6 @@ export function rateLimitResponse(retryAfterMs: number) {
     headers: {
       "content-type": "application/json",
       "retry-after": String(seconds),
-      "x-ratelimit-limit": String(5),
-      "x-ratelimit-retry-after": String(seconds),
     },
   });
 }

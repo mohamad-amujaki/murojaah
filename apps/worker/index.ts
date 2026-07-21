@@ -11,7 +11,7 @@ import { handleGetAyahProgress, handleUpsertAyahProgress } from "./routes/ayah-p
 import { handleListBadges } from "./routes/badges";
 import { handleCreateEncouragement, handleListEncouragements, handleMarkEncouragementRead } from "./routes/encouragements";
 import { handleGoogleCallback, handleGoogleStart } from "./routes/oauth";
-import { handleMyStats, handleUpdateProfile } from "./routes/profile";
+import { handleMyStats, handleSuggestion, handleUpdateProfile } from "./routes/profile";
 import {
   handleAdminStats, handleChildStats, handleListAdminUsers,
   handleUpdateAdminUser, handleUpdateChild,
@@ -22,7 +22,7 @@ const routes: RouteHandler[] = [
   handleHealth, handleQuranSurah, handleQuranAudio, handlePracticeComplete,
   handleRegister, handleLogin, handleLogout, handleMe, handleCreateChild, handleSwitchProfile, handleForgotPassword, handleResetPassword,
   handleGoogleStart, handleGoogleCallback,
-  handleUpdateProfile, handleMyStats,
+  handleUpdateProfile, handleMyStats, handleSuggestion,
   handleCreateClass, handleJoinClass, handleListClasses, handleClassMembers, handleLeaveClass, handleRemoveMember,
   handleCreateAssignment, handleListAssignments,
   handleUpsertAyahProgress, handleGetAyahProgress,

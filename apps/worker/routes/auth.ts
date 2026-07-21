@@ -19,7 +19,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const handleRegister: RouteHandler = async (request, url, env) => {
   if (url.pathname !== "/api/auth/register" || request.method !== "POST") return null;
   const ip = getClientIp(request);
-  const { allowed, retryAfterMs } = rateLimit(ip, "/api/auth/register");
+  const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/auth/register");
   if (!allowed) return rateLimitResponse(retryAfterMs);
   if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
   const db = getDb({ DB: env.DB });
@@ -51,7 +51,7 @@ export const handleRegister: RouteHandler = async (request, url, env) => {
 export const handleLogin: RouteHandler = async (request, url, env) => {
   if (url.pathname !== "/api/auth/login" || request.method !== "POST") return null;
   const ip = getClientIp(request);
-  const { allowed, retryAfterMs } = rateLimit(ip, "/api/auth/login");
+  const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/auth/login");
   if (!allowed) return rateLimitResponse(retryAfterMs);
   if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
   const db = getDb({ DB: env.DB });
@@ -156,7 +156,7 @@ export const handleSwitchProfile: RouteHandler = async (request, url, env, ctx) 
 export const handleForgotPassword: RouteHandler = async (request, url, env) => {
   if (url.pathname !== "/api/auth/forgot-password" || request.method !== "POST") return null;
   const ip = getClientIp(request);
-  const { allowed, retryAfterMs } = rateLimit(ip, "/api/auth/register");
+  const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/auth/forgot-password");
   if (!allowed) return rateLimitResponse(retryAfterMs);
   if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
   const db = getDb({ DB: env.DB });

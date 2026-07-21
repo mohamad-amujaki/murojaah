@@ -17,7 +17,8 @@
     "server:build": "npm install && node scripts/build.mjs"
   },
   "dependencies": {
-    "better-sqlite3": "^11.7.0"
+    "better-sqlite3": "^11.7.0",
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "esbuild": "^0.28.1",

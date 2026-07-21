@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { getDb } from "@murojaah/db/client";
-import { users } from "@murojaah/db";
+import { ayahProgress, ayahs, surahs, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json } from "../lib/http";
 import { publicUser } from "../lib/profile";
@@ -55,4 +55,40 @@ export const handleMyStats: RouteHandler = async (request, url, env, ctx) => {
   const db = getDb({ DB: env.DB });
 
   return json(await computeUserStats(db, ctx.currentUser.id), 200, {}, "no-store");
+};
+
+// ponytail: naive spaced-repetition — oldest-touched, not-yet-mastered ayah wins.
+// No SM-2/forgetting-curve math; upgrade if murid volume ever demands it.
+export const handleSuggestion: RouteHandler = async (request, url, env, ctx) => {
+  if (url.pathname !== "/api/me/suggestion" || request.method !== "GET") return null;
+  if (!ctx.currentUser) return json({ error: "Belum masuk." }, 401, {}, "no-store");
+  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
+  const db = getDb({ DB: env.DB });
+
+  const [weakest] = await db.select({
+    surahId: ayahs.surahId,
+    number: ayahs.number,
+    mastery: ayahProgress.mastery,
+    lastPracticedAt: ayahProgress.lastPracticedAt,
+    ayahCount: surahs.ayahCount,
+  })
+    .from(ayahProgress)
+    .innerJoin(ayahs, eq(ayahProgress.ayahId, ayahs.id))
+    .innerJoin(surahs, eq(ayahs.surahId, surahs.id))
+    .where(and(eq(ayahProgress.userId, ctx.currentUser.id), ne(ayahProgress.mastery, "Sudah hafal")))
+    .orderBy(asc(ayahProgress.lastPracticedAt))
+    .limit(1);
+
+  if (!weakest) return json({ suggestion: null }, 200, {}, "no-store");
+
+  const startAyah = weakest.number;
+  const endAyah = Math.min(weakest.number + 3, weakest.ayahCount);
+  return json({
+    suggestion: {
+      surahId: weakest.surahId,
+      startAyah,
+      endAyah,
+      mastery: weakest.mastery,
+    },
+  }, 200, {}, "no-store");
 };
