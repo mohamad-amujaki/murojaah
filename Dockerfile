@@ -38,7 +38,7 @@ RUN apk add --no-cache --virtual .build-deps python3 make g++ \
 
 # Built artifacts from the build stage
 COPY --from=build /build/dist/worker ./dist/worker
-COPY --from=build /build/apps/web/dist/client ./static
+COPY --from=build /build/apps/web/dist ./static
 
 # Migrations + Quran seed, auto-applied by server.mjs on startup
 COPY packages/db/migrations ./migrations
