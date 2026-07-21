@@ -13,4 +13,11 @@ export default defineConfig({
     },
   },
   plugins: [react(), tailwindcss()],
+  // Only affects `vite dev`, not `vite build` — proxies API calls to the
+  // Node/MySQL server.mjs backend started alongside it by scripts/dev.mjs.
+  server: {
+    proxy: {
+      "/api": "http://localhost:8787",
+    },
+  },
 });

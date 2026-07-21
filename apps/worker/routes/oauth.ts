@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDb } from "@murojaah/db/client";
 import { credentials, oauthAccounts, users, sessions } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json } from "../lib/http";
 import { generateSessionToken, sessionExpiry, setSessionCookieHeader } from "../lib/auth";
+import { insertReturning } from "../lib/db-helpers";
 
 const STATE_COOKIE = "murojaah_oauth_state";
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -151,10 +152,10 @@ export const handleGoogleCallback: RouteHandler = async (request, url, env) => {
     if (existingCredential) {
       userId = existingCredential.userId;
     } else {
-      const [created] = await db.insert(users).values({ displayName: claims.name || email.split("@")[0], role: "parent" }).returning();
+      const created = await insertReturning(db, users, { displayName: claims.name || email.split("@")[0], role: "parent" });
       userId = created.id;
     }
-    await db.insert(oauthAccounts).values({ userId, provider: "google", providerAccountId: claims.sub, email }).onConflictDoNothing();
+    await db.insert(oauthAccounts).values({ userId, provider: "google", providerAccountId: claims.sub, email }).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   }
 
   const isNewUser = !existingOauth;

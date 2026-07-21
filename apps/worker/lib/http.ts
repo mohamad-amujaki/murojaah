@@ -1,8 +1,9 @@
+import type { Pool } from "mysql2/promise";
 import type { PublicUser } from "@murojaah/shared";
 import type { RateLimitStore } from "./rate-limit";
 
 export interface Env {
-  DB: D1Database;
+  DB: Pool;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   NODE_ENV?: string;
@@ -26,23 +27,7 @@ const baseSecurityHeaders = {
   "x-xss-protection": "1; mode=block",
 };
 
-const securityHeaders = (): Record<string, string> => {
-  return baseSecurityHeaders;
-  return {
-    ...baseSecurityHeaders,
-    "content-security-policy": [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https://cdn.equran.id https://equran.id",
-      "connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://equran.id https://cdn.equran.id",
-      "media-src 'self' https://cdn.equran.id",
-      "frame-ancestors 'none'",
-      "form-action 'self'",
-    ].join("; "),
-  };
-};
+const securityHeaders = (): Record<string, string> => baseSecurityHeaders;
 
 export const json = (data: unknown, status = 200, extraHeaders: Record<string, string> = {}, cacheControl = "no-store") =>
   Response.json(data, {

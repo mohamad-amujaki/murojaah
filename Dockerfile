@@ -30,11 +30,9 @@ WORKDIR /app
 
 RUN apk add --no-cache dumb-init
 
-# Runtime deps only (better-sqlite3); gcc toolchain kept just for the install
+# mysql2 is pure JS — no native toolchain needed for the runtime install.
 COPY package.json package-lock.json ./
-RUN apk add --no-cache --virtual .build-deps python3 make g++ \
-  && npm ci --omit=dev --no-audit --no-fund \
-  && apk del .build-deps
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # Built artifacts from the build stage
 COPY --from=build /build/dist/worker ./dist/worker
@@ -42,15 +40,12 @@ COPY --from=build /build/apps/web/dist ./static
 
 # Migrations + Quran seed, auto-applied by server.mjs on startup
 COPY packages/db/migrations ./migrations
-COPY packages/db/seeds/quran-full.sql ./seeds/quran-full.sql
+COPY packages/db/seeds/quran-full.mysql.sql ./seeds/quran-full.mysql.sql
 
 COPY server.mjs ./
 
-RUN mkdir -p /app/data
-
 ENV NODE_ENV=production
 ENV PORT=8787
-ENV DATABASE_URL=file:/app/data/murojaah.db
 ENV STATIC_DIR=/app/static
 
 EXPOSE 8787

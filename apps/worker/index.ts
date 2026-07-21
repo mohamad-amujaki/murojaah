@@ -34,7 +34,7 @@ const routes: RouteHandler[] = [
 ];
 
 export default {
-  async fetch(request, env) {
+  async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     const ctx = await resolveContext(request, env);
 
@@ -46,4 +46,4 @@ export default {
     if (url.pathname.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan." }, 404);
     return new Response(null, { status: 404 });
   },
-} satisfies ExportedHandler<Env>;
+};

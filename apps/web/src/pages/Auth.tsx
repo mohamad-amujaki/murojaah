@@ -41,6 +41,17 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: "
   };
 
   return <div className="auth-page">
+    <div className="auth-visual">
+      <div className="auth-visual-brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span></div>
+      <div className="auth-visual-art">
+        <div className="moon">✦</div>
+        <div className="quran"><BookOpen /></div>
+        <i className="star s1">✦</i><i className="star s2">✦</i>
+      </div>
+      <div className="auth-visual-copy">
+        <p>Muraja'ah Al-Qur'an, sedikit demi sedikit, setiap hari.</p>
+      </div>
+    </div>
     <div className="auth-form-panel">
       <button type="button" className="back-link" onClick={onClose}><ChevronLeft /> Kembali</button>
       <form className="auth-card" aria-label={mode==="login"?"Masuk":"Daftar"} onSubmit={submit}>
@@ -61,17 +72,6 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: "
           <a className="outline full google-btn" href={`/api/auth/google/start?intent=${mode}`}><GoogleIcon/> {mode==="login"?"Masuk":"Daftar"} dengan Google</a>
         </div>
       </form>
-    </div>
-    <div className="auth-visual">
-      <div className="auth-visual-brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span></div>
-      <div className="auth-visual-art">
-        <div className="moon">✦</div>
-        <div className="quran"><BookOpen /></div>
-        <i className="star s1">✦</i><i className="star s2">✦</i>
-      </div>
-      <div className="auth-visual-copy">
-        <p>Muraja'ah Al-Qur'an, sedikit demi sedikit, setiap hari.</p>
-      </div>
     </div>
   </div>;
 }

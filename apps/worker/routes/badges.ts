@@ -1,17 +1,17 @@
 import { eq } from "drizzle-orm";
-import { getDb } from "@murojaah/db/client";
 import { badges, userBadges } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json } from "../lib/http";
+import { requireAuth } from "../lib/guards";
 
 export const handleListBadges: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/badges" || request.method !== "GET") return null;
-  if (!ctx.currentUser) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireAuth(env, ctx);
+  if (guard instanceof Response) return guard;
+  const { user, db } = guard;
 
   const all = await db.select().from(badges);
-  const earned = await db.select().from(userBadges).where(eq(userBadges.userId, ctx.currentUser.id));
+  const earned = await db.select().from(userBadges).where(eq(userBadges.userId, user.id));
   const earnedByBadgeId = new Map(earned.map(row => [row.badgeId, row.earnedAt]));
 
   return json({

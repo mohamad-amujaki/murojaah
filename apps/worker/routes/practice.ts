@@ -1,8 +1,8 @@
 import { and, eq, inArray, or } from "drizzle-orm";
-import { getDb } from "@murojaah/db/client";
 import { assignments, classMembers, practiceSessions, xpLedger } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json } from "../lib/http";
+import { requireAuth } from "../lib/guards";
 import { evaluateBadges } from "../lib/badges";
 import { getClientIp, rateLimit, rateLimitResponse } from "../lib/rate-limit";
 
@@ -10,11 +10,13 @@ const SUCCESS_MESSAGE = "MasyaAllah, sesi berhasil diselesaikan!";
 
 export const handlePracticeComplete: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/practice/complete" || request.method !== "POST") return null;
-  if (!ctx.currentUser) return json({ error: "Silakan masuk untuk menyimpan sesi latihan." }, 401, {}, "no-store");
+  const guard = requireAuth(env, ctx);
+  if (guard instanceof Response) return guard;
+  const { user, db } = guard;
   const ip = getClientIp(request);
   const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/practice/complete");
   if (!allowed) return rateLimitResponse(retryAfterMs);
-  const userId = ctx.currentUser.id;
+  const userId = user.id;
 
   let body: Record<string, unknown>;
   try {
@@ -36,8 +38,6 @@ export const handlePracticeComplete: RouteHandler = async (request, url, env, ct
     && Number.isFinite(duration) && duration >= 0;
 
   if (!valid) return json({ error: "Data sesi latihan tidak valid." }, 400, {}, "no-store");
-  if (!env.DB) return json({ error: "Layanan sesi latihan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
 
   try {
 
@@ -46,7 +46,7 @@ export const handlePracticeComplete: RouteHandler = async (request, url, env, ct
       if (existing) return json({ xp: 35, message: SUCCESS_MESSAGE }, 201, {}, "no-store");
     }
 
-    const inserted = await db.insert(practiceSessions).values({
+    const [inserted] = await db.insert(practiceSessions).values({
       userId,
       surahId,
       startAyah: start,
@@ -55,8 +55,8 @@ export const handlePracticeComplete: RouteHandler = async (request, url, env, ct
       duration: Math.round(duration),
       status: "completed",
       clientId,
-    }).returning({ id: practiceSessions.id });
-    const sessionId = inserted[0]?.id;
+    });
+    const sessionId = inserted.insertId;
     if (!sessionId) throw new Error("Sesi tidak berhasil dibuat");
     await db.insert(xpLedger).values({ userId, source: `practice:${sessionId}`, amount: 35 });
     await evaluateBadges(db, userId).catch(err => console.error("Gagal mengevaluasi lencana", err));

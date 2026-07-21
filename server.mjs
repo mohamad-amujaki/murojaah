@@ -1,123 +1,86 @@
 /**
- * Node.js entry point — runs bundled Cloudflare Worker on VPS with better-sqlite3.
- * Replaces Cloudflare D1 API with a better-sqlite3 adapter.
+ * Node.js entry point — runs bundled Cloudflare Worker on VPS with MySQL.
  */
 
 import { createServer } from "node:http";
-import Database from "better-sqlite3";
+import mysql from "mysql2/promise";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const PORT = parseInt(process.env.PORT ?? "8787", 10);
-const DATABASE_URL = process.env.DATABASE_URL ?? "file:/app/data/murojaah.db";
 const STATIC_DIR = process.env.STATIC_DIR ?? resolve(__dirname, "static");
 
-// Init SQLite
-const dbPath = DATABASE_URL.startsWith("file:") ? DATABASE_URL.slice(5) : DATABASE_URL;
+// ——— MySQL connection pool ———
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT ?? "3306", 10),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
-// Ensure data dir exists
-const dbDir = dbPath.includes("/") ? dbPath.slice(0, dbPath.lastIndexOf("/")) : ".";
-if (!existsSync(dbDir)) mkdirSync(dbDir, { recursive: true });
-
-const db = new Database(dbPath);
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
-db.pragma("synchronous = NORMAL");
-db.pragma("temp_store = MEMORY");
-db.pragma("mmap_size = 268435456"); // 256MB
-
-// Verify
 try {
-  db.prepare("SELECT 1").get();
-  console.log(`✓ Database: ${dbPath}`);
+  await pool.query("SELECT 1");
+  console.log(`✓ Database: ${process.env.DB_HOST}/${process.env.DB_NAME}`);
 } catch (e) {
   console.error("✘ Database error:", e.message);
   process.exit(1);
 }
 
 // ——— Auto-migrations ———
-// Applies each packages/db/migrations/*.sql exactly once (tracked in _migrations),
-// then the full-Quran seed. Replaces `wrangler d1 migrations apply`, which only
-// targets Cloudflare D1 and can't reach this SQLite file on the VPS.
+// Applies each packages/db/migrations/*.sql exactly once (tracked in mu__migrations),
+// then the full-Quran seed. Statements are split on drizzle-kit's own
+// "--> statement-breakpoint" marker since mysql2 doesn't run multi-statement
+// strings by default outside of an explicit `multipleStatements` connection.
 const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR ?? resolve(__dirname, "migrations");
-const SEED_FILES = [resolve(__dirname, "seeds", "quran-full.sql")];
+const SEED_FILES = [resolve(__dirname, "seeds", "quran-full.mysql.sql")];
+
+async function runSqlFile(path) {
+  const text = readFileSync(path, "utf8");
+  // drizzle-kit migrations separate statements with an explicit marker (safe to
+  // split on, since it never appears inside a string literal); seed files are
+  // generated one full INSERT per line instead — naively splitting either kind
+  // on every ";" breaks as soon as a value (e.g. ayah translation text) contains
+  // one.
+  const rawStatements = text.includes("--> statement-breakpoint")
+    ? text.split("--> statement-breakpoint")
+    : text.split("\n");
+  const statements = rawStatements.map((s) => s.trim()).filter((s) => s.length > 0 && !s.startsWith("--"));
+  for (const stmt of statements) await pool.query(stmt);
+}
+
 try {
-  db.exec("CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
-  const applied = new Set(db.prepare("SELECT name FROM _migrations").all().map((r) => r.name));
+  await pool.query("CREATE TABLE IF NOT EXISTS mu__migrations (name VARCHAR(191) PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP()))");
+  const [appliedRows] = await pool.query("SELECT name FROM mu__migrations");
+  const applied = new Set(appliedRows.map((r) => r.name));
+
   if (existsSync(MIGRATIONS_DIR)) {
     for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort()) {
       if (applied.has(file)) continue;
-      db.exec(readFileSync(resolve(MIGRATIONS_DIR, file), "utf8"));
-      db.prepare("INSERT INTO _migrations (name) VALUES (?)").run(file);
+      await runSqlFile(resolve(MIGRATIONS_DIR, file));
+      await pool.query("INSERT INTO mu__migrations (name) VALUES (?)", [file]);
       console.log(`✓ Migration applied: ${file}`);
     }
   } else {
     console.warn(`⚠ Migrations dir not found: ${MIGRATIONS_DIR}`);
   }
+
   for (const seedPath of SEED_FILES) {
     const name = `seed:${seedPath.split("/").pop()}`;
     if (applied.has(name) || !existsSync(seedPath)) continue;
-    db.exec(readFileSync(seedPath, "utf8"));
-    db.prepare("INSERT INTO _migrations (name) VALUES (?)").run(name);
+    await runSqlFile(seedPath);
+    await pool.query("INSERT INTO mu__migrations (name) VALUES (?)", [name]);
     console.log(`✓ Seed applied: ${name}`);
   }
 } catch (e) {
   console.error("✘ Migration error:", e.message);
   process.exit(1);
 }
-
-// ——— D1-compatible adapter for better-sqlite3 ———
-// Faithful to Cloudflare's D1 client API as consumed by drizzle-orm/d1:
-//   stmt.bind(...).all()  → { results: Row[], success, meta }   (drizzle destructures { results })
-//   stmt.bind(...).raw()  → Array<Array<value>>                 (drizzle's select fast-path)
-//   stmt.bind(...).first(col?) → Row | column value | null
-//   stmt.bind(...).run()  → { success, meta: { changes, last_row_id }, results }
-// Errors intentionally propagate so Drizzle surfaces the real SQL failure.
-const coerceParam = (p) => {
-  if (typeof p === "boolean") return p ? 1 : 0; // D1 accepts booleans; better-sqlite3 does not
-  if (p === undefined) return null;
-  return p;
-};
-
-const d1 = {
-  prepare: (sql) => ({
-    bind: (...params) => {
-      const stmt = db.prepare(sql);
-      const bound = params.map(coerceParam);
-      const isReader = stmt.reader; // true when the statement returns rows (SELECT / ...RETURNING)
-      const meta = (info) => ({ changes: info.changes, last_row_id: Number(info.lastInsertRowid), duration: 0 });
-      return {
-        all: async () => {
-          if (isReader) return { results: stmt.all(...bound), success: true, meta: { duration: 0 } };
-          const info = stmt.run(...bound);
-          return { results: [], success: true, meta: meta(info) };
-        },
-        raw: async (options) => {
-          const rows = stmt.raw(true).all(...bound);
-          if (options?.columnNames) return [stmt.columns().map((c) => c.name), ...rows];
-          return rows;
-        },
-        first: async (colName) => {
-          const row = stmt.get(...bound);
-          if (row === undefined) return null;
-          return typeof colName === "string" ? row[colName] : row;
-        },
-        run: async () => {
-          if (isReader) return { results: stmt.all(...bound), success: true, meta: { duration: 0 } };
-          const info = stmt.run(...bound);
-          return { results: [], success: true, meta: meta(info) };
-        },
-      };
-    },
-  }),
-  batch: (statements) => Promise.all(statements.map((s) => s.all())),
-  exec: async (sql) => {
-    db.exec(sql);
-  },
-};
 
 // ——— Redis (optional): shared rate-limit store ———
 // When REDIS_URL is set, rate-limit counters live in Redis so they survive
@@ -155,7 +118,7 @@ if (process.env.REDIS_URL) {
 
 // ——— Env ———
 const env = {
-  DB: d1,
+  DB: pool,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? "",
   NODE_ENV: process.env.NODE_ENV ?? "production",
@@ -294,7 +257,7 @@ server.listen(PORT, "0.0.0.0", () => {
 });
 
 process.on("SIGTERM", () => {
-  db.close();
+  pool.end().catch(() => undefined);
   if (redis) redis.quit().catch(() => undefined);
   server.close(() => process.exit(0));
 });

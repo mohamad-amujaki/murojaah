@@ -17,7 +17,7 @@ await build({
   target: "node20",
   format: "esm",
   outfile: resolve(ROOT, "dist/worker/index.mjs"),
-  external: ["node:async_hooks"],
+  external: ["node:async_hooks", "mysql2", "mysql2/promise"],
   define: {
     "process.env.NODE_ENV": '"production"',
   },

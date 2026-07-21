@@ -7,10 +7,11 @@
     "@murojaah/db": "workspace:*",
     "@murojaah/shared": "workspace:*",
     "drizzle-orm": "^0.44.7",
+    "mysql2": "^3.23.1",
     "nodemailer": "^6.9.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260710.1",
+    "@types/node": "^20.0.0",
     "@types/nodemailer": "^6.4.0",
     "typescript": "^6.0.2"
   },

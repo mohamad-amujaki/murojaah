@@ -4,7 +4,7 @@
   "packageManager": "pnpm@10.0.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @murojaah/web dev",
+    "dev": "node scripts/dev.mjs",
     "build": "pnpm --filter @murojaah/web build",
     "build:server": "node scripts/build.mjs",
     "typecheck": "pnpm -r --if-present typecheck",
@@ -14,13 +14,16 @@
     "db:migrate:remote": "pnpm --filter @murojaah/web db:migrate:remote",
     "db:seed:local": "pnpm --filter @murojaah/web db:seed:local",
     "server": "node server.mjs",
-    "server:build": "npm install && node scripts/build.mjs"
+    "server:build": "npm install && node scripts/build.mjs",
+    "db:migrate:mysql": "node scripts/migrate-sqlite-to-mysql.mjs"
   },
   "dependencies": {
-    "better-sqlite3": "^11.7.0",
+    "mysql2": "^3.23.1",
     "redis": "^4.7.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
+    "better-sqlite3": "^11.7.0",
     "esbuild": "^0.28.1",
     "typescript": "^6.0.2"
   }

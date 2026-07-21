@@ -1,15 +1,9 @@
-import { Component, useCallback, useEffect, useRef, useState } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import type { UserRole } from "@murojaah/shared";
 import {
-  Bell, BookOpen, Check, ChevronDown, CircleHelp, LogOut, Mail, Menu, MessageCircle, ShieldCheck, Sparkles, WifiOff, X
+  Bell, BookOpen, Check, ChevronDown, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
 } from "lucide-react";
-import { HomePage } from "./pages/Home";
-import { PracticePage } from "./pages/Practice";
-import { Achievements } from "./pages/Achievements";
-import { Dashboard } from "./pages/Dashboard";
-import { Profile } from "./pages/Profile";
-import { ChildProfiles } from "./pages/ChildProfiles";
 import { AuthDialog } from "./pages/Auth";
 import { LandingPage } from "./pages/Landing";
 import { AddChildModal } from "./components/AddChildModal";
@@ -17,7 +11,17 @@ import { Modal } from "./components/Modal";
 import { nav, pageFromHash } from "./types";
 import type { Page, Role } from "./types";
 import { useAuth } from "./lib/auth-context";
+import { getTheme, setTheme } from "./lib/theme";
 import { syncPendingSessions } from "./lib/sync";
+
+// Lazy-loaded: only needed once a user is logged in, so unauthenticated
+// visitors (landing/auth) don't pay for this code in their first paint.
+const HomePage = lazy(() => import("./pages/Home").then(m => ({ default: m.HomePage })));
+const PracticePage = lazy(() => import("./pages/Practice").then(m => ({ default: m.PracticePage })));
+const Achievements = lazy(() => import("./pages/Achievements").then(m => ({ default: m.Achievements })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
+const Profile = lazy(() => import("./pages/Profile").then(m => ({ default: m.Profile })));
+const ChildProfiles = lazy(() => import("./pages/ChildProfiles").then(m => ({ default: m.ChildProfiles })));
 
 export class AppErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -69,6 +73,8 @@ function AuthenticatedApp() {
   const [roleSetupBusy, setRoleSetupBusy] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
+  const [darkMode, setDarkMode] = useState(() => getTheme() === "dark");
+  const toggleTheme = () => { const next = darkMode ? "light" : "dark"; setDarkMode(!darkMode); setTheme(next); };
   const go = (next: Page) => { setPage(next); location.hash = next; scrollTo({ top: 0, behavior: "smooth" }); setMenu(false); };
   const notify = useCallback((text: string) => { setToast(text); if(toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current=window.setTimeout(() => setToast(""), 2800); }, []);
   useEffect(() => {
@@ -104,6 +110,7 @@ function AuthenticatedApp() {
         <div className="top-actions">
           {!online && <span className="offline"><WifiOff /> Offline</span>}
           {isActingAsChild && <button className="outline" onClick={() => switchProfile(loginUser.id)}>Kembali ke {loginUser.displayName}</button>}
+          <button className="icon-btn" onClick={toggleTheme} aria-label={darkMode ? "Ganti ke mode terang" : "Ganti ke mode gelap"}>{darkMode ? <Sun /> : <Moon />}</button>
           <button className="icon-btn notify" onClick={() => notify("Belum ada notifikasi baru")} aria-label="Notifikasi"><Bell /><i /></button>
           {!isActingAsChild && loginUser.role === "parent"
             ? <div className="role-select"><ShieldCheck /><select value={String(user.id)} onChange={e => handleProfileSelect(e.target.value)} aria-label="Pilih profil">
@@ -115,12 +122,14 @@ function AuthenticatedApp() {
         </div>
       </header>
       <div className="content">
-        {page === "home" && <HomePage go={go} />}
-        {page === "practice" && <PracticePage notify={notify} />}
-        {page === "achievements" && <Achievements />}
-        {page === "dashboard" && <Dashboard role={role} notify={notify} />}
-        {page === "children" && role !== "Murid" && <ChildProfiles role={role} notify={notify} />}
-        {page === "profile" && <Profile notify={notify} />}
+        <Suspense fallback={null}>
+          {page === "home" && <HomePage go={go} />}
+          {page === "practice" && <PracticePage notify={notify} />}
+          {page === "achievements" && <Achievements />}
+          {page === "dashboard" && <Dashboard role={role} notify={notify} />}
+          {page === "children" && role !== "Murid" && <ChildProfiles role={role} notify={notify} />}
+          {page === "profile" && <Profile notify={notify} />}
+        </Suspense>
       </div>
     </main>
     <nav className="bottom-nav">{visibleNav.slice(0,4).map(item => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => go(item.id)}><item.icon /><span>{item.label}</span></button>)}</nav>

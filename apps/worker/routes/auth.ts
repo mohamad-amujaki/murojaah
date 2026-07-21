@@ -3,6 +3,7 @@ import { getDb } from "@murojaah/db/client";
 import { credentials, parentChildren, passwordResetTokens, sessions, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json } from "../lib/http";
+import { requireAuth, requireDb } from "../lib/guards";
 import {
   clearSessionCookieHeader, generateSessionToken, hashPassword,
   sessionExpiry, setSessionCookieHeader, verifyPassword,
@@ -10,6 +11,7 @@ import {
 import { publicUser } from "../lib/profile";
 import { getClientIp, rateLimit, rateLimitResponse } from "../lib/rate-limit";
 import { emailConfigFromEnv, RESET_EMAIL_HTML, sendEmail } from "../lib/email";
+import { insertReturning } from "../lib/db-helpers";
 
 const REGISTERABLE_ROLES = ["student", "teacher", "parent"] as const;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,8 +23,9 @@ export const handleRegister: RouteHandler = async (request, url, env) => {
   const ip = getClientIp(request);
   const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/auth/register");
   if (!allowed) return rateLimitResponse(retryAfterMs);
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireDb(env);
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const displayName = String(body?.displayName ?? "").trim();
@@ -37,7 +40,7 @@ export const handleRegister: RouteHandler = async (request, url, env) => {
   const [existing] = await db.select({ id: credentials.id }).from(credentials).where(eq(credentials.email, email)).limit(1);
   if (existing) return json({ error: "Email sudah terdaftar." }, 409, {}, "no-store");
 
-  const [user] = await db.insert(users).values({ displayName, role: role as typeof REGISTERABLE_ROLES[number] }).returning();
+  const user = await insertReturning(db, users, { displayName, role: role as typeof REGISTERABLE_ROLES[number] });
   const passwordHash = await hashPassword(password);
   await db.insert(credentials).values({ userId: user.id, email, passwordHash });
 
@@ -53,8 +56,9 @@ export const handleLogin: RouteHandler = async (request, url, env) => {
   const ip = getClientIp(request);
   const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/auth/login");
   if (!allowed) return rateLimitResponse(retryAfterMs);
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireDb(env);
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const email = String(body?.email ?? "").trim().toLowerCase();
@@ -77,11 +81,9 @@ export const handleLogin: RouteHandler = async (request, url, env) => {
 
 export const handleLogout: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/auth/logout" || request.method !== "POST") return null;
-  if (ctx.sessionToken) {
-    if (env.DB) {
-      const db = getDb({ DB: env.DB });
-      await db.delete(sessions).where(eq(sessions.token, ctx.sessionToken));
-    }
+  if (ctx.sessionToken && env.DB) {
+    const db = getDb({ DB: env.DB });
+    await db.delete(sessions).where(eq(sessions.token, ctx.sessionToken));
   }
   return json({ ok: true }, 200, { "set-cookie": clearSessionCookieHeader(url) }, "no-store");
 };
@@ -92,15 +94,13 @@ export const handleMe: RouteHandler = async (request, url, env, ctx) => {
 
   let children: ReturnType<typeof publicUser>[] = [];
   let loginUser = ctx.currentUser;
-  if (ctx.loginUserId) {
-    if (env.DB) {
-      const db = getDb({ DB: env.DB });
-      const rows = await db.select().from(users).where(eq(users.managedBy, ctx.loginUserId));
-      children = rows.map(publicUser);
-      if (ctx.loginUserId !== ctx.currentUser.id) {
-        const [row] = await db.select().from(users).where(eq(users.id, ctx.loginUserId)).limit(1);
-        if (row) loginUser = publicUser(row);
-      }
+  if (ctx.loginUserId && env.DB) {
+    const db = getDb({ DB: env.DB });
+    const rows = await db.select().from(users).where(eq(users.managedBy, ctx.loginUserId));
+    children = rows.map(publicUser);
+    if (ctx.loginUserId !== ctx.currentUser.id) {
+      const [row] = await db.select().from(users).where(eq(users.id, ctx.loginUserId)).limit(1);
+      if (row) loginUser = publicUser(row);
     }
   }
   return json({ user: ctx.currentUser, loginUser, children, isActingAsChild: ctx.loginUserId !== ctx.currentUser.id }, 200, {}, "no-store");
@@ -108,12 +108,12 @@ export const handleMe: RouteHandler = async (request, url, env, ctx) => {
 
 export const handleCreateChild: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/auth/children" || request.method !== "POST") return null;
-  if (!ctx.currentUser || !ctx.loginUserId) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (ctx.currentUser.role !== "parent" || ctx.loginUserId !== ctx.currentUser.id) {
+  const guard = requireAuth(env, ctx);
+  if (guard instanceof Response) return guard;
+  const { user, db } = guard;
+  if (user.role !== "parent" || ctx.loginUserId !== user.id) {
     return json({ error: "Hanya akun orang tua yang dapat menambah profil anak." }, 403, {}, "no-store");
   }
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const displayName = String(body?.displayName ?? "").trim();
@@ -125,11 +125,11 @@ export const handleCreateChild: RouteHandler = async (request, url, env, ctx) =>
   if (!GENDER_VALUES.includes(gender as typeof GENDER_VALUES[number])) return json({ error: "Jenis kelamin wajib dipilih." }, 400, {}, "no-store");
   if (!validBirthDate) return json({ error: "Tanggal lahir tidak valid." }, 400, {}, "no-store");
 
-  const [child] = await db.insert(users).values({
-    displayName, role: "student", managedBy: ctx.loginUserId,
+  const child = await insertReturning(db, users, {
+    displayName, role: "student", managedBy: user.id,
     gender: gender as typeof GENDER_VALUES[number], birthDate,
-  }).returning();
-  await db.insert(parentChildren).values({ parentId: ctx.loginUserId, childId: child.id });
+  });
+  await db.insert(parentChildren).values({ parentId: user.id, childId: child.id });
 
   return json({ child: publicUser(child) }, 201, {}, "no-store");
 };
@@ -137,8 +137,9 @@ export const handleCreateChild: RouteHandler = async (request, url, env, ctx) =>
 export const handleSwitchProfile: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/auth/switch-profile" || request.method !== "POST") return null;
   if (!ctx.currentUser || !ctx.loginUserId || !ctx.sessionToken) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireDb(env);
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const targetId = Number(body?.userId);
@@ -158,8 +159,9 @@ export const handleForgotPassword: RouteHandler = async (request, url, env) => {
   const ip = getClientIp(request);
   const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/auth/forgot-password");
   if (!allowed) return rateLimitResponse(retryAfterMs);
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireDb(env);
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const email = String(body?.email ?? "").trim().toLowerCase();
@@ -186,8 +188,9 @@ export const handleForgotPassword: RouteHandler = async (request, url, env) => {
 
 export const handleResetPassword: RouteHandler = async (request, url, env) => {
   if (url.pathname !== "/api/auth/reset-password" || request.method !== "POST") return null;
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireDb(env);
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const token = String(body?.token ?? "").trim();

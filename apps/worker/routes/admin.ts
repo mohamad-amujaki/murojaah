@@ -1,17 +1,17 @@
 import { eq, sql } from "drizzle-orm";
-import { getDb } from "@murojaah/db/client";
 import { classes, practiceSessions, users, xpLedger } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json } from "../lib/http";
+import { requireAuth, requireRole } from "../lib/guards";
 import { computeUserStats } from "../lib/stats";
+import { updateReturning } from "../lib/db-helpers";
 import { parseProfileFieldUpdates, publicUser } from "../lib/profile";
 
 export const handleAdminStats: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/admin/stats" || request.method !== "GET") return null;
-  if (!ctx.currentUser) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (ctx.currentUser.role !== "admin") return json({ error: "Hanya admin yang dapat mengakses statistik ini." }, 403, {}, "no-store");
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireRole(env, ctx, "admin", "Hanya admin yang dapat mengakses statistik ini.");
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const roleCounts = await db.select({ role: users.role, count: sql<number>`count(*)` }).from(users).groupBy(users.role);
   const countFor = (role: string) => roleCounts.find(r => r.role === role)?.count ?? 0;
@@ -34,12 +34,12 @@ export const handleAdminStats: RouteHandler = async (request, url, env, ctx) => 
 export const handleChildStats: RouteHandler = async (request, url, env, ctx) => {
   const match = url.pathname.match(/^\/api\/children\/(\d+)\/stats$/);
   if (!match || request.method !== "GET") return null;
-  if (!ctx.currentUser || !ctx.loginUserId) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (ctx.currentUser.role !== "parent" || ctx.loginUserId !== ctx.currentUser.id) {
+  const guard = requireAuth(env, ctx);
+  if (guard instanceof Response) return guard;
+  const { user, db } = guard;
+  if (user.role !== "parent" || ctx.loginUserId !== user.id) {
     return json({ error: "Hanya akun orang tua yang dapat melihat statistik anak." }, 403, {}, "no-store");
   }
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
 
   const childId = Number(match[1]);
   const [child] = await db.select({ id: users.id, managedBy: users.managedBy }).from(users).where(eq(users.id, childId)).limit(1);
@@ -52,12 +52,12 @@ export const handleChildStats: RouteHandler = async (request, url, env, ctx) => 
 export const handleUpdateChild: RouteHandler = async (request, url, env, ctx) => {
   const match = url.pathname.match(/^\/api\/children\/(\d+)$/);
   if (!match || request.method !== "PATCH") return null;
-  if (!ctx.currentUser || !ctx.loginUserId) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (ctx.currentUser.role !== "parent" || ctx.loginUserId !== ctx.currentUser.id) {
+  const guard = requireAuth(env, ctx);
+  if (guard instanceof Response) return guard;
+  const { user, db } = guard;
+  if (user.role !== "parent" || ctx.loginUserId !== user.id) {
     return json({ error: "Hanya akun orang tua yang dapat mengubah profil anak." }, 403, {}, "no-store");
   }
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
 
   const childId = Number(match[1]);
   const [child] = await db.select({ id: users.id, managedBy: users.managedBy }).from(users).where(eq(users.id, childId)).limit(1);
@@ -68,16 +68,15 @@ export const handleUpdateChild: RouteHandler = async (request, url, env, ctx) =>
   const parsed = parseProfileFieldUpdates(body);
   if ("error" in parsed) return json({ error: parsed.error }, 400, {}, "no-store");
 
-  const [updated] = await db.update(users).set(parsed.updates).where(eq(users.id, childId)).returning();
+  const updated = await updateReturning(db, users, parsed.updates, childId);
   return json({ child: publicUser(updated) }, 200, {}, "no-store");
 };
 
 export const handleListAdminUsers: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/admin/users" || request.method !== "GET") return null;
-  if (!ctx.currentUser) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (ctx.currentUser.role !== "admin") return json({ error: "Hanya admin yang dapat mengakses data ini." }, 403, {}, "no-store");
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireRole(env, ctx, "admin", "Hanya admin yang dapat mengakses data ini.");
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const roleFilter = url.searchParams.get("role");
   const rows = roleFilter
@@ -89,10 +88,9 @@ export const handleListAdminUsers: RouteHandler = async (request, url, env, ctx)
 export const handleUpdateAdminUser: RouteHandler = async (request, url, env, ctx) => {
   const match = url.pathname.match(/^\/api\/admin\/users\/(\d+)$/);
   if (!match || request.method !== "PATCH") return null;
-  if (!ctx.currentUser) return json({ error: "Belum masuk." }, 401, {}, "no-store");
-  if (ctx.currentUser.role !== "admin") return json({ error: "Hanya admin yang dapat mengubah data ini." }, 403, {}, "no-store");
-  if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
-  const db = getDb({ DB: env.DB });
+  const guard = requireRole(env, ctx, "admin", "Hanya admin yang dapat mengubah data ini.");
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
 
   const targetId = Number(match[1]);
   const [target] = await db.select({ id: users.id }).from(users).where(eq(users.id, targetId)).limit(1);
@@ -102,6 +100,6 @@ export const handleUpdateAdminUser: RouteHandler = async (request, url, env, ctx
   const parsed = parseProfileFieldUpdates(body);
   if ("error" in parsed) return json({ error: parsed.error }, 400, {}, "no-store");
 
-  const [updated] = await db.update(users).set(parsed.updates).where(eq(users.id, targetId)).returning();
+  const updated = await updateReturning(db, users, parsed.updates, targetId);
   return json({ user: publicUser(updated) }, 200, {}, "no-store");
 };
