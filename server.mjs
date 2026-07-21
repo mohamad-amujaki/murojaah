@@ -195,8 +195,13 @@ const MIME = {
 };
 
 function serveStatic(urlPath, res) {
-  const filePath = resolve(STATIC_DIR, urlPath === "/" ? "/index.html" : urlPath);
+  // path.resolve() treats a leading "/" as absolute and discards STATIC_DIR
+  // entirely, so it must be stripped before joining; the startsWith check
+  // then blocks "../" traversal outside STATIC_DIR.
+  const relPath = (urlPath === "/" ? "index.html" : urlPath).replace(/^\/+/, "");
+  const filePath = resolve(STATIC_DIR, relPath);
   try {
+    if (!filePath.startsWith(STATIC_DIR)) throw new Error("Outside static dir");
     const stat = statSync(filePath);
     if (!stat.isFile()) throw new Error("Not a file");
     const ext = "." + filePath.split(".").pop();
