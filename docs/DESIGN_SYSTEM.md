@@ -11,7 +11,7 @@ Sumber: [src/styles.css](../src/styles.css), [index.html](../index.html). Stylin
 Didefinisikan sebagai CSS custom properties di `:root`:
 
 | Token | Hex | Penggunaan |
-|---|---|---|
+| --- | --- | --- |
 | `--green` | `#106b55` | Warna primer/brand — tombol utama, ikon aktif, progress bar |
 | `--deep` | `#084b3c` | Hijau lebih gelap — gradient hero, toast background |
 | `--mint` | `#e8f4ef` | Latar lembut untuk elemen aktif/ikon (hijau muda) |
@@ -43,7 +43,7 @@ Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — ka
 
 ## 5. Komponen Kunci
 | Komponen | Kelas CSS | Karakteristik |
-|---|---|---|
+| --- | --- | --- |
 | Tombol primer | `.primary` | Hijau solid, teks putih, radius 11px, hover naik 2px + shadow, varian `.light` (putih di atas hero gelap) |
 | Tombol outline | `.outline` | Border tipis, background putih, teks hijau |
 | Kartu | `.card` | Putih, border `--line`, radius 16px, hover naik 3px + shadow lembut |

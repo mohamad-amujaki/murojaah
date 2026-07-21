@@ -7,7 +7,7 @@ Menggantikan versi sebelumnya (2026-07-20) — Fase 0–3 di sana **sudah selesa
 ## Ringkasan Apa yang Sudah Selesai (Fase 0–3 lama)
 
 | Area | Status |
-|---|---|
+| --- | --- |
 | Monorepo pnpm (`apps/web`, `apps/worker`, `packages/db`, `packages/shared`) | ✅ Selesai |
 | Auth Cloudflare-native (session cookie, PBKDF2, akun anak tanpa password + profile switcher) | ✅ Selesai |
 | Login/Daftar dengan Google (OAuth 2.0 penuh) | ✅ Selesai |

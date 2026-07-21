@@ -2,7 +2,7 @@
 
 ## 1. Stack
 | Layer | Teknologi |
-|---|---|
+| --- | --- |
 | Frontend | React 19 + TypeScript, single-file app di [src/main.tsx](../src/main.tsx) |
 | Styling | Tailwind CSS v4 (via `@tailwindcss/vite`) + custom CSS di [src/styles.css](../src/styles.css) |
 | Icons | lucide-react |
@@ -32,7 +32,7 @@ Catatan arsitektur: proyek ini sengaja sangat terpusat (bukan feature-folder). B
 ## 3. API Reference (`worker/index.ts`)
 
 | Method | Path | Deskripsi | Auth |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | GET | `/api/health` | Health check | tidak ada |
 | GET | `/api/profile` | Profil pengguna — **hardcoded**, bukan dari DB | tidak ada |
 | GET | `/api/surahs` | Daftar surah — **hardcoded** (hanya 1 entri Al-Ikhlas) | tidak ada |

@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    image: murojaah:latest
+    container_name: murojaah
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - murojaah-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=8787
+      - DATABASE_URL=file:/app/data/murojaah.db
+      - STATIC_DIR=/app/static
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  murojaah-data:

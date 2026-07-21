@@ -1,0 +1,101 @@
+# Murojaah — Nginx reverse proxy untuk Docker + Node.js
+# Place di /etc/nginx/sites-available/murojaah
+
+upstream murojaah_app {
+    server 127.0.0.1:8787;
+    keepalive 32;
+}
+
+# Rate limiting zones
+limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/m;
+limit_req_zone $binary_remote_addr zone=api:10m rate=60r/m;
+
+server {
+    listen 80;
+    server_name YOUR_DOMAIN_GANTI_DISINI;
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name YOUR_DOMAIN_GANTI_DISINI;
+
+    # SSL
+    ssl_certificate     /etc/letsencrypt/live/YOUR_DOMAIN_GANTI_DISINI/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN_GANTI_DISINI/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout  1d;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Gzip
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
+    gzip_disable "MSIE [1-6]\.";
+
+    # Static files (Cloudflare Pages style)
+    location /assets/ {
+        alias /app/static/assets/;
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # SPA fallback
+    location / {
+        try_files $uri $uri/ /index.html;
+        alias /app/static/;
+        index index.html;
+        expires -1;
+        add_header Cache-Control "no-cache, must-revalidate";
+    }
+
+    # API proxy
+    location /api/ {
+        limit_req zone=api burst=20 nodelay;
+
+        proxy_pass http://murojaah_app;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_request_buffering off;
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 10s;
+
+        # Proxy body size (max file upload for practice session)
+        client_max_body_size 1m;
+    }
+
+    # Health check
+    location /health {
+        proxy_pass http://murojaah_app;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        access_log off;
+    }
+
+    # Error pages
+    error_page 502 503 504 /50x.html;
+    location = /50x.html {
+        root /app/static;
+        internal;
+    }
+
+    # Logs
+    access_log /var/log/nginx/murojaah_access.log;
+    error_log  /var/log/nginx/murojaah_error.log;
+}
