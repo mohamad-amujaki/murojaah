@@ -5,7 +5,7 @@ services:
     container_name: murojaah
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8787:8787"
+      - "8787:8787"
     volumes:
       - murojaah-data:/app/data
     environment:
