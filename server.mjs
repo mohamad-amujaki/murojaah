@@ -269,8 +269,15 @@ const server = createServer(async (req, res) => {
   try {
     const cfResp = await worker.fetch(cfReq, env);
 
+    // fetch's Headers.forEach yields each Set-Cookie separately (not comma-joined
+    // like other headers), so repeated keys must be collected into an array —
+    // assigning into a plain object would silently drop all but the last one.
     const headers = {};
-    cfResp.headers.forEach((v, k) => { headers[k] = v; });
+    cfResp.headers.forEach((v, k) => {
+      if (headers[k] === undefined) headers[k] = v;
+      else if (Array.isArray(headers[k])) headers[k].push(v);
+      else headers[k] = [headers[k], v];
+    });
 
     res.writeHead(cfResp.status, headers);
     const respBody = await cfResp.text();
