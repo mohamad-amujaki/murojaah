@@ -62,7 +62,7 @@ const url = new URL(req.url, `${proto}://${req.headers.host}`);
 
 ## 🟡 P2 — Performa
 
-1. **Google Fonts di-`@import` di dalam CSS** ([styles.css:1](../apps/web/src/styles.css)) — `@import url(...)` di dalam stylesheet bersifat *render-blocking* (browser harus fetch CSS itu dulu sebelum lanjut parsing). Pindahkan ke `<link rel="preconnect" href="https://fonts.googleapis.com">` + `<link rel="stylesheet" ...>` di `index.html`, atau lebih baik lagi self-host font (satu file `.woff2` lokal) — menghindari request pihak ketiga sekaligus mempercepat first paint dan tetap berfungsi saat offline (PWA).
+1. **Google Fonts di-`@import` di dalam CSS** ~~([styles.css:1](../apps/web/src/styles.css))~~ ✅ **Selesai (migrasi Tailwind v4, 2026-07-22)**: Fonts sekarang dimuat via `<link rel="preconnect" + stylesheet>` non-blocking (`media="print" onload="this.media='all'"`) di `index.html:11-16`. File `styles.css` sudah tidak ada.
 2. **Nginx sudah gzip aktif** ([nginx.vps.conf.example](nginx.vps.conf.example)) — bagus. Pertimbangkan tambah `brotli` (lebih baik dari gzip, didukung Nginx dengan modul tambahan) kalau image dasar mendukung.
 3. **Cache-Control untuk asset build** sudah `immutable` + `expires 7d` di Nginx — sudah tepat karena Vite menghasilkan nama file dengan hash.
 4. **`better-sqlite3` di Docker image** — pastikan base image (`node:20-alpine`) punya build tools untuk native module (`python3`, `make`, `g++`) saat `npm install`, atau native binding gagal ter-compile di dalam container Alpine (musl libc kadang bermasalah dengan native addons). Rekomendasi: uji build image sekali secara lokal sebelum push ke EasyPanel, atau pindah ke `node:20-bookworm-slim` (glibc) yang secara historis lebih ramah untuk native modules seperti `better-sqlite3`.

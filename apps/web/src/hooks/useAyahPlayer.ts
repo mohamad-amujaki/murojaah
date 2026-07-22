@@ -25,10 +25,24 @@ export function useAyahPlayer(ayahs: Ayah[], notify: (s: string) => void) {
     const a = new Audio(ayahs[index].audio);
     a.preload = "auto";
     a.playbackRate = Number(speed);
-    a.onplay = () => setPlaying(true);
+
+    const stallTimer = setTimeout(() => {
+      if (a.paused) {
+        a.pause();
+        if (index + 1 < end) { continuePlayback.current = true; setIndex(index + 1); }
+        else if (loops === "∞" || count < Number(loops)) {
+          continuePlayback.current = true;
+          setCount(c => c + 1);
+          setIndex(start - 1);
+        } else notify("Audio tidak bisa diputar. Periksa koneksi internet.");
+      }
+    }, 12_000);
+
+    a.onplay = () => { setPlaying(true); clearTimeout(stallTimer); };
     a.onpause = () => setPlaying(false);
-    a.onerror = () => { setPlaying(false); notify("Audio gagal dimuat. Periksa koneksi internet."); };
+    a.onerror = () => { setPlaying(false); clearTimeout(stallTimer); notify("Audio gagal dimuat. Periksa koneksi internet."); };
     a.onended = () => {
+      clearTimeout(stallTimer);
       setPlaying(false);
       if (index + 1 < end) { continuePlayback.current = true; setIndex(index + 1); return; }
       if (loops === "∞" || count < Number(loops)) {
@@ -39,7 +53,7 @@ export function useAyahPlayer(ayahs: Ayah[], notify: (s: string) => void) {
     };
     audio.current = a;
     if (continuePlayback.current) { continuePlayback.current = false; a.play().catch(() => setPlaying(false)); }
-    return () => { a.onended = null; a.pause(); };
+    return () => { clearTimeout(stallTimer); a.onended = null; a.pause(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, index, speed, audioCycle, end, loops, count, start]);
 

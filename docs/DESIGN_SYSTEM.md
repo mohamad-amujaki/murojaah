@@ -1,25 +1,28 @@
 # Design System — Murojaah
 
-Sumber: [apps/web/src/styles.css](../apps/web/src/styles.css), [apps/web/index.html](../apps/web/index.html). Styling murni CSS kustom (tanpa komponen desain terpisah/Storybook); dokumen ini menstandarkan token yang sudah dipakai di kode agar konsisten saat menambah UI baru.
+Sumber: [apps/web/src/app.css](../apps/web/src/app.css), [apps/web/index.html](../apps/web/index.html). Styling menggunakan Tailwind CSS v4 (`@tailwindcss/vite`) dengan `@theme` tokens + `@layer components` untuk CSS kustom; dokumen ini menstandarkan token yang sudah dipakai di kode agar konsisten saat menambah UI baru.
 
 ## 1. Filosofi
 - Hangat, tenang, "islami-modern": hijau tua sebagai warna identitas, aksen emas untuk pencapaian/highlight, krem sebagai latar netral.
-- Kepadatan informasi tinggi tapi rapi (dashboard, kartu statistik) dengan tipografi kecil (minimum 12px pada teks sekunder, lihat §3) dan white space konsisten lewat border-radius besar (10–22px).
+- Kepadatan informasi tinggi tapi rapi (dashboard, kartu statistik) dengan tipografi kecil (minimum 10.5px pada teks sekunder — `text-xs` pada base 14px, lihat §3) dan white space konsisten lewat border-radius besar (10–22px).
 - Animasi halus, dihormati preferensi pengguna (`prefers-reduced-motion` mematikan semua animasi/transisi).
 
 ## 2. Warna
-Didefinisikan sebagai CSS custom properties di `:root`:
+Didefinisikan sebagai CSS custom properties di `:root` (light) dan `[data-theme="dark"]` (dark). Tailwind v4 dari `@theme`:
 
-| Token | Hex | Penggunaan |
-| --- | --- | --- |
-| `--green` | `#106b55` | Warna primer/brand — tombol utama, ikon aktif, progress bar |
-| `--deep` | `#084b3c` | Hijau lebih gelap — gradient hero, toast background |
-| `--mint` | `#e8f4ef` | Latar lembut untuk elemen aktif/ikon (hijau muda) |
-| `--cream` | `#f8f7f2` | Latar belakang utama aplikasi |
-| `--gold` | `#e7aa33` | Aksen pencapaian/XP/highlight |
-| `--ink` | `#18332c` | Warna teks utama |
-| `--muted` | `#5c6b66` | Teks sekunder/deskripsi *(diperbarui 2026-07-21 dari `#70817c` — versi lama gagal WCAG AA, rasio kontras 3.8:1 di atas `--cream`; versi baru ≈5.8:1)* |
-| `--line` | `#e2e9e5` | Border/divider |
+| Token | Light | Dark | Penggunaan |
+| --- | --- | --- | --- |
+| `--green` | `#106b55` | `#106b55` | Primer/brand — tombol utama, ikon aktif, progress bar |
+| `--deep` | `#084b3c` | — | Hijau lebih gelap — gradient hero, toast |
+| `--mint` | `#e8f4ef` | — | Latar lembut elemen aktif/ikon |
+| `--cream` | `#f8f7f2` | — | Latar belakang utama (dark: `#0e1613`) |
+| `--gold` | `#e7aa33` | — | Aksen pencapaian/XP/highlight |
+| `--ink` | `#18332c` | `#d6e0db` | Teks utama (dark: 12.5:1 di `#0e1613`) |
+| `--muted` | `#42524c` | `#8a9d96` | Teks sekunder (dark: 6.7:1) |
+| `--line` | `#d3ddd7` | `#2d3f38` | Border/divider |
+| `--surface` | `#fff` | `#1a2622` | Latar kartu/sheet |
+
+Token light/dark konsisten via CSS custom properties — kelas `text-ink`, `text-muted`, `border-line`, `bg-surface` otomatis menyesuaikan tanpa per-element override.
 
 Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — kandidat token baru bila dipakai berulang):
 - Oranye pencapaian/streak: `#f0884d`, `#ee864a`, `#f08d67`
@@ -29,10 +32,18 @@ Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — ka
 - Status "baik/sesuai target": `var(--green)` di atas `var(--mint)`
 
 ## 3. Tipografi
+- Base: `html { font-size: 87.5% }` → 1rem = 14px.
 - Font UI: **Manrope** (400/500/600/700/800), fallback `system-ui, sans-serif`.
 - Font Arab: **Noto Naskh Arabic** (500/600), dipakai khusus di kelas `.arabic` untuk teks ayat.
-- Skala umum *(diperbarui 2026-07-21 — Lighthouse "legible font sizes" mensyaratkan minimum 12px)*: judul halaman 22–29px (`h1`), judul kartu 13–17px (`h2`/`h3`), body/label 12–13px, mikro-copy (eyebrow, badge count) tetap **minimum 12px** dengan letter-spacing lebar (1–1.5px) dan huruf kapital untuk tetap terasa "kecil" tanpa turun di bawah ambang keterbacaan.
-- Teks Arab: `font-size: 40px` (28–32px di layar sempit), `line-height: 2` untuk keterbacaan tajwid.
+- Skala (setelah base 14px):
+  - `text-[10px]` (mikro: eyebrow, badge count) — kapital + letter-spacing lebar
+  - `text-xs` = 10.5px — label, metadata, navigasi
+  - `text-sm` = 12.25px — deskripsi pendek
+  - `text-base` = 14px — body copy utama
+  - `text-lg` = 15.75px — heading kartu
+  - `text-xl` = 17.5px — judul halaman mobile
+  - `text-2xl` = 21px — judul section
+- Teks Arab: `font-size: 40px` (36px tablet, 32px mobile), `line-height: 1.8` untuk keterbacaan tajwid.
 
 ## 4. Spacing & Radius
 - Radius kecil (tombol ikon, chip): 7–11px.
@@ -59,12 +70,19 @@ Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — ka
 - Satu marka brand kustom: elemen `۞` (ornamen ayat Al-Qur'an) dipakai sebagai boot splash icon, bukan dari lucide.
 
 ## 7. Layout & Responsivitas
-Tiga breakpoint utama (mobile-first dari breakpoint terbesar ke terkecil, sesuai urutan di CSS):
-- **Desktop (>1000px)**: sidebar tetap 254px di kiri, konten `margin-left: 254px`, topbar sticky.
-- **Tablet (≤1000px)**: sidebar jadi drawer (`transform: translateX(-100%)`, dibuka via `.sidebar.open` + backdrop), grid dashboard/goals menyesuaikan jadi 1–2 kolom.
-- **Mobile (≤680px)**: sidebar sepenuhnya diganti **bottom navigation** tetap (`.bottom-nav`, 4 item pertama dari `nav`), padding & font-size diperkecil, beberapa tabel berubah jadi grid 2 kolom tanpa header.
+Breakpoint `max-width` menurun, dari umum ke spesifik:
 
-Container konten dibatasi `max-width: 1280px`, padding horizontal responsif `5vw` (desktop) turun ke `14px` (mobile).
+| Viewport | Nav | Grid columns |
+| --- | --- | --- |
+| >1000px | Sidebar tetap 254px | goals-grid 4, badges 4, landing-features 4 |
+| ≤1000px | Sidebar drawer + **bottom-nav** muncul | goals-grid 3, badges 3 |
+| ≤900px | — | landing-features 2, landing-steps 1 |
+| ≤860px | Auth page: visual ke atas, form ke bawah | — |
+| ≤820px | — | landing-features 3, arabic 36px, heading turun |
+| ≤680px | Sidebar diganti bottom-nav (4 item) | goals-grid 1, badges 2, semua grid single-col |
+| ≤560px | Landing nav links sembunyi | landing-features 1, h1 28px |
+
+Container konten padding horizontal `5vw` (desktop) → `14px` (mobile). Bottom-nav hadir di ≤1000px (bersamaan sidebar collapse), bukan hanya di mobile.
 
 ## 8. Motion
 - Masuk halaman: `page-in` (fade) pada `.content`, `rise-in` (fade+translateY 14px) pada tiap section dengan delay bertingkat (0, 0.06s, 0.1s) untuk efek staggered.
@@ -75,8 +93,8 @@ Container konten dibatasi `max-width: 1280px`, padding horizontal responsif `5vw
 ## 9. Aksesibilitas
 - Semua tombol ikon-saja punya `aria-label` (mis. "Tutup menu", "Ayat sebelumnya", "Notifikasi").
 - Focus ring kustom: outline emas 3px dengan opacity, `outline-offset: 2px`, diterapkan ke `button`, `input`, `select`.
-- Kontras: teks utama `--ink` (#18332c) di atas `--cream` (#f8f7f2) — rasio tinggi; teks muted (`--muted`, WCAG AA ✅) digunakan hanya untuk info sekunder, bukan konten esensial.
-- Mode gelap: `[data-theme="dark"]` di `:root` mendefinisikan ulang semua warna di atas (lihat blok `[data-theme="dark"]` di `styles.css`), toggle tersedia di topbar & Profil, tersimpan di `localStorage`.
+- Kontras: token `--ink`/`--muted` dioverride di `[data-theme="dark"]` untuk menjaga rasio ≥4.5:1 (AA) di kedua tema. `--muted` saat ini 7.3:1 (light) dan 5.5:1 (dark) di atas latar masing-masing.
+- Mode gelap: `[data-theme="dark"]` mendefinisikan ulang `--color-ink`, `--color-muted`, `--color-line`, `--color-surface` (lihat blok `[data-theme="dark"]` di `app.css`), toggle tersedia di topbar & Profil, tersimpan di `localStorage`.
 - Bahasa dokumen: `lang="id"` di `index.html`.
 
 ## 10. Prinsip Saat Menambah UI Baru

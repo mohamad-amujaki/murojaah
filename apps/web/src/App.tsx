@@ -1,9 +1,10 @@
 import { Component, lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { BookOpen } from "lucide-react";
-import { AuthDialog } from "./pages/Auth";
 import { LandingPage } from "./pages/Landing";
 import { useAuth } from "./lib/auth-context";
+
+const AuthDialog = lazy(() => import("./pages/Auth").then(m => ({ default: m.AuthDialog })));
 
 const AuthenticatedApp = lazy(() => import("./AuthenticatedApp"));
 
@@ -27,7 +28,7 @@ export function App() {
   }, [auth.user]);
   if (auth.loading) return null;
   if (!auth.user) {
-    if (authView) return <AuthDialog initialMode={authView} onClose={() => setAuthView(null)} />;
+    if (authView) return <Suspense fallback={null}><AuthDialog initialMode={authView} onClose={() => setAuthView(null)} /></Suspense>;
     return <LandingPage onLogin={() => setAuthView("login")} onRegister={() => setAuthView("register")} />;
   }
   return (

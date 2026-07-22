@@ -3,10 +3,20 @@ import type {
   MeResponse, PublicUser, QuranAyahResponse, RegisterPayload, StatsResponse, UpdateProfilePayload,
 } from "@murojaah/shared";
 
+const getCache = new Map<string, { data: unknown; at: number }>();
+const CACHE_TTL = 15_000;
+
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
+  const isGet = !options?.method || options.method === "GET";
+  const cacheKey = isGet ? path : "";
+  if (isGet) {
+    const hit = getCache.get(cacheKey);
+    if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data as T;
+  }
   const response = await fetch(`/api${path}`, { ...options, headers: { "content-type": "application/json", ...options?.headers } });
   const data = await response.json() as T | ApiError;
   if (!response.ok) throw new Error((data as ApiError).error || "Terjadi kesalahan. Silakan coba lagi.");
+  if (isGet) getCache.set(cacheKey, { data, at: Date.now() });
   return data as T;
 }
 export const completePractice = (payload: CompletePracticePayload) => api<CompletePracticeResponse>("/practice/complete", { method:"POST", body:JSON.stringify(payload) });

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { CreateChildPayload, LoginPayload, PublicUser, RegisterPayload, UpdateProfilePayload } from "@murojaah/shared";
 import {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const value: AuthValue = {
+  const value = useMemo<AuthValue>(() => ({
     ...state,
     login: async (payload) => { await loginApi(payload); await refresh(); },
     register: async (payload) => { await registerApi(payload); await refresh(); },
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     switchProfile: async (userId) => { await switchProfileApi(userId); await refresh(); },
     updateProfile: async (payload) => { await updateProfileApi(payload); await refresh(); },
     refresh,
-  };
+  }), [state, refresh]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

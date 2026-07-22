@@ -3,8 +3,9 @@ import type { UserRole } from "@murojaah/shared";
 import {
   Bell, BookOpen, Check, ChevronDown, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
 } from "lucide-react";
-import { AddChildModal } from "./components/AddChildModal";
 import { Modal } from "./components/Modal";
+
+const AddChildModal = lazy(() => import("./components/AddChildModal").then(m => ({ default: m.AddChildModal })));
 import { nav, pageFromHash } from "./types";
 import type { Page, Role } from "./types";
 import { useAuth } from "./lib/auth-context";

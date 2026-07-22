@@ -48,7 +48,7 @@ Logo kecil, link Masuk/Daftar, atribusi EQuran.id, tahun. Tidak perlu footer 5 k
 - **Copy berbahasa Indonesia, nada hangat** — samakan dengan nada aplikasi saat ini ("MasyaAllah", "Sedikit demi sedikit"), jangan tiba-tiba jadi corporate-speak di landing.
 - **Above the fold harus menjawab 3 pertanyaan dalam 3 detik**: apa ini, untuk siapa, apa yang saya lakukan sekarang (klik apa).
 - **Satu CTA primer per section** — dua tombol setara berdampingan menurunkan conversion rate (paradox of choice); selalu ada 1 tombol solid + maksimal 1 link teks sekunder.
-- **Mobile-first** — mayoritas trafik landing page produk konsumer datang dari mobile; hero, kartu fitur, dan CTA harus dites di lebar 375px dulu, desktop menyusul (pola breakpoint yang sudah ada di [styles.css](../apps/web/src/styles.css) sudah mobile-first, lanjutkan pola itu).
+- **Mobile-first** — mayoritas trafik landing page produk konsumer datang dari mobile; hero, kartu fitur, dan CTA harus dites di lebar 375px dulu, desktop menyusul (pola breakpoint di [app.css](../apps/web/src/app.css) sudah mencakup 560px/680px/820px/900px, lanjutkan pola itu).
 - **Kecepatan muat** — tidak ada gambar besar/video di atas fold; pakai elemen dekoratif CSS/SVG yang sudah ada (`.hero-art`), bukan foto stok berat.
 - **Aksesibilitas** — kontras teks di atas gradient hijau harus tetap ≥4.5:1 (putih di atas `#0c735b` sudah aman, sudah dipakai di `.hero-card`), semua tombol CTA harus punya target sentuh ≥44px (pola `.primary` yang ada sudah `min-height:44px`, pertahankan).
 

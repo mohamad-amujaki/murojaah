@@ -6,7 +6,7 @@
 | Layer | Teknologi |
 | --- | --- |
 | Frontend | React 19 + TypeScript, `apps/web/src/` (App.tsx + halaman terpisah per fitur) |
-| Styling | Tailwind CSS v4 (via `@tailwindcss/vite`) + custom CSS di [apps/web/src/styles.css](../apps/web/src/styles.css), termasuk `[data-theme="dark"]` |
+| Styling | Tailwind CSS v4 (via `@tailwindcss/vite`) + custom CSS di [apps/web/src/app.css](../apps/web/src/app.css), termasuk `[data-theme="dark"]` |
 | Icons | lucide-react |
 | Routing | Hash-based manual routing (state `page` di `App.tsx`, bukan library router) |
 | Build tool (frontend) | Vite 8 |
@@ -100,7 +100,7 @@ Catatan: `pnpm dev` versi lama (Cloudflare Vite plugin + emulasi D1 lokal) sudah
 1. Buat OAuth Client ID (tipe "Web application") di [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
 2. Tambahkan Authorized redirect URI: `https://<domain-produksi>/api/auth/google/callback` (dan `http://localhost:5173/api/auth/google/callback` untuk dev lokal).
 3. Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` sebagai env var di EasyPanel/`.env` — bukan `wrangler secret` (jalur itu sudah tidak dipakai).
-4. Pengguna baru yang daftar lewat Google otomatis diberi peran `parent` (bisa diubah manual lewat Profil, lihat ROADMAP.md Fase 4d). `id_token` divalidasi klaim `aud`/`iss`/`email_verified`/`exp` plus verifikasi signature JWKS penuh terhadap `https://www.googleapis.com/oauth2/v3/certs`.
+4. Pengguna baru yang daftar lewat Google otomatis diberi peran `parent` (bisa diubah manual lewat Profil, lihat ROADMAP.md Fase 4d). `id_token` divalidasi klaim `aud`/`iss`/`email_verified`/`exp` plus verifikasi signature JWKS penuh: `kid` diparse dari JWT header, JWK di-import via `crypto.subtle.importKey("jwk", ...)` (bukan konstruksi DER manual), RSA-SHA256 terhadap `https://www.googleapis.com/oauth2/v3/certs` dengan cache edge 1 jam.
 
 ## 8. Known Gaps (lihat juga [ROADMAP.md](ROADMAP.md))
 - Tidak ada test otomatis (unit/e2e) di repo ini.

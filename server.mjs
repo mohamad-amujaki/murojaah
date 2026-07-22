@@ -6,7 +6,8 @@ import { createServer } from "node:http";
 import mysql from "mysql2/promise";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
+import { readFile, stat } from "node:fs/promises";
 import { brotliCompressSync, gzipSync } from "node:zlib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,7 +39,7 @@ const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR ?? resolve(__dirname, "migrati
 const SEED_FILES = [resolve(__dirname, "seeds", "quran-full.mysql.sql")];
 
 async function runSqlFile(path) {
-  const text = readFileSync(path, "utf8");
+  const text = await readFile(path, "utf8");
   const rawStatements = text.includes("--> statement-breakpoint")
     ? text.split("--> statement-breakpoint")
     : text.split("\n");
@@ -152,12 +153,12 @@ const MIME = {
 // CPU for no size benefit.
 const COMPRESSIBLE_EXT = new Set([".html", ".js", ".mjs", ".css", ".json", ".svg"]);
 
-function sendFile(res, acceptEncoding, filePath, ext, stat, cacheControl) {
-  const body = readFileSync(filePath);
+async function sendFile(res, acceptEncoding, filePath, ext, fileStat, cacheControl) {
+  const body = await readFile(filePath);
   const headers = {
     "Content-Type": MIME[ext] ?? "application/octet-stream",
     "Cache-Control": cacheControl,
-    "ETag": `"${stat.mtimeMs}"`,
+    "ETag": `"${fileStat.mtimeMs}"`,
   };
   if (COMPRESSIBLE_EXT.has(ext) && acceptEncoding.includes("br")) {
     const compressed = brotliCompressSync(body);
@@ -172,13 +173,15 @@ function sendFile(res, acceptEncoding, filePath, ext, stat, cacheControl) {
     res.writeHead(200, headers);
     res.end(compressed);
   } else {
-    headers["Content-Length"] = stat.size;
+    headers["Content-Length"] = fileStat.size;
     res.writeHead(200, headers);
     res.end(body);
   }
 }
 
-function serveStatic(urlPath, acceptEncoding, res) {
+let indexCache = null;
+
+async function serveStatic(urlPath, acceptEncoding, res) {
   // path.resolve() treats a leading "/" as absolute and discards STATIC_DIR
   // entirely, so it must be stripped before joining; the startsWith check
   // then blocks "../" traversal outside STATIC_DIR.
@@ -186,20 +189,23 @@ function serveStatic(urlPath, acceptEncoding, res) {
   const filePath = resolve(STATIC_DIR, relPath);
   try {
     if (!filePath.startsWith(STATIC_DIR)) throw new Error("Outside static dir");
-    const stat = statSync(filePath);
-    if (!stat.isFile()) throw new Error("Not a file");
+    const fileStat = await stat(filePath);
+    if (!fileStat.isFile()) throw new Error("Not a file");
     const ext = "." + filePath.split(".").pop();
     // Vite fingerprints everything under /assets/ with a content hash, so those
     // can be cached forever; index.html (and anything else) must stay
     // revalidate-able or a redeploy would keep serving stale asset references.
     const cacheControl = relPath.startsWith("assets/") ? "public, max-age=31536000, immutable" : "no-cache";
-    sendFile(res, acceptEncoding, filePath, ext, stat, cacheControl);
+    await sendFile(res, acceptEncoding, filePath, ext, fileStat, cacheControl);
   } catch {
     // Try index.html fallback for SPA
     try {
       const indexPath = resolve(STATIC_DIR, "index.html");
-      const stat = statSync(indexPath);
-      sendFile(res, acceptEncoding, indexPath, ".html", stat, "no-cache");
+      if (!indexCache) {
+        const s = await stat(indexPath);
+        indexCache = { stat: s };
+      }
+      await sendFile(res, acceptEncoding, indexPath, ".html", indexCache.stat, "no-cache");
     } catch {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Not found" }));
@@ -228,7 +234,7 @@ const server = createServer(async (req, res) => {
 
   // Static files (non-API)
   if (!url.pathname.startsWith("/api/")) {
-    serveStatic(url.pathname, acceptEncoding, res);
+    await serveStatic(url.pathname, acceptEncoding, res);
     return;
   }
 
