@@ -1,0 +1,1 @@
+DROP TABLE `mu_refresh_tokens`;

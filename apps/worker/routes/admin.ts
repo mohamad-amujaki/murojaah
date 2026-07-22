@@ -1,10 +1,10 @@
 import { eq, sql } from "drizzle-orm";
 import { classes, practiceSessions, users, xpLedger } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
-import { requireAuth, requireRole } from "../lib/guards";
+import { json, readJsonBody } from "../lib/http";
+import { requireAuth, requireOwnedChild, requireRole } from "../lib/guards";
 import { computeUserStats } from "../lib/stats";
-import { updateReturning } from "../lib/db-helpers";
+import { findOrNotFound, updateReturning } from "../lib/db-helpers";
 import { parseProfileFieldUpdates, publicUser } from "../lib/profile";
 
 export const handleAdminStats: RouteHandler = async (request, url, env, ctx) => {
@@ -42,9 +42,8 @@ export const handleChildStats: RouteHandler = async (request, url, env, ctx) => 
   }
 
   const childId = Number(match[1]);
-  const [child] = await db.select({ id: users.id, managedBy: users.managedBy }).from(users).where(eq(users.id, childId)).limit(1);
-  if (!child) return json({ error: "Profil anak tidak ditemukan." }, 404, {}, "no-store");
-  if (child.managedBy !== ctx.loginUserId) return json({ error: "Kamu tidak memiliki akses ke profil ini." }, 403, {}, "no-store");
+  const child = await requireOwnedChild(db, childId, ctx.loginUserId);
+  if (child instanceof Response) return child;
 
   return json(await computeUserStats(db, childId), 200, {}, "no-store");
 };
@@ -60,11 +59,10 @@ export const handleUpdateChild: RouteHandler = async (request, url, env, ctx) =>
   }
 
   const childId = Number(match[1]);
-  const [child] = await db.select({ id: users.id, managedBy: users.managedBy }).from(users).where(eq(users.id, childId)).limit(1);
-  if (!child) return json({ error: "Profil anak tidak ditemukan." }, 404, {}, "no-store");
-  if (child.managedBy !== ctx.loginUserId) return json({ error: "Kamu tidak memiliki akses ke profil ini." }, 403, {}, "no-store");
+  const child = await requireOwnedChild(db, childId, ctx.loginUserId);
+  if (child instanceof Response) return child;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const parsed = parseProfileFieldUpdates(body);
   if ("error" in parsed) return json({ error: parsed.error }, 400, {}, "no-store");
 
@@ -93,10 +91,10 @@ export const handleUpdateAdminUser: RouteHandler = async (request, url, env, ctx
   const { db } = guard;
 
   const targetId = Number(match[1]);
-  const [target] = await db.select({ id: users.id }).from(users).where(eq(users.id, targetId)).limit(1);
-  if (!target) return json({ error: "Pengguna tidak ditemukan." }, 404, {}, "no-store");
+  const target = await findOrNotFound(db, users, eq(users.id, targetId), "Pengguna tidak ditemukan.");
+  if (target instanceof Response) return target;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const parsed = parseProfileFieldUpdates(body);
   if ("error" in parsed) return json({ error: parsed.error }, 400, {}, "no-store");
 

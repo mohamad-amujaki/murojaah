@@ -1,5 +1,7 @@
 # Review Deployment VPS/EasyPanel — UI/UX, Performa, Security
 
+> ⚠️ **CATATAN USANG (2026-07-21, sore)**: dokumen ini adalah catatan historis titik-waktu untuk migrasi Cloudflare D1 → **SQLite via better-sqlite3** di VPS. Beberapa jam kemudian di hari yang sama, proyek migrasi sekali lagi dari SQLite → **MySQL** (lihat [TECH.md](TECH.md) §1 dan [ROADMAP.md](ROADMAP.md)) — jadi detail teknis di bawah (adapter better-sqlite3, `server.mjs` versi SQLite, dll.) **tidak lagi mencerminkan kode saat ini**. Dibiarkan apa adanya sebagai riwayat, jangan dijadikan rujukan arsitektur aktif.
+
 Review kode per 2026-07-21, fokus pada jalur deploy VPS yang sudah mulai disiapkan (`Dockerfile`, `docker-compose.yml`, `server.mjs`, `deploy-vps.sh`, `docs/nginx.vps.conf.example`) menggantikan Cloudflare Workers + D1.
 
 > **UPDATE (2026-07-21 siang): SEMUA BLOCKER SUDAH DIPERBAIKI & DIVERIFIKASI.**

@@ -1,11 +1,11 @@
 import { and, eq, sql } from "drizzle-orm";
 import { classMembers, classes, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
+import { json, readJsonBody } from "../lib/http";
 import { requireAuth, requireRole } from "../lib/guards";
 import { generateJoinCode } from "../lib/codes";
 import { computeUserStats } from "../lib/stats";
-import { insertReturning } from "../lib/db-helpers";
+import { findOrNotFound, insertReturning } from "../lib/db-helpers";
 
 export const handleCreateClass: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/classes" || request.method !== "POST") return null;
@@ -13,7 +13,7 @@ export const handleCreateClass: RouteHandler = async (request, url, env, ctx) =>
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const name = String(body?.name ?? "").trim();
   if (!name) return json({ error: "Nama kelas wajib diisi." }, 400, {}, "no-store");
 
@@ -28,12 +28,12 @@ export const handleJoinClass: RouteHandler = async (request, url, env, ctx) => {
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const joinCode = String(body?.joinCode ?? "").trim().toUpperCase();
   if (!joinCode) return json({ error: "Kode kelas wajib diisi." }, 400, {}, "no-store");
 
-  const [target] = await db.select().from(classes).where(eq(classes.joinCode, joinCode)).limit(1);
-  if (!target) return json({ error: "Kode kelas tidak ditemukan." }, 404, {}, "no-store");
+  const target = await findOrNotFound(db, classes, eq(classes.joinCode, joinCode), "Kode kelas tidak ditemukan.");
+  if (target instanceof Response) return target;
 
   await db.insert(classMembers).values({ classId: target.id, studentId: user.id }).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   return json({ class: target }, 201, {}, "no-store");
@@ -62,8 +62,8 @@ export const handleClassMembers: RouteHandler = async (request, url, env, ctx) =
   const { user, db } = guard;
 
   const classId = Number(match[1]);
-  const [target] = await db.select().from(classes).where(eq(classes.id, classId)).limit(1);
-  if (!target) return json({ error: "Kelas tidak ditemukan." }, 404, {}, "no-store");
+  const target = await findOrNotFound(db, classes, eq(classes.id, classId), "Kelas tidak ditemukan.");
+  if (target instanceof Response) return target;
   if (target.teacherId !== user.id) return json({ error: "Kamu bukan pengajar kelas ini." }, 403, {}, "no-store");
 
   const members = await db.select({ id: users.id, displayName: users.displayName })

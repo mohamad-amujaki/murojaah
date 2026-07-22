@@ -1,0 +1,1 @@
+DROP TABLE `mu_password_reset_tokens`;

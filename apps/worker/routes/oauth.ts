@@ -22,29 +22,31 @@ interface GoogleIdTokenClaims {
   exp: number;
 }
 
-function decodeIdToken(idToken: string): GoogleIdTokenClaims | null {
-  try {
-    const payload = idToken.split(".")[1];
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(payload.length + (4 - (payload.length % 4)) % 4, "=");
-    return JSON.parse(atob(normalized));
-  } catch {
-    return null;
-  }
+function decodeBase64Url(s: string) {
+  return JSON.parse(atob(s.replace(/-/g, "+").replace(/_/g, "/").padEnd(s.length + (4 - (s.length % 4)) % 4, "=")));
 }
 
-async function verifyWithJwks(idToken: string, kid: string): Promise<boolean> {
+function decodeIdToken(idToken: string): GoogleIdTokenClaims | null {
+  try { return decodeBase64Url(idToken.split(".")[1]); } catch { return null; }
+}
+
+async function verifyWithJwks(idToken: string): Promise<boolean> {
   try {
-    const jwksResp = await fetch(GOOGLE_JWKS_URI);
+    const [rawHeader, rawPayload, rawSig] = idToken.split(".");
+    if (!rawHeader || !rawPayload || !rawSig) return false;
+    const { kid } = decodeBase64Url(rawHeader) as { kid?: string };
+    if (!kid) return false;
+
+    const jwksResp = await fetch(GOOGLE_JWKS_URI, { cf: { cacheTtl: 3600, cacheEverything: true } } as RequestInit);
     if (!jwksResp.ok) return false;
-    const jwks = await jwksResp.json() as { keys: { kid: string; n: string; e: string }[] };
+    const jwks = await jwksResp.json() as { keys: { kid: string; n: string; e: string; kty?: string; alg?: string }[] };
     const key = jwks.keys.find(k => k.kid === kid);
     if (!key) return false;
-    const modulus = Uint8Array.from(atob(key.n.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const exponent = Uint8Array.from(atob(key.e.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const pubKey = await crypto.subtle.importKey("spki", new Uint8Array([0x30, 0x82, ...[0x01, modulus.length + exponent.length + 4], 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, modulus.length + exponent.length + 2, 0x02, modulus.length, ...Array.from(modulus), 0x02, exponent.length, ...Array.from(exponent)]), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
-    const tokenParts = idToken.split(".");
-    const sigBytes = Uint8Array.from(atob(tokenParts[2].replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const data = new TextEncoder().encode(`${tokenParts[0]}.${tokenParts[1]}`);
+
+    const pubKey = await crypto.subtle.importKey("jwk", { kty: key.kty ?? "RSA", n: key.n, e: key.e, alg: "RS256" }, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+
+    const sigBytes = Uint8Array.from(atob(rawSig.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    const data = new TextEncoder().encode(`${rawHeader}.${rawPayload}`);
     return await crypto.subtle.verify("RSASSA-PKCS1-v1_5", pubKey, sigBytes, data);
   } catch {
     return false;
@@ -117,11 +119,12 @@ export const handleGoogleCallback: RouteHandler = async (request, url, env) => {
     h.append("set-cookie", clearStateCookie);
     return new Response(null, { status: 302, headers: h });
   }
-  const tokenBody = await tokenResponse.json() as { id_token?: string; kid?: string };
-  const claims = tokenBody.id_token ? decodeIdToken(tokenBody.id_token) : null;
+  const tokenBody = await tokenResponse.json() as { id_token?: string };
+  const idToken = tokenBody.id_token;
+  const claims = idToken ? decodeIdToken(idToken) : null;
 
-  if (tokenBody.kid && tokenBody.id_token) {
-    const sigValid = await verifyWithJwks(tokenBody.id_token, tokenBody.kid);
+  if (idToken) {
+    const sigValid = await verifyWithJwks(idToken);
     if (!sigValid) {
       const h = new Headers({ location: `${url.origin}/?error=oauth_invalid` });
       h.append("set-cookie", clearStateCookie);

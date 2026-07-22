@@ -1,9 +1,9 @@
-# Product Requirements Document (PRD) — HafizAyat
+# Product Requirements Document (PRD) — Murojaah
 
 Referensi bisnis: [BRD.md](BRD.md). Referensi teknis: [TECH.md](TECH.md), [ERD.md](ERD.md), [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
 ## 1. Ringkasan Produk
-HafizAyat adalah PWA hafalan Al-Qur'an dengan 5 halaman utama: **Beranda**, **Latihan**, **Pencapaian**, **Dashboard** (adaptif per peran), dan **Profil**. Navigasi berbasis hash (`#home`, `#practice`, dst.), single-page app tanpa reload.
+Murojaah adalah PWA hafalan Al-Qur'an dengan 5 halaman utama: **Beranda**, **Latihan**, **Pencapaian**, **Dashboard** (adaptif per peran), dan **Profil**. Navigasi berbasis hash (`#home`, `#practice`, dst.), single-page app tanpa reload.
 
 ## 2. Fitur (berdasarkan implementasi UI saat ini di [src/main.tsx](../src/main.tsx))
 

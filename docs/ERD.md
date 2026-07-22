@@ -1,6 +1,6 @@
-# Entity Relationship Document (ERD) — HafizAyat
+# Entity Relationship Document (ERD) — Murojaah
 
-Sumber kebenaran skema: [src/db/schema.ts](../src/db/schema.ts) (Drizzle ORM) dan [migrations/0001_initial.sql](../migrations/0001_initial.sql) (SQLite/D1). Kedua file ini harus tetap sinkron secara manual (skema Drizzle tidak auto-generate migration di repo ini — gunakan `npm run db:generate`).
+Sumber kebenaran skema: [packages/db/src/schema.ts](../packages/db/src/schema.ts) (Drizzle ORM, dialek MySQL) dan [packages/db/migrations/](../packages/db/migrations/) (di-generate via `pnpm db:generate`, dijalankan otomatis oleh `server.mjs` saat boot). Nama tabel di database aktual diberi prefix `mu_` (mis. `users` di bawah ini = tabel `mu_users`) — dihilangkan di diagram supaya lebih ringkas dibaca.
 
 ## Diagram Relasi
 
@@ -164,5 +164,5 @@ Pesan dukungan dari orang tua ke anak.
 | created_at | TEXT NOT NULL default CURRENT_TIMESTAMP |   |
 
 ## Catatan
-- Semua FK bersifat implisit secara referensial di Drizzle/SQLite (`PRAGMA foreign_keys = ON` diaktifkan di migrasi) tetapi **tidak ada `ON DELETE CASCADE`** — penghapusan user/surah harus ditangani secara eksplisit di level aplikasi.
+- Semua FK ditegakkan MySQL sendiri (InnoDB) tetapi **tidak ada `ON DELETE CASCADE`** — penghapusan user/surah harus ditangani secara eksplisit di level aplikasi.
 - Saat ini hanya `practice_sessions` dan `xp_ledger` yang benar-benar ditulis oleh kode aplikasi (`worker/index.ts`); tabel lain sudah ter-migrasi dan sebagian ter-seed ([seeds/local.sql](../seeds/local.sql)) tapi belum punya jalur tulis dari API.

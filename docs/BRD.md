@@ -45,10 +45,10 @@ Murojaah adalah aplikasi web (PWA) untuk membantu proses hafalan (tahfiz) dan mu
 
 ## 6. Batasan
 
-- Berjalan sebagai aplikasi Cloudflare Workers + D1 (SQLite), sehingga batasan skala/latensi mengikuti platform tersebut.
+- Berjalan sebagai aplikasi Node.js (Docker) di VPS dengan database MySQL, sehingga batasan skala/latensi mengikuti kapasitas VPS dan koneksi ke database terkelola.
 - Data ayat Al-Qur'an dan audio murottal bergantung pada API pihak ketiga (EQuran.id) sebagai sumber data real-time, dengan fallback data statis (Surah Al-Ikhlas) bila API tidak tersedia.
 
 ## 7. Kriteria Sukses
 
 - Murid dapat menyelesaikan sesi latihan end-to-end (pilih surah → dengar/hafalkan → selesaikan sesi → dapat XP) tanpa error, termasuk saat offline (fallback lokal).
-- Sesi latihan tersimpan secara persisten di D1 (`practice_sessions`, `xp_ledger`).
+- Sesi latihan tersimpan secara persisten di MySQL (`mu_practice_sessions`, `mu_xp_ledger`).

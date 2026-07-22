@@ -1,8 +1,9 @@
 import { and, eq, sql } from "drizzle-orm";
 import { ayahProgress, ayahs } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
+import { json, readJsonBody } from "../lib/http";
 import { requireAuth } from "../lib/guards";
+import { findOrNotFound } from "../lib/db-helpers";
 
 const MASTERY_VALUES = ["Belum hafal", "Perlu latihan", "Sudah hafal"] as const;
 
@@ -12,7 +13,7 @@ export const handleUpsertAyahProgress: RouteHandler = async (request, url, env, 
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const surahId = Number(body?.surahId);
   const number = Number(body?.number);
   const mastery = String(body?.mastery ?? "");
@@ -20,8 +21,8 @@ export const handleUpsertAyahProgress: RouteHandler = async (request, url, env, 
     return json({ error: "Data progres ayat tidak valid." }, 400, {}, "no-store");
   }
 
-  const [ayah] = await db.select().from(ayahs).where(and(eq(ayahs.surahId, surahId), eq(ayahs.number, number))).limit(1);
-  if (!ayah) return json({ error: "Ayat belum tersedia di database." }, 404, {}, "no-store");
+  const ayah = await findOrNotFound(db, ayahs, and(eq(ayahs.surahId, surahId), eq(ayahs.number, number))!, "Ayat belum tersedia di database.");
+  if (ayah instanceof Response) return ayah;
 
   await db.insert(ayahProgress).values({
     userId: user.id, ayahId: ayah.id, mastery, repetitions: 1, lastPracticedAt: sql`CURRENT_TIMESTAMP`,

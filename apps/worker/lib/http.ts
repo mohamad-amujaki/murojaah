@@ -36,3 +36,7 @@ export const json = (data: unknown, status = 200, extraHeaders: Record<string, s
   });
 
 export type RouteHandler = (request: Request, url: URL, env: Env, ctx: RequestContext) => Promise<Response | null>;
+
+export async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
+  return request.json().catch(() => null) as Promise<Record<string, unknown> | null>;
+}

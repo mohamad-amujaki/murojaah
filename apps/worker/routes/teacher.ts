@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { classMembers, classes, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
+import { json, readJsonBody } from "../lib/http";
 import { requireRole } from "../lib/guards";
 import { parseProfileFieldUpdates, publicUser } from "../lib/profile";
 import { updateReturning } from "../lib/db-helpers";
@@ -42,7 +42,7 @@ export const handleUpdateStudent: RouteHandler = async (request, url, env, ctx) 
     .limit(1);
   if (!enrolled) return json({ error: "Murid tidak ditemukan di kelas kamu." }, 403, {}, "no-store");
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const parsed = parseProfileFieldUpdates(body);
   if ("error" in parsed) return json({ error: parsed.error }, 400, {}, "no-store");
 

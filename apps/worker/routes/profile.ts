@@ -1,7 +1,7 @@
 import { and, asc, eq, ne } from "drizzle-orm";
 import { ayahProgress, ayahs, surahs, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
+import { json, readJsonBody } from "../lib/http";
 import { requireAuth } from "../lib/guards";
 import { publicUser } from "../lib/profile";
 import { computeUserStats } from "../lib/stats";
@@ -16,7 +16,7 @@ export const handleUpdateProfile: RouteHandler = async (request, url, env, ctx) 
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const updates: Record<string, unknown> = {};
 
   if (body?.displayName !== undefined) {

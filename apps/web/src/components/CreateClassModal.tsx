@@ -37,7 +37,7 @@ export function CreateClassModal({ onClose, onCreated }: { onClose: () => void; 
     return <Modal onClose={onClose}>
       <div className="card auth-card" aria-label="Kelas berhasil dibuat">
         <div className="brand"><span className="brandmark"><Users /></span><span>{created.name}</span></div>
-        <p style={{fontSize:11,color:"var(--muted)",margin:0}}>Bagikan kode ini ke murid supaya mereka bisa gabung ke kelas.</p>
+        <p className="text-xs" style={{color:"var(--muted)",margin:0}}>Bagikan kode ini ke murid supaya mereka bisa gabung ke kelas.</p>
         <div className="join-code-box">{created.joinCode}</div>
         <button type="button" className="outline full" onClick={copyCode}>{copied?<><Check/> Tersalin!</>:<><Copy/> Salin kode</>}</button>
         {error && <p className="auth-error">{error}</p>}

@@ -5,6 +5,7 @@ import type { AdminStatsResponse, AssignmentResponse, ClassMember, ClassResponse
 import { getAdminStats, getAssignments, getChildStats, getClassMembers, getClasses, getMyStats, getSurahs, removeClassMember } from "../lib/api";
 import { PageTitle } from "../components/PageTitle";
 import { Stat } from "../components/Stat";
+import { StatsTable } from "../components/StatsTable";
 import { CreateClassModal } from "../components/CreateClassModal";
 import { CreateAssignmentModal } from "../components/CreateAssignmentModal";
 import { SendEncouragementModal } from "../components/SendEncouragementModal";
@@ -80,9 +81,10 @@ function TeacherDashboard({notify}:{notify:(s:string)=>void}){
         </div>
         {!selected && <p className="empty-state">Kamu belum punya kelas. Buat kelas untuk mulai memantau murid.</p>}
         {selected && members.length===0 && <p className="empty-state">Belum ada murid yang bergabung. Bagikan kode: <b>{selected.joinCode}</b></p>}
-        {members.length>0 && <div className="student-table"><div className="table-row table-header"><span>MURID</span><span>AYAT DIKUASAI</span><span>STREAK</span><span>XP</span><span></span></div>
-          {members.map((m,i)=><div className="table-row" key={m.id}><span><i className={`avatar av${i%4}`}>{m.displayName.split(" ").map(x=>x[0]).join("").slice(0,2)}</i><b>{m.displayName}</b></span><span>{m.ayahsMastered} ayat</span><span><Flame/> {m.streak} hari</span><span>{m.totalXp} XP</span><span><button className="outline" style={{color:"#b8583d",borderColor:"#f0d0c4",fontSize:8,minHeight:30,padding:"0 8px"}} onClick={()=>{if(confirm(`Hapus ${m.displayName} dari kelas?`)){removeClassMember(selected!.id,m.id).then(()=>{getClassMembers(selected!.id).then(r=>setMembers(r.members));notify(`${m.displayName} dihapus dari kelas.`);}).catch(()=>notify("Gagal menghapus murid."))}}}>Hapus</button></span></div>)}
-        </div>}
+        {members.length>0 && <StatsTable nameHeader="MURID" rows={members.map(m=>({
+          id: m.id, name: m.displayName, ayahsMastered: m.ayahsMastered, streak: m.streak, totalXp: m.totalXp,
+          action: <button className="outline" style={{color:"#b8583d",borderColor:"#f0d0c4",minHeight:30,padding:"0 8px"}} onClick={()=>{if(confirm(`Hapus ${m.displayName} dari kelas?`)){removeClassMember(selected!.id,m.id).then(()=>{getClassMembers(selected!.id).then(r=>setMembers(r.members));notify(`${m.displayName} dihapus dari kelas.`);}).catch(()=>notify("Gagal menghapus murid."))}}}>Hapus</button>,
+        }))} />}
       </div>
       <aside className="card class-card">
         <div className="card-head"><div><h3>Kelas kamu</h3><p>{classes.length} kelas aktif</p></div><BarChart3/></div>
@@ -118,9 +120,11 @@ function ParentDashboard({notify}:{notify:(s:string)=>void}){
     <section className="card table-card">
       <div className="card-head"><div><h3>Progres anak</h3><p>Terakhir diperbarui hari ini</p></div></div>
       {kids.length===0 && <p className="empty-state">Belum ada profil anak. Tambah lewat menu profil di sidebar.</p>}
-      {kids.length>0 && <div className="student-table"><div className="table-row table-header"><span>ANAK</span><span>AYAT DIKUASAI</span><span>STREAK</span><span>XP</span></div>
-        {kids.map((child,i)=>{const s=childStats[child.id];return <div className="table-row" key={child.id}><span><i className={`avatar av${i%4}`}>{child.displayName.split(" ").map(x=>x[0]).join("").slice(0,2)}</i><span><b>{child.displayName}</b>{child.birthDate && <small className="child-meta">{calculateAge(child.birthDate)} tahun • {child.gender==="P"?"Perempuan":"Laki-laki"}</small>}</span></span><span>{s?.ayahsMastered??"…"} ayat</span><span><Flame/> {s?.streak??"…"} hari</span><span>{s?.totalXp??"…"} XP</span></div>})}
-      </div>}
+      {kids.length>0 && <StatsTable nameHeader="ANAK" rows={kids.map(child=>{const s=childStats[child.id];return {
+        id: child.id, name: child.displayName,
+        meta: child.birthDate && <small className="child-meta">{calculateAge(child.birthDate)} tahun • {child.gender==="P"?"Perempuan":"Laki-laki"}</small>,
+        ayahsMastered: s?.ayahsMastered??"…", streak: s?.streak??"…", totalXp: s?.totalXp??"…",
+      };})} />}
     </section>
     <button className="primary" style={{marginTop:15}} disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Plus/> Kirim dukungan</button>
     {showEncouragement && <SendEncouragementModal kids={kids} onClose={()=>setShowEncouragement(false)} notify={notify}/>}

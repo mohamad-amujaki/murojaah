@@ -10,6 +10,7 @@ import type { Page, Role } from "./types";
 import { useAuth } from "./lib/auth-context";
 import { getTheme, setTheme } from "./lib/theme";
 import { syncPendingSessions } from "./lib/sync";
+import { ROLE_LABEL, ROLE_OPTIONS, initials } from "./lib/constants";
 
 const HomePage = lazy(() => import("./pages/Home").then(m => ({ default: m.HomePage })));
 const PracticePage = lazy(() => import("./pages/Practice").then(m => ({ default: m.PracticePage })));
@@ -18,18 +19,10 @@ const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m
 const Profile = lazy(() => import("./pages/Profile").then(m => ({ default: m.Profile })));
 const ChildProfiles = lazy(() => import("./pages/ChildProfiles").then(m => ({ default: m.ChildProfiles })));
 
-const ROLE_LABEL: Record<string, Role> = { student: "Murid", teacher: "Guru", parent: "Orang Tua", admin: "Admin" };
-const initials = (name: string) => name.split(" ").map(part => part[0]).join("").slice(0, 2).toUpperCase();
-const ROLE_OPTIONS: { value: Exclude<UserRole, "admin">; label: string }[] = [
-  { value: "student", label: "Murid" },
-  { value: "teacher", label: "Guru" },
-  { value: "parent", label: "Orang Tua" },
-];
-
 export default function AuthenticatedApp() {
   const { user, loginUser, children: kids, isActingAsChild, logout, switchProfile, updateProfile } = useAuth();
   if (!user || !loginUser) return null;
-  const role: Role = ROLE_LABEL[user.role] ?? "Murid";
+  const role: Role = (ROLE_LABEL[user.role] as Role) ?? "Murid";
   const visibleNav = nav.filter(item => item.id !== "children" || role !== "Murid");
 
   const [page, setPage] = useState<Page>(pageFromHash);
@@ -119,8 +112,8 @@ export default function AuthenticatedApp() {
     </Modal>}
     {showRoleSetup && <div className="auth-modal-backdrop" onClick={()=>{}}><div className="auth-modal"><form className="card auth-card" onSubmit={async e => { e.preventDefault(); const form = new FormData(e.currentTarget); const role = form.get("role") as Exclude<UserRole, "admin">; if (!role) return; setRoleSetupBusy(true); try { await updateProfile({ role }); setShowRoleSetup(false); const url = new URL(location.href); url.searchParams.delete("role_setup"); history.replaceState({}, "", url.href); notify(`Peran berhasil diatur: ${ROLE_LABEL[role]}`); } catch (err) { notify(err instanceof Error ? err.message : "Gagal mengatur peran."); } finally { setRoleSetupBusy(false); } }}>
       <div className="brand"><span className="brandmark"><BookOpen /></span><span>Atur Peran</span></div>
-      <p style={{fontSize:11,color:"var(--muted)",margin:0}}>Terima kasih sudah mendaftar! Kamu ini siapa?</p>
-      {ROLE_OPTIONS.map(r => <label key={r.value} style={{fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:8,padding:"10px 14px",border:"1px solid var(--line)",borderRadius:9}}><input type="radio" name="role" value={r.value} defaultChecked={r.value==="student"} style={{margin:0}}/>{r.label}</label>)}
+      <p className="text-xs" style={{color:"var(--muted)",margin:0}}>Terima kasih sudah mendaftar! Kamu ini siapa?</p>
+      {ROLE_OPTIONS.map(r => <label key={r.value} className="text-xs" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:8,padding:"10px 14px",border:"1px solid var(--line)",borderRadius:9}}><input type="radio" name="role" value={r.value} defaultChecked={r.value==="student"} style={{margin:0}}/>{r.label}</label>)}
       <button className="primary full" disabled={roleSetupBusy} type="submit">{roleSetupBusy?"Menyimpan...":"Simpan"}</button>
     </form></div></div>}
   </div>;

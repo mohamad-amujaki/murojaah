@@ -15,7 +15,6 @@ interface RateLimitConfig {
 const LIMITS: Record<string, RateLimitConfig> = {
   "/api/auth/login": { windowMs: 15 * 60 * 1000, maxRequests: 5 },
   "/api/auth/register": { windowMs: 60 * 60 * 1000, maxRequests: 5 },
-  "/api/auth/forgot-password": { windowMs: 60 * 60 * 1000, maxRequests: 5 },
   "/api/practice/complete": { windowMs: 60 * 1000, maxRequests: 10 },
   default: { windowMs: 60 * 1000, maxRequests: 60 },
 };

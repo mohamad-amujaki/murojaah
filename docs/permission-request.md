@@ -3,7 +3,7 @@
 Ditujukan ke: admin@equran.id
 Terkait: Terms of Service EQuran.id ([https://equran.id/terms](https://equran.id/terms)), khususnya bagian 5 (Penggunaan API) dan 7 (Hak Kekayaan Intelektual).
 
-Konteks: skrip [packages/db/scripts/import-quran.mjs](../packages/db/scripts/import-quran.mjs) sudah menarik seluruh 114 surah (6.236 ayat, termasuk terjemahan) dari API EQuran.id ke database D1 milik aplikasi Murojaah untuk mendukung mode offline, dan service worker aplikasi meng-cache audio murottal dari CDN EQuran.id per-ayat setelah pertama diputar. Email ini meminta konfirmasi eksplisit bahwa penggunaan tersebut diperbolehkan, karena Terms of Service tidak secara eksplisit mengizinkan maupun melarang penyimpanan permanen/offline seperti ini.
+Konteks: skrip [packages/db/scripts/import-quran.mjs](../packages/db/scripts/import-quran.mjs) sudah menarik seluruh 114 surah (6.236 ayat, termasuk terjemahan) dari API EQuran.id ke database MySQL milik aplikasi Murojaah untuk mendukung mode offline, dan service worker aplikasi meng-cache audio murottal dari CDN EQuran.id per-ayat setelah pertama diputar. Email ini meminta konfirmasi eksplisit bahwa penggunaan tersebut diperbolehkan, karena Terms of Service tidak secara eksplisit mengizinkan maupun melarang penyimpanan permanen/offline seperti ini.
 
 ---
 
@@ -16,7 +16,7 @@ Perkenalkan, kami sedang mengembangkan **Murojaah**, aplikasi web (PWA) untuk me
 Sehubungan dengan Terms of Service EQuran.id yang kami baca di https://equran.id/terms, kami ingin memastikan dua hal berikut sudah sesuai ketentuan sebelum kami lanjutkan ke tahap produksi:
 
 1. **Impor satu kali (one-time import) ke database kami sendiri.**
-   Kami menjalankan skrip yang memanggil endpoint `GET /api/v2/surat/{id}` untuk seluruh 114 surah (total 6.236 ayat, termasuk teks Arab, transliterasi, dan terjemahan bahasa Indonesia), lalu menyimpannya secara permanen di database Cloudflare D1 milik aplikasi kami. Tujuannya agar aplikasi tetap bisa menampilkan ayat & terjemahan saat pengguna sedang offline, tanpa bergantung pada ketersediaan API EQuran.id setiap saat. Proses ini dijalankan satu kali (bukan permintaan berulang saat runtime), dengan jeda antar-permintaan agar tidak membebani server.
+   Kami menjalankan skrip yang memanggil endpoint `GET /api/v2/surat/{id}` untuk seluruh 114 surah (total 6.236 ayat, termasuk teks Arab, transliterasi, dan terjemahan bahasa Indonesia), lalu menyimpannya secara permanen di database MySQL milik aplikasi kami. Tujuannya agar aplikasi tetap bisa menampilkan ayat & terjemahan saat pengguna sedang offline, tanpa bergantung pada ketersediaan API EQuran.id setiap saat. Proses ini dijalankan satu kali (bukan permintaan berulang saat runtime), dengan jeda antar-permintaan agar tidak membebani server.
 
 2. **Cache audio murottal di perangkat pengguna.**
    Aplikasi kami menyimpan (cache) berkas audio dari CDN EQuran.id (`cdn.equran.id/audio-partial/...`) di perangkat pengguna melalui service worker, khusus untuk ayat yang sudah pernah diputar pengguna tersebut — bukan mengunduh seluruh koleksi audio sekaligus. Ini memungkinkan ayat yang sudah pernah dilatih tetap bisa didengarkan saat pengguna offline.

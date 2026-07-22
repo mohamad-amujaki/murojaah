@@ -1,8 +1,6 @@
 const PBKDF2_ITERATIONS = 100_000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days for refresh token
 export const SESSION_COOKIE = "murojaah_session";
-export const REFRESH_COOKIE = "murojaah_refresh";
 
 function toHex(buffer: ArrayBuffer) {
   return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, "0")).join("");
@@ -43,16 +41,8 @@ export function generateSessionToken(): string {
   return toHex(crypto.getRandomValues(new Uint8Array(32)).buffer);
 }
 
-export function generateRefreshToken(): string {
-  return toHex(crypto.getRandomValues(new Uint8Array(48)).buffer);
-}
-
 export function sessionExpiry(): string {
   return new Date(Date.now() + SESSION_TTL_MS).toISOString();
-}
-
-export function refreshExpiry(): string {
-  return new Date(Date.now() + REFRESH_TOKEN_TTL_MS).toISOString();
 }
 
 export function readSessionCookie(request: Request): string | null {
@@ -62,33 +52,12 @@ export function readSessionCookie(request: Request): string | null {
   return match ? match.slice(SESSION_COOKIE.length + 1) : null;
 }
 
-export function readRefreshCookie(request: Request): string | null {
-  const header = request.headers.get("cookie");
-  if (!header) return null;
-  const match = header.split(";").map(part => part.trim()).find(part => part.startsWith(`${REFRESH_COOKIE}=`));
-  return match ? match.slice(REFRESH_COOKIE.length + 1) : null;
-}
-
-function cookieAttrs(token: string, maxAge: number, url: URL, isRefresh = false): string {
-  const name = isRefresh ? REFRESH_COOKIE : SESSION_COOKIE;
-  const secure = url.protocol === "https:" ? " Secure;" : "";
-  return `${name}=${token}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${maxAge}`;
-}
-
 export function setSessionCookieHeader(token: string, url: URL): string {
-  return cookieAttrs(token, 30 * 24 * 60 * 60, url);
-}
-
-export function setRefreshCookieHeader(token: string, url: URL): string {
-  return cookieAttrs(token, 7 * 24 * 60 * 60, url, true);
+  const secure = url.protocol === "https:" ? " Secure;" : "";
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`;
 }
 
 export function clearSessionCookieHeader(url: URL): string {
   const secure = url.protocol === "https:" ? " Secure;" : "";
   return `${SESSION_COOKIE}=; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=0`;
-}
-
-export function clearRefreshCookieHeader(url: URL): string {
-  const secure = url.protocol === "https:" ? " Secure;" : "";
-  return `${REFRESH_COOKIE}=; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=0`;
 }

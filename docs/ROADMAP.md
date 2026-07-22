@@ -9,13 +9,14 @@ Menggantikan versi sebelumnya (2026-07-20) — Fase 0–3 di sana **sudah selesa
 | Area | Status |
 | --- | --- |
 | Monorepo pnpm (`apps/web`, `apps/worker`, `packages/db`, `packages/shared`) | ✅ Selesai |
-| Auth Cloudflare-native (session cookie, PBKDF2, akun anak tanpa password + profile switcher) | ✅ Selesai |
+| Auth (session cookie, PBKDF2, akun anak tanpa password + profile switcher) | ✅ Selesai |
 | Login/Daftar dengan Google (OAuth 2.0 penuh) | ✅ Selesai |
 | Landing page marketing + form auth jadi popup modal | ✅ Selesai |
 | Kelas & tugas (`classes`, `assignments`) + modal buat kelas/tugas | ✅ Selesai |
 | Progres per-ayat (`ayah_progress`) tersambung ke Practice page | ✅ Selesai |
 | Badge otomatis (`badges`, `user_badges`) | ✅ Selesai |
-| 114 surah lengkap di D1, `/api/quran/surah/:id` baca dari D1 dulu | ✅ Selesai |
+| 114 surah lengkap di database, `/api/quran/surah/:id` baca dari database dulu | ✅ Selesai |
+| Migrasi database dari Cloudflare D1 (SQLite) ke MySQL (`mu_*`, `mysql2`) + copy data produksi | ✅ Selesai (2026-07-21) |
 | Dukungan orang tua (`encouragements`) + modal kirim dukungan | ✅ Selesai |
 | Offline-first: antrean sesi latihan (IndexedDB) + cache audio per-ayat (Service Worker) + idempotency key | ✅ Selesai |
 | Statistik nyata (XP, streak, level, ayat dikuasai) di Profil/Pencapaian/Dashboard/Beranda | ✅ Selesai |
@@ -74,10 +75,8 @@ Tidak ditemukan tombol "unduh laporan" di kode saat ini (sempat ada di versi seb
 - Opsi A (rekomendasi): perbaiki copy landing page untuk akurat — mis. "Atur peran setelah daftar" atau hapus mention role dari step 1, selesaikan dulu Fase 4d yang membangun alur pilih-peran pasca-OAuth.
 - Opsi B: kerjakan Fase 4d dulu, baru sesuaikan copy — agar janji landing page terpenuhi.
 
-### 4j. `env.DB` Fallback Palsu di Practice Route
-**Temuan**: [practice.ts:35](../apps/worker/routes/practice.ts) — jika `env.DB` tidak tersedia (dev tanpa binding D1), endpoint mengembalikan `json({ xp: 35, message: SUCCESS_MESSAGE }, 201)` seolah sesi berhasil disimpan. Ini membingungkan testing sinkronisasi offline karena antrean IndexedDB tidak pernah dikosongkan (server selalu jawab sukses meski tidak ada data tersimpan).
-- Ganti dengan `json({ error: "Layanan sesi latihan belum tersedia." }, 503)` agar offline queue bekerja sebagaimana mestinya di development.
-- Catatan: baris ini berguna saat demo frontend-only tanpa Worker. Jika masih diperlukan, tambahkan flag env `DEMO_MODE` yang eksplisit.
+### 4j. ~~`env.DB` Fallback Palsu di Practice Route~~ ✅ Selesai (resolved sebagai efek samping refactor guard 2026-07-21)
+`handlePracticeComplete` sekarang pakai `requireAuth()` ([guards.ts](../apps/worker/lib/guards.ts)) yang mengembalikan `503` sebenarnya kalau DB tidak tersedia — tidak ada lagi fallback sukses palsu.
 
 ### 4k. Tidak Ada Fitur Keluar/Kelola Anggota Kelas
 **Temuan**: [classes.ts](../apps/worker/routes/classes.ts) — murid bisa gabung kelas via kode (`POST /api/classes/join`) tapi tidak ada endpoint untuk keluar. Guru juga tidak bisa menghapus murid dari kelas. Di UI, tidak ada tombol apapun untuk mengelola keanggotaan.
@@ -106,7 +105,7 @@ Ditemukan saat review, sengaja **tidak diprioritaskan** selama masih tahap ekspl
 - **Lupa kata sandi**: belum ada alur reset password sama sekali — pengguna yang lupa sandi email/password akan terkunci permanen dari akunnya (Google OAuth tidak terpengaruh).
 - **Verifikasi email**: pendaftaran email/password tidak memverifikasi kepemilikan email — siapa pun bisa daftar pakai email siapa pun.
 - **Test otomatis**: nol test di seluruh repo (dikonfirmasi tidak ada `*.test.ts`, `vitest.config`, atau folder `tests/`). Minimal yang disarankan sebelum produksi: satu smoke test per alur kritis (register→login, practice→XP→badge, switch-profile guard).
-- **`database_id` masih placeholder** di [wrangler.jsonc](../apps/web/wrangler.jsonc) (`00000000-0000-0000-0000-000000000000`) — harus diganti ID D1 produksi asli sebelum deploy, plus `GOOGLE_CLIENT_ID`/`SECRET` perlu di-set via `wrangler secret put` (saat ini hanya ada di `.dev.vars` lokal).
+- ~~**`database_id` masih placeholder** di `wrangler.jsonc`~~ **Tidak relevan lagi (2026-07-21)**: proyek sudah pindah ke MySQL untuk deployment VPS; jalur Cloudflare Workers/D1 (`wrangler.jsonc`, `pnpm dev` lama) dibiarkan di repo tapi tidak dipakai. Kredensial produksi sekarang lewat `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USER`/`DB_PASSWORD` di `.env` (lihat [docs/.env.example](.env.example)).
 - **Manajemen kuota cache audio offline**: cache Service Worker berjalan otomatis tanpa kontrol pengguna — perlu UI sederhana di Profil ("Hapus data ayat tersimpan") sebelum banyak pengguna mengeluh penyimpanan penuh.
 - **Content Security Policy (CSP)**: [http.ts](../apps/worker/lib/http.ts) hanya mengirim `x-content-type-options` dan `referrer-policy`. Sebelum produksi publik, tambah header CSP (`script-src`, `style-src`, `connect-src`, `form-action`) karena aplikasi merender konten Arab dan bisa menjadi vektor XSS jika data input tidak dibersihkan di masa depan.
 - **Service Worker update notification**: [App.tsx:70](../apps/web/src/App.tsx) mendaftarkan SW via `navigator.serviceWorker.register("/sw.js")` tetapi tidak ada listener `controllerchange` dan tidak ada banner "Versi baru tersedia — muat ulang". SW bisa berjalan dengan kode lama berhari-hari tanpa pengguna sadar. Tambah listener, simpan `registration.waiting` di state, tampilkan tombol reload yang panggil `registration.waiting.postMessage({action: "skipWaiting"})`.
@@ -117,18 +116,18 @@ Ditemukan saat review, sengaja **tidak diprioritaskan** selama masih tahap ekspl
 
 Ide baru di luar Fase 4 (yang sebagian besar masih berlaku). Diurutkan berdasarkan rasio dampak/effort:
 
-1. **Muraja'ah cerdas (saran ayat otomatis)** — dampak paling tinggi, data sudah ada. `ayah_progress` sudah mencatat mastery + `last_practiced_at` per ayat; tinggal satu query "ayat berstatus *Perlu latihan* atau paling lama tidak diulang" untuk mengisi kartu hero Beranda ("Waktunya mengulang Al-Falaq ayat 3–5") dan tombol "Latihan yang disarankan" di Practice. Ini spaced-repetition versi paling sederhana — tanpa algoritma SM-2, cukup urutkan berdasarkan umur + status.
-2. **Dark mode** — murah karena seluruh warna sudah CSS variables di `:root` ([styles.css](../apps/web/src/styles.css)). Tambah blok `[data-theme="dark"]` + toggle di Profil (kolom `preferences` JSON sudah siap menampung `theme`). Default ikuti `prefers-color-scheme`.
+1. ~~**Muraja'ah cerdas (saran ayat otomatis)**~~ ✅ **Selesai (2026-07-21)**: `GET /api/me/suggestion` di [profile.ts](../apps/worker/routes/profile.ts) mengurutkan `ayah_progress` berdasarkan status + umur, mengisi kartu hero Beranda dan hand-off ke Practice via sessionStorage. Diverifikasi nyata di browser.
+2. ~~**Dark mode**~~ ✅ **Selesai (2026-07-21)**: blok `[data-theme="dark"]` di [styles.css](../apps/web/src/styles.css) + toggle di topbar & Profil, tersimpan di `localStorage` (bukan `preferences` JSON — lebih sederhana, tidak perlu round-trip API untuk ganti tema). Diverifikasi kedua arah di browser.
 3. **Onboarding first-run** — setelah daftar, pengguna baru mendarat di Beranda yang serba kosong. Arahkan langsung ke Practice dengan surah pendek yang disarankan (An-Nas/Al-Ikhlas) + satu kalimat panduan; hilang setelah sesi pertama selesai.
 4. **Pilihan qari** — URL audio kini hardcode Misyari Rasyid ([quran.ts](../apps/worker/routes/quran.ts)); EQuran.id menyediakan beberapa qari di CDN yang sama. Simpan pilihan di `preferences`, endpoint audio menerima parameter qari. Catatan: cache audio offline per-qari akan membesar — tetap on-demand.
 5. **Pengingat harian (streak reminder)** — butuh SMTP diimplementasi dulu (stub [email.ts](../apps/worker/lib/email.ts) — prasyarat yang sama dengan reset password). Mulai dari email harian sederhana via cron (node-cron di server.mjs atau cron EasyPanel yang memanggil endpoint internal); Web Push (VAPID) nanti saja, infrastrukturnya jauh lebih berat.
 6. **Leaderboard kelas mingguan** — data sudah lengkap (XP per murid per kelas). Tampilkan top-3 XP minggu ini di dashboard murid & guru. Buat *opsional per kelas* (toggle guru) — kompetisi bisa memotivasi sebagian murid dan menekan sebagian lainnya.
-7. **Backup otomatis SQLite (ops, bukan fitur)** — begitu ada pengguna nyata, satu file `/app/data/murojaah.db` adalah seluruh datanya. Cron harian `sqlite3 /app/data/murojaah.db ".backup /app/data/backups/$(date +%F).db"` + retensi 7 hari + salin keluar VPS (rclone/S3). Ini hal pertama yang disesali kalau dilewati.
-8. **Redis untuk kebutuhan lain** — sengaja *belum*: session tetap di SQLite (lookup lokal sudah cepat), cache data Qur'an tidak perlu (SQLite lokal lebih cepat dari round-trip Redis). Baru relevan kalau nanti ada fitur realtime (notifikasi live) via pub/sub — jangan dipakai hanya karena sudah terpasang.
+7. **Backup otomatis MySQL (ops, bukan fitur)** — *(diperbarui 2026-07-21, database sudah pindah dari SQLite ke MySQL)*. Database sekarang di server MySQL terkelola (`DB_HOST` di `.env`), bukan file lokal di VPS — cek dulu apakah provider-nya sudah menyediakan backup otomatis bawaan sebelum bangun sendiri. Kalau belum: cron harian `mysqldump -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME | gzip > backup-$(date +%F).sql.gz` + retensi 7 hari + salin keluar (rclone/S3). Ini hal pertama yang disesali kalau dilewati.
+8. **Redis untuk kebutuhan lain** — sengaja *belum*: session tetap di MySQL (lookup dengan index sudah cepat), cache data Qur'an tidak perlu (query MySQL lokal lebih cepat dari round-trip Redis). Baru relevan kalau nanti ada fitur realtime (notifikasi live) via pub/sub — jangan dipakai hanya karena sudah terpasang.
 
 ## Risiko & Keputusan yang Masih Menggantung
 
-- **Lisensi EQuran.id**: draft email permintaan izin sudah ada di [permission-request.md](permission-request.md) tapi **belum dikonfirmasi terkirim**. Perlu dikirim sebelum proyek ini punya pengguna di luar tim sendiri, mengingat 114 surah + audio sudah disalin permanen ke D1 dan di-cache offline.
+- **Lisensi EQuran.id**: draft email permintaan izin sudah ada di [permission-request.md](permission-request.md) tapi **belum dikonfirmasi terkirim**. Perlu dikirim sebelum proyek ini punya pengguna di luar tim sendiri, mengingat 114 surah + audio sudah disalin permanen ke database (MySQL) dan di-cache offline.
 - **Consent anak login mandiri**: belum ada batas usia minimum atau mekanisme consent orang tua untuk anak yang punya akun sendiri (bukan profil dikelola) — masih sama seperti dicatat di versi roadmap sebelumnya, belum dibahas ulang.
 - **Role default Google OAuth**: lihat Fase 4d — ini keputusan produk (biarkan manual lewat admin, atau bangun alur pilih-peran) yang perlu Anda putuskan sebelum saya kerjakan.
 - **Google OAuth id_token signature diverifikasi sendiri**: [oauth.ts:33-35](../apps/worker/routes/oauth.ts) menyebutkan bahwa `id_token` tidak diverifikasi signature-nya terhadap JWKS Google. Ini *acceptable* karena token diperoleh via server-to-server exchange (authorization code + client_secret via TLS), bukan dari klien. Namun, untuk kepatuhan OAuth 2.0 security BCP, verifikasi JWKS disarankan sebelum produksi publik — terutama jika suatu saat flow diperluas ke Implicit Grant atau PKFE yang tidak melewati server. Di-*tag* `ponytail` di kode sebagai debt yang diketahui.

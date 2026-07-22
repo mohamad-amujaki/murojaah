@@ -2,12 +2,7 @@ import { useState } from "react";
 import { BookOpen, ChevronLeft } from "lucide-react";
 import type { UserRole } from "@murojaah/shared";
 import { useAuth } from "../lib/auth-context";
-
-const ROLE_OPTIONS: { value: Exclude<UserRole, "admin">; label: string }[] = [
-  { value: "student", label: "Murid" },
-  { value: "teacher", label: "Guru" },
-  { value: "parent", label: "Orang Tua" },
-];
+import { ROLE_OPTIONS } from "../lib/constants";
 
 const GoogleIcon = () => <svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true">
   <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.9 5.1 29.7 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-3.5z"/>

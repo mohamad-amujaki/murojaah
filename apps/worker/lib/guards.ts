@@ -1,3 +1,5 @@
+import { eq } from "drizzle-orm";
+import { users } from "@murojaah/db";
 import { getDb } from "@murojaah/db/client";
 import type { CurrentUser, Env, RequestContext } from "./http";
 import { json } from "./http";
@@ -12,7 +14,7 @@ export function requireAuth(env: Env, ctx: RequestContext): { user: CurrentUser;
   return { user: ctx.currentUser, db: getDb({ DB: env.DB }) };
 }
 
-// For pre-auth routes (register/login/forgot-password) that only need the DB, not a logged-in user.
+// For pre-auth routes (register/login) that only need the DB, not a logged-in user.
 export function requireDb(env: Env): { db: Db } | Response {
   if (!env.DB) return json({ error: "Layanan belum tersedia." }, 503, {}, "no-store");
   return { db: getDb({ DB: env.DB }) };
@@ -26,4 +28,14 @@ export function requireRole(
   const roles = Array.isArray(role) ? role : [role];
   if (!roles.includes(guard.user.role)) return json({ error: message }, 403, {}, "no-store");
   return guard;
+}
+
+// ponytail: "is this child managed by this parent" was checked ad-hoc in admin/encouragements routes.
+export async function requireOwnedChild(
+  db: Db, childId: number, parentId: number,
+): Promise<{ id: number; managedBy: number | null } | Response> {
+  const [child] = await db.select({ id: users.id, managedBy: users.managedBy }).from(users).where(eq(users.id, childId)).limit(1);
+  if (!child) return json({ error: "Profil anak tidak ditemukan." }, 404, {}, "no-store");
+  if (child.managedBy !== parentId) return json({ error: "Kamu tidak memiliki akses ke profil ini." }, 403, {}, "no-store");
+  return child;
 }

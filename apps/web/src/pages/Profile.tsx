@@ -6,10 +6,7 @@ import { Toggle } from "../components/Toggle";
 import { useAuth } from "../lib/auth-context";
 import { getMyStats } from "../lib/api";
 import { getTheme, setTheme } from "../lib/theme";
-
-const initials = (name: string) => name.split(" ").map(part => part[0]).join("").slice(0, 2).toUpperCase();
-
-const ROLE_LABEL: Record<string, string> = { student: "Murid", teacher: "Guru", parent: "Orang Tua", admin: "Admin" };
+import { ROLE_LABEL, initials } from "../lib/constants";
 
 export function Profile({notify}:{notify:(s:string)=>void}){
   const { user, loginUser, updateProfile } = useAuth();

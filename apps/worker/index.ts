@@ -4,7 +4,7 @@ import { resolveContext } from "./lib/session";
 import { handleHealth } from "./routes/health";
 import { handleQuranAudio, handleQuranSurah } from "./routes/quran";
 import { handlePracticeComplete } from "./routes/practice";
-import { handleCreateChild, handleForgotPassword, handleLogin, handleLogout, handleMe, handleRegister, handleResetPassword, handleSwitchProfile } from "./routes/auth";
+import { handleCreateChild, handleLogin, handleLogout, handleMe, handleRegister, handleSwitchProfile } from "./routes/auth";
 import { handleClassMembers, handleCreateClass, handleJoinClass, handleLeaveClass, handleListClasses, handleRemoveMember } from "./routes/classes";
 import { handleCreateAssignment, handleListAssignments } from "./routes/assignments";
 import { handleGetAyahProgress, handleUpsertAyahProgress } from "./routes/ayah-progress";
@@ -20,7 +20,7 @@ import { handleListTeacherStudents, handleUpdateStudent } from "./routes/teacher
 
 const routes: RouteHandler[] = [
   handleHealth, handleQuranSurah, handleQuranAudio, handlePracticeComplete,
-  handleRegister, handleLogin, handleLogout, handleMe, handleCreateChild, handleSwitchProfile, handleForgotPassword, handleResetPassword,
+  handleRegister, handleLogin, handleLogout, handleMe, handleCreateChild, handleSwitchProfile,
   handleGoogleStart, handleGoogleCallback,
   handleUpdateProfile, handleMyStats, handleSuggestion,
   handleCreateClass, handleJoinClass, handleListClasses, handleClassMembers, handleLeaveClass, handleRemoveMember,

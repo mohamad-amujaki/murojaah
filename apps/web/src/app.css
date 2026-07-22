@@ -1,0 +1,441 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"]));
+
+@theme {
+  --color-green: #106b55;
+  --color-gold: #e7aa33;
+  --color-deep: #084b3c;
+  --color-mint: #e8f4ef;
+  --color-cream: #f8f7f2;
+  --color-ink: #18332c;
+  --color-muted: #42524c;
+  --color-line: #d3ddd7;
+  --color-surface: #fff;
+  --font-primary: "Manrope", system-ui, sans-serif;
+  --font-arabic: "Noto Naskh Arabic", serif;
+  --animate-fade-in: fade-in 0.18s ease;
+  --animate-modal-in: modal-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-float-art: float-art 4.5s ease-in-out infinite;
+}
+
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.98) } to { opacity: 1; transform: none } }
+@keyframes float-art { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-12px) } }
+
+*, ::after, ::before { box-sizing: border-box }
+html { font-size: 87.5% }
+html, body, #root { @apply min-h-[100%] m-0 bg-cream }
+html[data-theme="dark"], [data-theme="dark"] body, [data-theme="dark"] #root { background: #0e1613; color: #d6e0db }
+
+[data-theme="dark"] {
+  --color-ink: #d6e0db;
+  --color-muted: #8a9d96;
+  --color-line: #2d3f38;
+  --color-surface: #1a2622;
+}
+button, input, select { font: inherit }
+button:disabled { cursor: not-allowed; opacity: .45 }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #e7aa3380; outline-offset: 2px }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important }
+}
+
+@layer components {
+.app-shell { @apply min-h-screen }
+.recovery { @apply min-h-screen grid place-items-center text-center p-6 bg-cream }
+.recovery .brandmark { @apply w-[54px] h-[54px] }
+.recovery h1 { @apply text-2xl mt-5 mb-[7px] }
+.recovery p { @apply max-w-[420px] text-muted text-xs leading-[1.7] m-0 mb-5 }
+
+.sidebar { @apply fixed inset-y-0 left-0 w-[254px] bg-surface border-r border-line p-[26px_18px] flex flex-col z-30 }
+.brand { @apply flex items-center gap-[10px] text-xl font-extrabold px-2 pb-[25px] }
+.brand > span:last-of-type span, .mobile-logo span { @apply text-green }
+.brandmark { @apply grid place-items-center w-[38px] h-[38px] rounded-[12px] text-white bg-green }
+.brandmark svg { @apply w-[21px] }
+.close-menu { @apply hidden! ml-auto }
+.profile-mini { @apply flex gap-[11px] items-center bg-[#f2f8f5] p-3 rounded-[14px] mb-6 }
+.avatar { @apply w-10 h-10 rounded-full bg-[#d4a06f] text-white grid place-items-center font-extrabold }
+.profile-mini div:last-child { @apply min-w-0 }
+.profile-mini b { @apply block text-xs whitespace-nowrap }
+.profile-mini span { @apply flex items-center gap-[5px] text-xs text-muted mt-[3px] }
+.profile-mini i { @apply w-[6px] h-[6px] rounded-full bg-[#45ad77] }
+.sidebar nav { @apply grid gap-[7px] }
+.sidebar nav button, .help { @apply border-0 bg-transparent text-[#64756f] flex items-center gap-[13px] p-[12px_13px] rounded-[10px] text-xs font-semibold min-h-[45px] transition-colors }
+.sidebar nav button.active, .help:hover { @apply bg-[#eef6f2] text-ink }
+.sidebar-tip { @apply bg-[#f2faf5] p-[14px_12px] rounded-[12px] mt-auto mb-[20px] border border-[#daeae1] }
+.sidebar-tip b { @apply block text-xs mb-[3px] }
+.sidebar-tip p { @apply text-xs text-muted leading-[1.6] m-0 }
+.safe { @apply text-xs text-muted mt-auto text-center }
+.main { @apply ml-[254px] min-h-screen }
+.topbar { @apply flex items-center h-[66px] px-5 border-b border-line gap-3 sticky top-0 bg-surface z-20 }
+.menu-btn, .mobile-logo { @apply hidden }
+.mobile-logo { @apply font-extrabold }
+.top-actions { @apply flex items-center gap-2 ml-auto }
+.offline { @apply flex items-center gap-[5px] text-[#b8583d] text-xs font-semibold }
+.role-select { @apply flex items-center gap-[6px] text-xs text-muted }
+.role-select svg:first-child { @apply text-green }
+.role-select select { @apply border-0 bg-transparent text-ink font-semibold }
+.content { @apply p-[28px_5vw_35px] }
+.bottom-nav { @apply hidden }
+.toast { @apply fixed z-40 flex items-center gap-[5px] bg-green text-white text-xs font-semibold px-[14px_18px] py-3 rounded-[12px] shadow-[0_6px_20px_#106b5540] bottom-5 right-5 animate-fade-in }
+.toast svg { @apply w-[15px] }
+
+.authentication-loading { @apply min-h-screen grid place-items-center p-6 bg-cream }
+
+.landing { @apply bg-cream min-h-screen }
+.landing-nav { @apply max-w-[1160px] mx-auto flex justify-between items-center px-[5vw] py-5 }
+.landing-nav-actions { @apply flex items-center gap-4 }
+.link-btn { @apply border-0 bg-transparent text-green font-bold text-xs cursor-pointer }
+.landing-hero { @apply max-w-[1160px] mx-auto flex items-center gap-10 px-[5vw] py-[30px_0_60px] }
+.landing-hero-copy { @apply flex-1 max-w-[560px] }
+.pill { @apply inline-flex items-center gap-[6px] px-[12px] py-[6px] rounded-full border text-[10px] font-bold tracking-[.5px] }
+.pill.dark { @apply bg-mint border-[#cfe7dc] text-green }
+.pill svg { @apply w-[14px] }
+.landing-hero h1 { @apply text-[38px] leading-[1.15] tracking-[-.8px] mx-0 my-[18px_0_14px] }
+.landing-hero-copy > p { @apply text-muted text-sm leading-[1.7] m-0 mb-[22px] }
+.landing-cta-row { @apply flex items-center gap-[18px] mb-[14px] }
+.primary { @apply border-0 bg-green text-white min-h-10 px-[18px] rounded-[10px] font-bold text-xs cursor-pointer }
+.primary.large { @apply min-h-[50px] px-[26px] text-xs }
+.primary.light { @apply bg-white text-green }
+
+.landing-hero-art { @apply flex-1 max-w-[340px] aspect-square relative grid place-items-center animate-float-art }
+.landing-hero-art .moon { @apply absolute w-[230px] h-[230px] rounded-full bg-mint text-green grid place-items-center text-[60px] }
+.landing-hero-art .quran { @apply w-[150px] h-24 grid place-items-center bg-[#def0e8] rounded-[20px] }
+.landing-hero-art .quran svg { @apply w-[60px] h-[60px] }
+
+.icon-btn { @apply border-0 bg-transparent cursor-pointer w-[38px] h-[38px] grid place-items-center rounded-[9px] text-muted text-lg p-0 }
+.back-link { @apply flex items-center gap-[5px] text-muted text-xs no-underline }
+.eyebrow { @apply text-[10px] font-bold tracking-[.5px] text-muted }
+
+.landing-trust { @apply max-w-[1160px] mx-auto flex flex-wrap gap-[14px_28px] text-muted text-xs font-semibold px-[5vw] pb-[50px] }
+.landing-trust span { @apply flex items-center gap-[6px] }
+.landing-trust svg { @apply w-[15px] text-green }
+
+.landing-section { @apply max-w-[1160px] mx-auto px-[5vw] py-10 }
+.landing-section h2 { @apply text-xl text-center m-0 mb-7 }
+.landing-features { @apply grid grid-cols-4 gap-[14px] }
+.card { @apply bg-surface border border-line rounded-[16px] p-5 }
+.landing-feature { @apply text-left }
+.landing-feature b { @apply block mt-3 mb-[6px] text-xs }
+.landing-feature p { @apply text-xs text-muted m-0 leading-[1.6] }
+.goal-icon { @apply w-[38px] h-[38px] rounded-[10px] grid place-items-center }
+.goal-icon.green { @apply bg-mint text-green }
+.goal-icon.gold { @apply bg-[#fcf5e7] text-gold }
+.goal-icon.purple { @apply bg-[#f2eff8] text-[#7c64c8] }
+
+.landing-steps { @apply grid grid-cols-3 gap-5 }
+.landing-step { @apply text-center px-[10px] }
+.landing-step > span { @apply grid place-items-center w-[34px] h-[34px] rounded-full bg-green text-white font-extrabold mx-auto mb-[14px] }
+.landing-step b { @apply block text-xs mb-[6px] }
+.landing-step p { @apply text-xs text-muted leading-[1.6] m-0 }
+
+.landing-closing { @apply text-center py-[60px] px-[5vw] mx-5 my-5 rounded-[16px] text-white bg-gradient-to-br from-[#0c735b] to-[#08503f] }
+.landing-closing h2 { @apply text-2xl m-0 mb-[10px] }
+.landing-closing p { @apply opacity-80 text-xs m-0 mb-6 }
+
+.landing-footer { @apply max-w-[1160px] mx-auto flex flex-wrap items-center justify-between gap-[14px] px-[5vw] py-[30px_0_50px] }
+.brand.small { @apply text-[15px] }
+.brand.small .brandmark { @apply w-7 h-7 }
+.brand.small .brandmark svg { @apply w-[15px] }
+.landing-footer-links { @apply flex gap-4 }
+.landing-footer p { @apply w-full text-center text-xs text-muted mt-[10px] m-0 }
+
+.auth-page { @apply min-h-screen flex bg-cream }
+.auth-visual { @apply flex-[0_0_42%] min-h-screen relative overflow-hidden text-white bg-gradient-to-br from-[#0c735b] to-[#08503f] }
+.auth-visual-brand { @apply flex items-center gap-[10px] text-lg font-extrabold z-[2] }
+.auth-visual-brand span:last-of-type span { @apply text-[#a9e6cf] }
+.auth-visual-brand .brandmark { @apply bg-[#ffffff26] }
+.auth-visual-art { @apply flex-1 relative grid place-items-center }
+.auth-visual-art .moon { @apply absolute w-[220px] h-[220px] rounded-full bg-[#faeac4] text-[#e2b958] shadow-[0_0_0_22px_#ffffff0d] }
+.auth-visual-art .quran { z-index: 2; width: 130px; height: 84px; display: grid; place-items: center; background: #ddb464; color: #4c735e; clip-path: polygon(50% 25%, 100% 0, 92% 78%, 50% 100%, 8% 78%, 0 0) }
+.auth-visual-art .star { @apply absolute text-[#ffe196] not-italic }
+.auth-visual-art .s1 { @apply left-[16%] top-[20%] text-xl }
+.auth-visual-art .s2 { @apply right-[14%] top-[14%] text-xs }
+.auth-visual-copy { @apply z-[2] }
+.auth-visual-copy p { @apply text-xl leading-[1.5] font-semibold max-w-[340px] m-0 }
+
+.auth-form-panel { @apply flex-1 flex flex-col justify-start px-[8vw] py-[90px_44px] relative min-h-screen }
+.auth-form-panel .back-link { @apply absolute top-8 left-[8vw] }
+.auth-form-panel .auth-card { @apply max-w-[420px] mx-auto w-full p-0 gap-[14px] }
+.auth-form-panel .auth-card h1 { @apply text-[26px] m-0 mb-[2px] tracking-[-.5px] }
+.auth-form-panel .auth-subtitle { @apply text-xs text-muted m-0 mb-2 }
+.auth-form-panel .auth-fields { @apply min-h-[300px] grid gap-3 }
+
+.auth-card { @apply w-full max-w-[630px] grid gap-4 p-8 bg-surface rounded-[20px] shadow-[0_2px_20px_#0f2b2112] }
+.auth-card .brand { @apply p-0 pb-[10px] justify-center }
+.auth-tabs { @apply grid grid-cols-2 bg-[#f3f6f4] p-1 rounded-[10px] gap-[3px] }
+.auth-tabs button { @apply border-0 bg-transparent rounded-[8px] min-h-10 text-xs font-bold text-muted }
+.auth-tabs button.active { @apply bg-surface text-green }
+.auth-card label { @apply text-xs font-bold text-muted block }
+.auth-card input, .auth-card select { @apply block w-full h-11 border border-line rounded-[10px] px-3 bg-surface mt-[5px] text-ink text-xs }
+.auth-card textarea { @apply block w-full border border-line rounded-[10px] p-3 bg-surface mt-[5px] text-ink text-xs font-[inherit] resize-y }
+.auth-card .google-btn { @apply min-h-11 text-xs }
+.auth-card .primary.full { @apply h-11 text-xs }
+.auth-error { @apply text-[#b8583d] text-xs m-0 bg-[#fff5f1] border border-[#f3d2c4] rounded-[8px] p-[8px_10px] }
+.google-btn { @apply no-underline gap-2 justify-center }
+.auth-divider { @apply flex items-center gap-[10px] text-muted text-xs }
+.auth-divider::before, .auth-divider::after { @apply content-[''] flex-1 h-[1px] bg-line }
+
+.auth-modal-backdrop { @apply fixed inset-0 bg-[#0f2b21b3] backdrop-blur-[2px] grid place-items-center p-6 z-80 animate-fade-in }
+.auth-modal { @apply relative w-full max-w-[630px] max-h-[90vh] overflow-y-auto animate-modal-in }
+.auth-modal-close { @apply absolute top-[10px] right-[10px] bg-[#f4f7f5] }
+
+.help-modal { @apply w-full max-w-[420px] p-7 grid gap-0 }
+.help-modal .brand { @apply p-0 pb-[10px] justify-center }
+.help-desc { @apply text-xs text-muted m-0 mb-4 leading-[1.6] }
+.help-channels { @apply grid gap-2 }
+.help-channel { @apply flex items-center gap-3 p-[12px_14px] border border-line rounded-[12px] no-underline text-inherit cursor-pointer bg-surface text-left font-[inherit] }
+.help-channel:hover { @apply border-[#c1d6ce] bg-mint }
+.help-channel:active { @apply scale-[.99] }
+.help-icon { @apply w-10 h-10 grid place-items-center rounded-[10px] bg-mint text-green flex-none }
+.help-icon svg { @apply w-[18px] }
+.help-channel div { @apply flex-1 min-w-0 }
+.help-channel b { @apply text-xs block }
+.help-channel p { @apply text-xs text-muted m-0 mt-[3px] leading-[1.4] }
+.help-channel small { @apply text-xs text-gold }
+.help-channel > svg { @apply text-muted flex-none }
+.help-footer { @apply text-xs text-muted text-center mt-[18px] m-0 pt-[14px] border-t border-line }
+
+.join-code-box { @apply text-center bg-mint border-[1.5px] border-dashed border-green rounded-[12px] p-[18px] font-mono text-[26px] font-extrabold tracking-[4px] text-green }
+.assignment-modal { @apply max-w-[420px] }
+.modal-surah-list { @apply grid-cols-1 max-h-[260px] overflow-y-auto }
+.selected-surah .link-btn { @apply ml-auto }
+
+.welcome { @apply flex items-center gap-3 mb-2 }
+.welcome h1 { @apply text-lg m-0 }
+.welcome p { @apply text-xs text-muted m-0 max-w-[230px] }
+.streak { @apply flex items-center gap-[6px] bg-[#fff3e8] text-[#c27838] text-xs font-extrabold px-3 py-[7px] rounded-[10px] }
+.streak small { @apply font-normal text-[#c2783880] }
+
+.hero-card { @apply relative overflow-hidden bg-surface border border-line rounded-[20px] }
+.hero-copy { @apply relative z-[2] p-[28px_28px_28px_24px] }
+.hero-card h2 { @apply text-xl m-0 mb-[6px] }
+.hero-art { @apply absolute right-0 top-0 bottom-0 w-[42%] grid place-items-center }
+.hero-art .moon { @apply w-[130px] h-[130px] rounded-full bg-mint text-green grid place-items-center text-4xl }
+.hero-art .quran { @apply absolute w-[110px] h-[70px] grid place-items-center }
+.hero-art .star { @apply absolute text-green text-lg not-italic }
+.hero-art .s1 { @apply left-[12%] top-[10%] }
+.hero-art .s2 { @apply right-[10%] top-[8%] text-xs }
+.progress-row { @apply flex items-center gap-[10px] text-xs text-muted mt-[14px] }
+.progress { @apply flex-1 h-2 bg-[#eef6f2] rounded-full overflow-hidden }
+.progress > div { @apply h-full bg-green rounded-full }
+
+.section-title { @apply text-xs font-bold text-muted mb-[10px] mt-6 first:mt-0 }
+.goals-grid { @apply grid grid-cols-4 gap-[10px] }
+.goal { @apply bg-surface border border-line rounded-[14px] p-[14px_12px] text-center }
+.goal-main { @apply flex-col }
+.goal b { @apply block text-xs mt-[6px] }
+.goal p { @apply text-[10px] text-muted m-0 }
+
+.two-col { @apply grid grid-cols-2 gap-[14px] }
+.card-head { @apply flex items-center justify-between mb-[14px] }
+.card-head .more { @apply text-xs text-muted no-underline }
+.count { @apply bg-[#fcf5e7] text-gold text-[10px] font-extrabold px-[7px] py-[3px] rounded-full }
+.assignment { @apply flex items-center gap-3 p-[10px_14px] border border-line rounded-[12px] }
+.assignment.done { @apply opacity-50 }
+.task-icon { @apply w-[34px] h-[34px] rounded-[9px] grid place-items-center flex-none }
+.task-icon.blue { @apply bg-[#e9f2fa] text-[#598fc2] }
+.empty-state { @apply text-xs text-muted text-center py-10 }
+
+.week-chart { @apply flex items-end gap-[6px] h-[80px] }
+.week-chart > div { @apply flex-1 rounded-[4px_4px_0_0] bg-[#daeae1] min-h-[4px] }
+.week-chart .today { @apply bg-green }
+.week-summary { @apply flex items-center gap-4 mt-[10px] text-xs text-muted }
+.support { @apply flex items-center gap-3 p-[12px_14px] bg-[#fcf9f0] border border-[#efe3c4] rounded-[12px] }
+.support p { @apply flex-1 text-xs text-muted m-0 leading-[1.5] }
+.parent-avatar { @apply w-9 h-9 rounded-full bg-[#d4a06f] text-white grid place-items-center font-extrabold text-xs flex-none }
+
+.student-table { @apply grid gap-[1px] }
+.table-header { @apply font-semibold text-muted }
+.table-row { @apply grid grid-cols-[1fr_1fr_auto] items-center gap-3 p-[10px_0] text-xs border-b border-line last:border-0 }
+.table-header { @apply pt-0 pb-[7px] }
+.avatar[class*="av0"] { background: #d4a06f }
+.avatar[class*="av1"] { background: #6fa8d4 }
+.avatar[class*="av2"] { background: #72b87a }
+.avatar[class*="av3"] { background: #b87aae }
+.child-meta { @apply block text-xs text-muted }
+.compact { @apply text-[10px] }
+.outline { @apply border border-line bg-transparent text-ink rounded-[8px] font-semibold text-xs cursor-pointer min-h-9 px-[14px] }
+.outline.full { @apply w-full }
+
+.dashboard-grid { @apply grid gap-[14px] }
+.dash-top { @apply flex items-center justify-between }
+.stat-grid { @apply grid grid-cols-3 gap-[14px] }
+.table-card { @apply overflow-hidden }
+
+.profile-grid { @apply grid grid-cols-[260px_1fr] gap-[14px] }
+.card .big-avatar { @apply w-[72px] h-[72px] rounded-full text-2xl }
+.mini-stats { @apply flex gap-[14px] mt-4 }
+.card h2 { @apply text-xs font-bold m-0 mb-[14px] }
+.preferences { @apply grid gap-4 }
+.info-row { @apply flex items-center justify-between }
+.info-row span { @apply flex items-center gap-2 text-xs }
+
+.level-card { @apply flex items-center gap-[32px] p-6 }
+.level-ring { @apply w-[72px] h-[72px] rounded-full bg-green text-white grid place-items-center text-2xl font-extrabold flex-none }
+.level-card > div:last-child { @apply flex-1 }
+.level-card .xp { @apply text-xs text-muted }
+.badges { @apply grid grid-cols-4 gap-[10px] }
+.badge-card { @apply p-[14px] text-center }
+.badge-card.locked { @apply opacity-40 }
+.badge-card span { @apply block text-3xl mt-2 }
+.badge-card b { @apply block text-xs mt-2 }
+.badge-card p { @apply text-[10px] text-muted m-0 mt-[3px] leading-[1.4] }
+.card.history { @apply grid gap-2 }
+.history-icon { @apply w-[34px] h-[34px] rounded-[9px] grid place-items-center flex-none }
+.history-icon.h0 { @apply bg-mint text-green }
+.history-icon.h1 { @apply bg-[#fcf5e7] text-gold }
+.history-icon.h2 { @apply bg-[#f0e8fc] text-[#7c64c8] }
+.history-icon.h3 { @apply bg-[#fce8f0] text-[#c8648f] }
+
+.practice-layout { @apply grid grid-cols-2 gap-[14px] }
+.search { @apply w-full h-[36px] border border-line rounded-[8px] px-3 bg-surface text-ink text-xs }
+.surah-list { @apply grid grid-cols-2 gap-[6px] }
+.surah-list button { @apply border-0 bg-transparent text-left p-[10px] rounded-[10px] cursor-pointer }
+.surah-list button:hover { @apply bg-mint }
+.surah-list button.selected { @apply bg-[#e4f3eb] }
+.surah-list b { @apply block text-xs }
+.surah-list small { @apply text-[10px] text-muted }
+.card.picker, .card.settings-card { @apply max-h-[440px] overflow-y-auto }
+.selected-surah { @apply flex items-center gap-2 p-[10px_0] text-xs }
+.field-row { @apply flex items-center gap-[6px] }
+.field-label { @apply text-xs text-muted font-semibold }
+.segmented { @apply flex bg-[#f3f6f4] p-[3px] rounded-[8px] }
+.segmented.three > button { @apply flex-1 }
+.segmented button { @apply border-0 bg-transparent text-xs font-semibold text-muted min-h-[32px] px-3 rounded-[6px] cursor-pointer }
+.segmented button.active { @apply bg-surface text-ink }
+
+.player-head { @apply flex items-center gap-3 }
+.player-head h1 { @apply text-lg m-0 }
+.player-head .outline { @apply text-xs min-h-[34px] px-[12px] }
+.player-card { @apply text-center pt-[48px] px-[24px] pb-5 }
+.arabic { @apply text-[40px] leading-[1.8] font-arabic }
+.arabic.hidden-text { @apply text-muted }
+.ayah-number { @apply text-xs text-muted }
+.latin { @apply text-xs text-muted mt-2 leading-[1.7] }
+.meaning { @apply text-xs text-ink mt-2 leading-[1.7] }
+.timeline { @apply flex items-center gap-[6px] mt-5 }
+.timeline > div { @apply flex-1 h-[3px] rounded-full bg-line }
+.timeline .active { @apply bg-green }
+.controls { @apply flex items-center gap-[6px] mt-5 justify-center }
+.controls button { @apply w-[44px] h-[44px] grid place-items-center border border-line rounded-full bg-surface cursor-pointer text-muted }
+.play-main { @apply w-[56px]! h-[56px]! bg-green! text-white! border-green! }
+.player-options { @apply grid grid-cols-[1fr_1fr] gap-[10px] mt-5 }
+.mastery { @apply grid grid-cols-[1fr_auto] items-center gap-3 p-[14px_16px] mt-5 }
+.mastery button { @apply text-xs gap-[5px] px-[12px] py-[6px] }
+.mastery-0.active { @apply bg-[#fce8e8] text-[#c86464] border-[#f3c4c4] }
+.mastery-1.active { @apply bg-[#fcf5e7] text-gold border-[#efe3c4] }
+.mastery-2.active { @apply bg-mint text-green border-[#cfe7dc] }
+.primary.finish { @apply bg-deep w-full mt-5 }
+
+@media (max-width: 1000px) {
+  .sidebar { @apply -translate-x-full }
+  .sidebar.open { @apply translate-x-0 shadow-[10px_0_30px_#0002] }
+  .close-menu { @apply grid! }
+  .backdrop { @apply block fixed inset-0 border-0 bg-black/30 z-29 }
+  .main { @apply ml-0 }
+  .topbar { @apply justify-between }
+  .menu-btn, .mobile-logo { @apply grid }
+  .goals-grid { @apply grid-cols-3 }
+  .goal:last-child { @apply col-span-3 }
+  .badges { @apply grid-cols-3 }
+  .dashboard-grid { @apply grid-cols-1 }
+  .class-card { @apply max-w-none }
+  .practice-layout { @apply grid-cols-1 }
+  .profile-grid { @apply grid-cols-[260px_1fr] }
+  .bottom-nav { @apply fixed bottom-0 left-0 right-0 h-[67px] bg-surface border-t border-line flex z-25 pb-[env(safe-area-inset-bottom)] }
+  .bottom-nav button { @apply flex-1 border-0 bg-surface text-[#7d8c87] text-xs flex flex-col items-center justify-center gap-1 }
+  .bottom-nav button.active { @apply text-green }
+  .bottom-nav svg { @apply w-[19px] }
+  .bottom-nav span { @apply max-w-[64px] overflow-hidden }
+  .content { @apply pb-[95px] }
+}
+@media (max-width: 900px) {
+  .landing-hero { @apply flex-col text-center }
+  .landing-hero-copy { @apply max-w-none }
+  .landing-cta-row { @apply justify-center flex-wrap }
+  .landing-features { @apply grid-cols-2 }
+  .landing-steps { @apply grid-cols-1 }
+}
+@media (max-width: 860px) {
+  .auth-page { @apply flex-col }
+  .auth-visual { @apply flex-none min-h-0 h-[220px] rounded-[0_0_28px_28px] p-[26px_28px] }
+  .auth-visual-art { @apply hidden }
+  .auth-visual-copy p { @apply text-[15px] }
+  .auth-form-panel { @apply min-h-0 p-[28px_24px_48px] -mt-6 }
+  .auth-form-panel .back-link { @apply static mb-[10px] }
+  .auth-form-panel .auth-card { @apply bg-surface rounded-[20px] p-[24px_20px] }
+}
+@media (max-width: 820px) {
+  .landing-hero h1 { @apply text-[32px] }
+  .landing-features { @apply grid-cols-3 }
+  .auth-form-panel .auth-card h1 { @apply text-[22px] }
+  .arabic { @apply text-[36px] }
+}
+@media (max-width: 680px) {
+  .topbar { @apply h-[62px] px-[14px] }
+  .role-select svg:first-child { @apply hidden }
+  .content { @apply p-[24px_14px_95px] }
+  .welcome { @apply items-start }
+  .welcome h1, .page-title h1, .player-head h1 { @apply text-xl }
+  .welcome p { @apply max-w-[230px] }
+  .streak { @apply p-[7px] }
+  .streak small { @apply hidden }
+  .hero-card { @apply p-[27px_23px] min-h-[250px] }
+  .hero-copy { @apply w-3/4 }
+  .hero-card h2 { @apply text-xl }
+  .hero-art { @apply right-[-15%] opacity-50 }
+  .goals-grid, .two-col { @apply grid-cols-1 }
+  .goal:last-child { @apply col-auto }
+  .support { @apply items-start }
+  .support button { @apply text-[0] p-2 }
+  .surah-list { @apply grid-cols-1 }
+  .player-head { @apply items-start }
+  .player-head .outline { @apply text-[0] w-[42px] p-0 justify-center }
+  .player-card { @apply pt-[38px] px-[18px] pb-5 }
+  .arabic { @apply text-[32px] }
+  .player-options { @apply gap-[10px] flex-wrap }
+  .mastery { @apply block }
+  .mastery > div:last-child { @apply grid mt-3 }
+  .mastery button { @apply justify-center }
+  .level-card { @apply p-5 flex-wrap }
+  .level-card .xp { @apply ml-auto }
+  .stat-grid { @apply grid-cols-2 }
+  .badges { @apply grid-cols-2 }
+  .dash-top { @apply block }
+  .dash-top > .primary { @apply mb-[15px] }
+  .table-card { @apply p-[14px] }
+  .table-card .card-head { @apply block }
+  .compact { @apply mt-[10px] }
+  .table-header { @apply hidden }
+  .table-row { @apply grid-cols-2 gap-[10px] }
+  .table-row > span:nth-child(3), .table-row > span:nth-child(4) { @apply justify-start }
+  .profile-grid { @apply grid-cols-1 }
+  .toast { @apply right-[14px] bottom-20 left-[14px] }
+  .week-chart { @apply gap-[7px] }
+}
+@media (max-width: 560px) {
+  .landing-hero h1 { @apply text-[28px] }
+  .landing-features { @apply grid-cols-1 }
+  .landing-nav-actions .link-btn { @apply hidden }
+}
+}
+
+.dark\:bg-surface-dark { background: #182420 }
+
+[data-theme="dark"] .sidebar-tip { background: #22321f; border-color: #3a4d33; color: #e3d6ab }
+[data-theme="dark"] .streak > span, [data-theme="dark"] .badge-card span.orange, [data-theme="dark"] .count, [data-theme="dark"] .attention { background: #3a2418; color: #f0a683 }
+[data-theme="dark"] .goal-icon.gold, [data-theme="dark"] .badge-card span.gold { background: #3a2f14; color: #e7c25f }
+[data-theme="dark"] .goal-icon.purple, [data-theme="dark"] .badge-card span.purple { background: #2a2438; color: #b39ee8 }
+[data-theme="dark"] .task-icon.blue { background: #1c2b36; color: #84b3d6 }
+[data-theme="dark"] .support { background: #241d13; border-color: #4a3a1f }
+[data-theme="dark"] .support p { color: #d8cdb8 }
+[data-theme="dark"] .mastery-0.active { background: #3a2418; color: #f0a683 }
+[data-theme="dark"] .mastery-1.active { background: #3a2f14; color: #e7c25f }
+[data-theme="dark"] .auth-error { background: #3a2418; color: #f0a683; border-color: #4a3327 }
+[data-theme="dark"] .search, [data-theme="dark"] .segmented, [data-theme="dark"] .controls button, [data-theme="dark"] .profile-mini, [data-theme="dark"] .assignment button, [data-theme="dark"] .surah-list button.selected, [data-theme="dark"] .selected-surah, [data-theme="dark"] .auth-tabs { background: #101c18 }
+[data-theme="dark"] .toggle { background: #2c3d36 }
+[data-theme="dark"] .sidebar nav button.active, [data-theme="dark"] .help:hover { background: #101c18 }
+[data-theme="dark"] .landing { background: #0e1613 }

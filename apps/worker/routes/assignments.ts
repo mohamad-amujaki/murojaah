@@ -1,7 +1,7 @@
 import { eq, inArray, or } from "drizzle-orm";
 import { assignments, classMembers, classes } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
+import { json, readJsonBody } from "../lib/http";
 import { requireAuth, requireRole } from "../lib/guards";
 import { insertReturning } from "../lib/db-helpers";
 
@@ -11,7 +11,7 @@ export const handleCreateAssignment: RouteHandler = async (request, url, env, ct
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const classId = body?.classId != null ? Number(body.classId) : null;
   const studentId = body?.studentId != null ? Number(body.studentId) : null;
   const surahId = Number(body?.surahId);

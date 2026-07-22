@@ -10,17 +10,15 @@ import type { StudentWithClasses } from "../lib/api";
 import { calculateAge } from "../lib/age";
 import { useAuth } from "../lib/auth-context";
 import type { Role } from "../types";
-
-const ROLE_LABEL_ID: Record<string, string> = { student: "Murid", teacher: "Guru", parent: "Orang Tua", admin: "Admin" };
+import { ROLE_LABEL, initials } from "../lib/constants";
 
 function ProfileRow({ user, extra, onEdit }: { user: PublicUser; extra?: string; onEdit: () => void }) {
-  const initials = user.displayName.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();
   return <div className="table-row" key={user.id}>
-    <span><i className="avatar">{initials}</i><span><b>{user.displayName}</b>
+    <span><i className="avatar">{initials(user.displayName)}</i><span><b>{user.displayName}</b>
       {user.birthDate && <small className="child-meta">{calculateAge(user.birthDate)} tahun • {user.gender==="P"?"Perempuan":"Laki-laki"}</small>}
       {!user.birthDate && <small className="child-meta">Data lahir belum diisi</small>}
     </span></span>
-    <span>{extra ?? ROLE_LABEL_ID[user.role]}</span>
+    <span>{extra ?? ROLE_LABEL[user.role]}</span>
     <span>{user.dailyTarget} menit/hari</span>
     <span><button className="outline" type="button" onClick={onEdit}><Pencil/> Ubah</button></span>
   </div>;
@@ -75,7 +73,7 @@ function AdminUsersView({ notify }: { notify: (s: string) => void }) {
 
   return <section className="card table-card">
     <div className="card-head">
-      <div><h3>Semua Pengguna</h3><p>{users.length} pengguna{roleFilter?` (${ROLE_LABEL_ID[roleFilter]})`:""}</p></div>
+      <div><h3>Semua Pengguna</h3><p>{users.length} pengguna{roleFilter?` (${ROLE_LABEL[roleFilter]})`:""}</p></div>
       <select value={roleFilter} onChange={e=>setRoleFilter(e.target.value)}>
         <option value="">Semua peran</option>
         <option value="student">Murid</option>

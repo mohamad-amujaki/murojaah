@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { getDb } from "@murojaah/db/client";
 import { ayahProgress, ayahs, practiceSessions, surahs, xpLedger } from "@murojaah/db";
+import { computeStreak } from "./streak";
 
 type Db = ReturnType<typeof getDb>;
 const XP_PER_LEVEL = 200;
@@ -15,13 +16,7 @@ export async function computeUserStats(db: Db, userId: number) {
   const totalRepetitions = sessionsRows.reduce((sum, s) => sum + s.loops, 0);
   const totalDurationSeconds = sessionsRows.reduce((sum, s) => sum + s.duration, 0);
 
-  const dates = new Set(sessionsRows.map(s => (s.completedAt ?? "").slice(0, 10)));
-  let streak = 0;
-  const cursor = new Date();
-  while (dates.has(cursor.toISOString().slice(0, 10))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
+  const streak = computeStreak(sessionsRows.map(s => s.completedAt ?? ""));
 
   const masteredRows = await db.select({ id: ayahProgress.id }).from(ayahProgress).where(eq(ayahProgress.userId, userId));
   const ayahsMastered = masteredRows.length;

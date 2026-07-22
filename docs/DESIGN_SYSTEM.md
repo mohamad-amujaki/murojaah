@@ -1,10 +1,10 @@
-# Design System — HafizAyat
+# Design System — Murojaah
 
-Sumber: [src/styles.css](../src/styles.css), [index.html](../index.html). Styling murni CSS kustom (tanpa komponen desain terpisah/Storybook); dokumen ini menstandarkan token yang sudah dipakai di kode agar konsisten saat menambah UI baru.
+Sumber: [apps/web/src/styles.css](../apps/web/src/styles.css), [apps/web/index.html](../apps/web/index.html). Styling murni CSS kustom (tanpa komponen desain terpisah/Storybook); dokumen ini menstandarkan token yang sudah dipakai di kode agar konsisten saat menambah UI baru.
 
 ## 1. Filosofi
 - Hangat, tenang, "islami-modern": hijau tua sebagai warna identitas, aksen emas untuk pencapaian/highlight, krem sebagai latar netral.
-- Kepadatan informasi tinggi tapi rapi (dashboard, kartu statistik) dengan tipografi kecil (9–13px pada teks sekunder) dan white space konsisten lewat border-radius besar (10–22px).
+- Kepadatan informasi tinggi tapi rapi (dashboard, kartu statistik) dengan tipografi kecil (minimum 12px pada teks sekunder, lihat §3) dan white space konsisten lewat border-radius besar (10–22px).
 - Animasi halus, dihormati preferensi pengguna (`prefers-reduced-motion` mematikan semua animasi/transisi).
 
 ## 2. Warna
@@ -18,7 +18,7 @@ Didefinisikan sebagai CSS custom properties di `:root`:
 | `--cream` | `#f8f7f2` | Latar belakang utama aplikasi |
 | `--gold` | `#e7aa33` | Aksen pencapaian/XP/highlight |
 | `--ink` | `#18332c` | Warna teks utama |
-| `--muted` | `#70817c` | Teks sekunder/deskripsi |
+| `--muted` | `#5c6b66` | Teks sekunder/deskripsi *(diperbarui 2026-07-21 dari `#70817c` — versi lama gagal WCAG AA, rasio kontras 3.8:1 di atas `--cream`; versi baru ≈5.8:1)* |
 | `--line` | `#e2e9e5` | Border/divider |
 
 Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — kandidat token baru bila dipakai berulang):
@@ -31,7 +31,7 @@ Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — ka
 ## 3. Tipografi
 - Font UI: **Manrope** (400/500/600/700/800), fallback `system-ui, sans-serif`.
 - Font Arab: **Noto Naskh Arabic** (500/600), dipakai khusus di kelas `.arabic` untuk teks ayat.
-- Skala umum: judul halaman 22–29px (`h1`), judul kartu 13–17px (`h2`/`h3`), body/label 9–13px, mikro-copy (eyebrow, badge count) 7–10px dengan letter-spacing lebar (1–1.5px) dan huruf kapital.
+- Skala umum *(diperbarui 2026-07-21 — Lighthouse "legible font sizes" mensyaratkan minimum 12px)*: judul halaman 22–29px (`h1`), judul kartu 13–17px (`h2`/`h3`), body/label 12–13px, mikro-copy (eyebrow, badge count) tetap **minimum 12px** dengan letter-spacing lebar (1–1.5px) dan huruf kapital untuk tetap terasa "kecil" tanpa turun di bawah ambang keterbacaan.
 - Teks Arab: `font-size: 40px` (28–32px di layar sempit), `line-height: 2` untuk keterbacaan tajwid.
 
 ## 4. Spacing & Radius
@@ -75,7 +75,8 @@ Container konten dibatasi `max-width: 1280px`, padding horizontal responsif `5vw
 ## 9. Aksesibilitas
 - Semua tombol ikon-saja punya `aria-label` (mis. "Tutup menu", "Ayat sebelumnya", "Notifikasi").
 - Focus ring kustom: outline emas 3px dengan opacity, `outline-offset: 2px`, diterapkan ke `button`, `input`, `select`.
-- Kontras: teks utama `--ink` (#18332c) di atas `--cream` (#f8f7f2) — rasio tinggi; teks muted digunakan hanya untuk info sekunder, bukan konten esensial.
+- Kontras: teks utama `--ink` (#18332c) di atas `--cream` (#f8f7f2) — rasio tinggi; teks muted (`--muted`, WCAG AA ✅) digunakan hanya untuk info sekunder, bukan konten esensial.
+- Mode gelap: `[data-theme="dark"]` di `:root` mendefinisikan ulang semua warna di atas (lihat blok `[data-theme="dark"]` di `styles.css`), toggle tersedia di topbar & Profil, tersimpan di `localStorage`.
 - Bahasa dokumen: `lang="id"` di `index.html`.
 
 ## 10. Prinsip Saat Menambah UI Baru

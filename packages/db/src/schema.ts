@@ -39,19 +39,6 @@ export const sessions = mysqlTable("mu_sessions", {
   expiresAt: text("expires_at").notNull(),
   createdAt: nowText("created_at"),
 });
-export const refreshTokens = mysqlTable("mu_refresh_tokens", {
-  token: varchar("token", { length: 128 }).primaryKey(),
-  userId: int("user_id").notNull().references(() => users.id),
-  expiresAt: text("expires_at").notNull(),
-  createdAt: nowText("created_at"),
-  deviceInfo: text("device_info"),
-});
-export const passwordResetTokens = mysqlTable("mu_password_reset_tokens", {
-  token: varchar("token", { length: 128 }).primaryKey(),
-  userId: int("user_id").notNull().references(() => users.id),
-  expiresAt: text("expires_at").notNull(),
-  createdAt: nowText("created_at"),
-});
 export const surahs = mysqlTable("mu_surahs", { id: int("id").primaryKey(), latinName: text("latin_name").notNull(), arabicName: text("arabic_name").notNull(), meaning: text("meaning").notNull(), ayahCount: int("ayah_count").notNull() });
 export const ayahs = mysqlTable("mu_ayahs", { id: int("id").autoincrement().primaryKey(), surahId: int("surah_id").notNull().references(()=>surahs.id), number: int("number").notNull(), arabic: text("arabic").notNull(), transliteration: text("transliteration"), translation: text("translation").notNull(), audioUrl: text("audio_url").notNull() }, t=>[uniqueIndex("ayah_surah_number").on(t.surahId,t.number)]);
 export const classes = mysqlTable("mu_classes", { id:int("id").autoincrement().primaryKey(), name:text("name").notNull(), teacherId:int("teacher_id").notNull().references(()=>users.id), joinCode:varchar("join_code", { length: 20 }).notNull().unique(), status:varchar("status", { length: 20 }).notNull().default("active") });

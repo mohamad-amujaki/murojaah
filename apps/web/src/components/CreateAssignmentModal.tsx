@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Check, ChevronRight, Search } from "lucide-react";
+import { BookOpen, Check } from "lucide-react";
 import { Modal } from "./Modal";
+import { SurahPicker } from "./SurahPicker";
+import { SegmentedControl } from "./SegmentedControl";
 import { createAssignment, getSurahs } from "../lib/api";
 import type { ClassResponse, SurahResponse } from "../lib/api";
 
@@ -36,20 +38,12 @@ export function CreateAssignmentModal({ classes, selectedClass, onClose, notify 
     }
   };
 
-  const filtered = surahList.filter(s => s.latinName.toLowerCase().includes(query.toLowerCase()));
-
   return <Modal onClose={onClose}>
     <form className="card auth-card assignment-modal" aria-label="Buat tugas baru" onSubmit={submit}>
       <div className="brand"><span className="brandmark"><BookOpen /></span><span>Buat Tugas Baru</span></div>
       {classes.length > 1 && <label>Kelas<select value={classId} onChange={e=>setClassId(+e.target.value)}>{classes.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
 
-      {!surah && <>
-        <label className="search"><Search/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cari surah..." /></label>
-        <div className="surah-list modal-surah-list">
-          {filtered.slice(0,30).map(s=><button type="button" key={s.id} onClick={()=>pickSurah(s)}><span>{s.id}</span><div><b>{s.latinName}</b><small>{s.meaning} • {s.ayahCount} ayat</small></div><ChevronRight/></button>)}
-          {filtered.length===0 && <p className="empty-state">Surah tidak ditemukan.</p>}
-        </div>
-      </>}
+      {!surah && <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} onSelect={pickSurah} limit={30} className="modal-surah-list" />}
 
       {surah && <>
         <div className="selected-surah"><BookOpen/><div><small>SURAH DIPILIH</small><b>{surah.latinName}</b></div><span>{surah.ayahCount} ayat</span><button type="button" className="link-btn" onClick={()=>setSurah(null)}>Ganti</button></div>
@@ -59,7 +53,7 @@ export function CreateAssignmentModal({ classes, selectedClass, onClose, notify 
           <label>Sampai ayat<select value={end} onChange={e=>setEnd(+e.target.value)}>{Array.from({length:surah.ayahCount},(_,i)=>i+1).filter(n=>n>=start).map(n=><option key={n}>{n}</option>)}</select></label>
         </div>
         <label className="field-label">Jumlah pengulangan</label>
-        <div className="segmented">{["1","3","5","10"].map(n=><button type="button" className={loops===n?"active":""} onClick={()=>setLoops(n)} key={n}>{n}×</button>)}</div>
+        <SegmentedControl options={["1","3","5","10"]} value={loops} onChange={setLoops} />
         <label>Tenggat (opsional)<input type="date" value={dueAt} onChange={e=>setDueAt(e.target.value)} /></label>
       </>}
 

@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@murojaah/db/client";
-import { credentials, parentChildren, passwordResetTokens, sessions, users } from "@murojaah/db";
+import { credentials, parentChildren, sessions, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
+import { json, readJsonBody } from "../lib/http";
 import { requireAuth, requireDb } from "../lib/guards";
 import {
   clearSessionCookieHeader, generateSessionToken, hashPassword,
@@ -10,7 +10,6 @@ import {
 } from "../lib/auth";
 import { publicUser } from "../lib/profile";
 import { getClientIp, rateLimit, rateLimitResponse } from "../lib/rate-limit";
-import { emailConfigFromEnv, RESET_EMAIL_HTML, sendEmail } from "../lib/email";
 import { insertReturning } from "../lib/db-helpers";
 
 const REGISTERABLE_ROLES = ["student", "teacher", "parent"] as const;
@@ -27,7 +26,7 @@ export const handleRegister: RouteHandler = async (request, url, env) => {
   if (guard instanceof Response) return guard;
   const { db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const displayName = String(body?.displayName ?? "").trim();
   const email = String(body?.email ?? "").trim().toLowerCase();
   const password = String(body?.password ?? "");
@@ -60,7 +59,7 @@ export const handleLogin: RouteHandler = async (request, url, env) => {
   if (guard instanceof Response) return guard;
   const { db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const email = String(body?.email ?? "").trim().toLowerCase();
   const password = String(body?.password ?? "");
   if (!email || !password) return json({ error: "Email dan kata sandi wajib diisi." }, 400, {}, "no-store");
@@ -115,7 +114,7 @@ export const handleCreateChild: RouteHandler = async (request, url, env, ctx) =>
     return json({ error: "Hanya akun orang tua yang dapat menambah profil anak." }, 403, {}, "no-store");
   }
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const displayName = String(body?.displayName ?? "").trim();
   const gender = String(body?.gender ?? "");
   const birthDate = String(body?.birthDate ?? "");
@@ -141,7 +140,7 @@ export const handleSwitchProfile: RouteHandler = async (request, url, env, ctx) 
   if (guard instanceof Response) return guard;
   const { db } = guard;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await readJsonBody(request);
   const targetId = Number(body?.userId);
   if (!Number.isInteger(targetId)) return json({ error: "Profil tidak valid." }, 400, {}, "no-store");
 
@@ -152,62 +151,4 @@ export const handleSwitchProfile: RouteHandler = async (request, url, env, ctx) 
   await db.update(sessions).set({ activeUserId: targetId }).where(eq(sessions.token, ctx.sessionToken));
   const [user] = await db.select().from(users).where(eq(users.id, targetId)).limit(1);
   return json({ user: publicUser(user) }, 200, {}, "no-store");
-};
-
-export const handleForgotPassword: RouteHandler = async (request, url, env) => {
-  if (url.pathname !== "/api/auth/forgot-password" || request.method !== "POST") return null;
-  const ip = getClientIp(request);
-  const { allowed, retryAfterMs } = await rateLimit(env, ip, "/api/auth/forgot-password");
-  if (!allowed) return rateLimitResponse(retryAfterMs);
-  const guard = requireDb(env);
-  if (guard instanceof Response) return guard;
-  const { db } = guard;
-
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
-  const email = String(body?.email ?? "").trim().toLowerCase();
-  if (!email) return json({ error: "Email wajib diisi." }, 400, {}, "no-store");
-
-  const [cred] = await db.select().from(credentials).where(eq(credentials.email, email)).limit(1);
-  if (cred) {
-    const resetToken = generateSessionToken();
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    await db.insert(passwordResetTokens).values({ token: resetToken, userId: cred.userId, expiresAt });
-
-    const emailCfg = emailConfigFromEnv(env as unknown as Record<string, unknown>);
-    const resetUrl = `${url.origin}/reset-password?token=${resetToken}`;
-    const [user] = await db.select().from(users).where(eq(users.id, cred.userId)).limit(1);
-    await sendEmail(emailCfg, {
-      to: email,
-      subject: "Atur Ulang Kata Sandi — Murojaah",
-      html: RESET_EMAIL_HTML(resetUrl, user?.displayName ?? "Pengguna"),
-    });
-  }
-
-  return json({ message: "Jika email tersebut terdaftar, tautan reset sudah dikirim." }, 200, {}, "no-store");
-};
-
-export const handleResetPassword: RouteHandler = async (request, url, env) => {
-  if (url.pathname !== "/api/auth/reset-password" || request.method !== "POST") return null;
-  const guard = requireDb(env);
-  if (guard instanceof Response) return guard;
-  const { db } = guard;
-
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
-  const token = String(body?.token ?? "").trim();
-  const newPassword = String(body?.password ?? "");
-
-  if (!token || newPassword.length < 8) {
-    return json({ error: "Token atau kata sandi tidak valid. Kata sandi minimal 8 karakter." }, 400, {}, "no-store");
-  }
-
-  const [resetRow] = await db.select().from(passwordResetTokens).where(eq(passwordResetTokens.token, token)).limit(1);
-  if (!resetRow || new Date(resetRow.expiresAt).getTime() < Date.now()) {
-    return json({ error: "Tautan sudah kadaluarsa atau tidak valid." }, 400, {}, "no-store");
-  }
-
-  const passwordHash = await hashPassword(newPassword);
-  await db.update(credentials).set({ passwordHash }).where(eq(credentials.userId, resetRow.userId));
-  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
-
-  return json({ message: "Kata sandi berhasil diatur ulang. Silakan masuk." }, 200, {}, "no-store");
 };

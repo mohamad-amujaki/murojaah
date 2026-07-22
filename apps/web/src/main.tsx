@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./styles.css";
+import "./app.css";
 import { App, AppErrorBoundary } from "./App";
 import { AuthProvider } from "./lib/auth-context";
 import { initTheme } from "./lib/theme";

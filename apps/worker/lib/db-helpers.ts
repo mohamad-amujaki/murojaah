@@ -1,9 +1,18 @@
-import { eq } from "drizzle-orm";
+import { eq, type SQL } from "drizzle-orm";
 import type { AnyMySqlColumn, MySqlTable } from "drizzle-orm/mysql-core";
+import { json } from "./http";
 
 // ponytail: MySQL has no RETURNING clause — insert/update then re-select by id.
 // Every table these helpers touch has a plain auto-increment `id` column.
 type DbLike = { insert: Function; update: Function; select: Function };
+
+export async function findOrNotFound<T extends MySqlTable>(
+  db: DbLike, table: T, where: SQL, message: string,
+): Promise<T["$inferSelect"] | Response> {
+  const [row] = await db.select().from(table).where(where).limit(1);
+  if (!row) return json({ error: message }, 404, {}, "no-store");
+  return row;
+}
 
 export async function insertReturning<T extends MySqlTable & { id: AnyMySqlColumn }>(
   db: DbLike, table: T, values: T["$inferInsert"],
