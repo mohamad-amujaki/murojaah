@@ -1,6 +1,6 @@
-import { BookOpen, Home, LayoutDashboard, Trophy, UserRound, Users } from "lucide-react";
+import { BookOpen, Home, Trophy, UserRound } from "lucide-react";
 
-export type Page = "home" | "practice" | "achievements" | "dashboard" | "children" | "profile";
+export type Page = "home" | "practice" | "achievements" | "profile";
 export type Role = "Murid" | "Guru" | "Orang Tua" | "Admin";
 export type Mastery = "Belum hafal" | "Perlu latihan" | "Sudah hafal";
 
@@ -21,12 +21,11 @@ export const surahs = [
 
 export const nav: { id: Page; label: string; icon: typeof Home }[] = [
   { id: "home", label: "Beranda", icon: Home }, { id: "practice", label: "Latihan", icon: BookOpen },
-  { id: "achievements", label: "Pencapaian", icon: Trophy }, { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "children", label: "Kelola Profil", icon: Users },
+  { id: "achievements", label: "Pencapaian", icon: Trophy },
   { id: "profile", label: "Profil", icon: UserRound }
 ];
 
-export const validPages: Page[] = ["home", "practice", "achievements", "dashboard", "children", "profile"];
+export const validPages: Page[] = ["home", "practice", "achievements", "profile"];
 export const pageFromHash = (): Page => {
   const value = location.hash.slice(1) as Page;
   return validPages.includes(value) ? value : "home";

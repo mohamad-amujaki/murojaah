@@ -16,15 +16,13 @@ import { ROLE_LABEL, ROLE_OPTIONS, initials } from "./lib/constants";
 const HomePage = lazy(() => import("./pages/Home").then(m => ({ default: m.HomePage })));
 const PracticePage = lazy(() => import("./pages/Practice").then(m => ({ default: m.PracticePage })));
 const Achievements = lazy(() => import("./pages/Achievements").then(m => ({ default: m.Achievements })));
-const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const Profile = lazy(() => import("./pages/Profile").then(m => ({ default: m.Profile })));
-const ChildProfiles = lazy(() => import("./pages/ChildProfiles").then(m => ({ default: m.ChildProfiles })));
 
 export default function AuthenticatedApp() {
   const { user, loginUser, children: kids, isActingAsChild, logout, switchProfile, updateProfile } = useAuth();
   if (!user || !loginUser) return null;
   const role: Role = (ROLE_LABEL[user.role] as Role) ?? "Murid";
-  const visibleNav = nav.filter(item => item.id !== "children" || role !== "Murid");
+  const visibleNav = nav;
 
   const [page, setPage] = useState<Page>(pageFromHash);
   const toastTimer = useRef<number | undefined>(undefined);
@@ -90,11 +88,9 @@ export default function AuthenticatedApp() {
       </header>
       <div className="content">
         <Suspense fallback={null}>
-          {page === "home" && <HomePage go={go} />}
+          {page === "home" && <HomePage go={go} notify={notify} />}
           {page === "practice" && <PracticePage notify={notify} />}
           {page === "achievements" && <Achievements />}
-          {page === "dashboard" && <Dashboard role={role} notify={notify} />}
-          {page === "children" && role !== "Murid" && <ChildProfiles role={role} notify={notify} />}
           {page === "profile" && <Profile notify={notify} />}
         </Suspense>
       </div>

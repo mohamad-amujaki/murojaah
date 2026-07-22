@@ -1,15 +1,143 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Check, ChevronRight, Flame, Heart, Play, Repeat2, Sparkles, Target, Zap } from "lucide-react";
+import { Award, BarChart3, BookOpen, Check, ChevronRight, Flame, Heart, Play, Plus, Repeat2, Sparkles, Target, Trophy, Users, Zap } from "lucide-react";
 import { Goal } from "../components/Goal";
+import { Stat } from "../components/Stat";
+import { StatsTable } from "../components/StatsTable";
+import { CreateClassModal } from "../components/CreateClassModal";
+import { CreateAssignmentModal } from "../components/CreateAssignmentModal";
+import { Modal } from "../components/Modal";
+import { SendEncouragementModal } from "../components/SendEncouragementModal";
 import type { StatsResponse } from "@murojaah/shared";
-import { getAssignments, getEncouragements, getMyStats, getSuggestion, getSurahs, markEncouragementRead } from "../lib/api";
-import type { AssignmentResponse, EncouragementResponse, Suggestion, SurahResponse } from "../lib/api";
+import type { AdminStatsResponse, ClassMember, ClassResponse, AssignmentResponse, EncouragementResponse, Suggestion, SurahResponse } from "../lib/api";
+import { getAdminStats, getAssignments, getChildStats, getClassMembers, getClasses, getEncouragements, getMyStats, getSuggestion, getSurahs, markEncouragementRead, removeClassMember } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
-import type { Page } from "../types";
+import { ROLE_LABEL } from "../lib/constants";
+import { calculateAge } from "../lib/age";
+import type { Page, Role } from "../types";
 
 const formatDue = (iso: string | null) => iso ? new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "long" }) : "Tanpa tenggat";
 
-export function HomePage({ go }: { go: (p: Page) => void }) {
+function StudentSection({ stats }: { stats: StatsResponse | null }) {
+  return <div className="stat-grid" style={{ marginTop: 20 }}>
+    <Stat icon={Flame} value={`${stats?.streak??0} hari`} label="Streak saat ini"/>
+    <Stat icon={BookOpen} value={`${stats?.ayahsMastered??0} ayat`} label="Sudah dikuasai"/>
+    <Stat icon={Repeat2} value={`${stats?.totalRepetitions??0}×`} label="Total pengulangan"/>
+    <Stat icon={Trophy} value={`Level ${stats?.level??1}`} label={`${stats?.totalXp??0} XP total`}/>
+  </div>;
+}
+
+function TeacherSection({ notify }: { notify: (s: string) => void }) {
+  const [classes,setClasses]=useState<ClassResponse[]>([]);
+  const [selected,setSelected]=useState<ClassResponse|null>(null);
+  const [members,setMembers]=useState<ClassMember[]>([]);
+  const [showCreateClass,setShowCreateClass]=useState(false);
+  const [showCreateAssignment,setShowCreateAssignment]=useState(false);
+  const [confirmRemove,setConfirmRemove]=useState<{id:number;name:string}|null>(null);
+
+  const loadClasses = async () => {
+    const res = await getClasses();
+    setClasses(res.classes);
+    setSelected(current => current ?? res.classes[0] ?? null);
+    return res.classes;
+  };
+  useEffect(()=>{ loadClasses().catch(()=>undefined); },[]);
+  useEffect(()=>{
+    if(!selected){ setMembers([]); return; }
+    getClassMembers(selected.id).then(res=>setMembers(res.members)).catch(()=>setMembers([]));
+  },[selected]);
+
+  return <section className="dashboard-grid" style={{marginTop:24}}>
+    <div className="dash-top">
+      <div className="stat-grid">
+        <Stat icon={Users} value={String(classes.length)} label="Kelas dikelola"/>
+        <Stat icon={BookOpen} value={String(members.length)} label="Murid di kelas ini"/>
+        <Stat icon={Flame} value={members.length?`${Math.round(members.reduce((s,m)=>s+m.streak,0)/members.length)} hari`:"0 hari"} label="Rata-rata streak"/>
+        <Stat icon={Award} value={String(members.reduce((s,m)=>s+m.ayahsMastered,0))} label="Total ayat dikuasai"/>
+      </div>
+      <button className="primary" disabled={!selected} onClick={()=>setShowCreateAssignment(true)}><Plus/> Buat tugas</button>
+    </div>
+    <div className="card table-card">
+      <div className="card-head"><div><h3>Progres murid</h3><p>{selected?selected.name:"Belum ada kelas"}</p></div>
+        {classes.length>1 && <select value={selected?.id} onChange={e=>setSelected(classes.find(c=>c.id===+e.target.value)??null)}>{classes.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>}
+      </div>
+      {!selected && <p className="empty-state">Kamu belum punya kelas. Buat kelas untuk mulai memantau murid.</p>}
+      {selected && members.length===0 && <p className="empty-state">Belum ada murid yang bergabung. Bagikan kode: <b>{selected.joinCode}</b></p>}
+      {members.length>0 && <StatsTable nameHeader="MURID" rows={members.map(m=>({
+        id: m.id, name: m.displayName, ayahsMastered: m.ayahsMastered, streak: m.streak, totalXp: m.totalXp,
+        action: <button className="outline" style={{color:"#b8583d",borderColor:"#f0d0c4",minHeight:30,padding:"0 8px"}} onClick={()=>setConfirmRemove({id:m.id,name:m.displayName})}>Hapus</button>,
+      }))} />}
+    </div>
+    <aside className="card class-card">
+      <div className="card-head"><div><h3>Kelas kamu</h3><p>{classes.length} kelas aktif</p></div><BarChart3/></div>
+      <ul>{classes.map(c=><li key={c.id}><i className={c.id===selected?.id?"green-dot":"gray-dot"}/>{c.name}<b>{c.joinCode}</b></li>)}
+        {classes.length===0 && <li>Belum ada kelas</li>}
+      </ul>
+      <button className="outline full" onClick={()=>setShowCreateClass(true)}><Plus/> Buat kelas baru</button>
+    </aside>
+    {showCreateClass && <CreateClassModal onClose={()=>setShowCreateClass(false)} onCreated={cls=>{loadClasses(); setSelected(cls);}}/>}
+    {showCreateAssignment && selected && <CreateAssignmentModal classes={classes} selectedClass={selected} onClose={()=>setShowCreateAssignment(false)} notify={notify}/>}
+    {confirmRemove && <Modal onClose={()=>setConfirmRemove(null)}><div className="card" style={{maxWidth:360,margin:"0 auto",textAlign:"center"}}><h3 style={{margin:"0 0 8px"}}>Hapus {confirmRemove.name}?</h3><p className="text-xs text-muted" style={{margin:"0 0 16px"}}>Murid akan dihapus dari kelas ini. Data latihannya tetap tersimpan.</p><div style={{display:"flex",gap:8,justifyContent:"center"}}><button className="outline" onClick={()=>setConfirmRemove(null)}>Batal</button><button className="primary" style={{background:"#b8583d"}} onClick={()=>{removeClassMember(selected!.id,confirmRemove.id).then(()=>{getClassMembers(selected!.id).then(r=>setMembers(r.members));notify(`${confirmRemove.name} dihapus dari kelas.`);}).catch(()=>notify("Gagal menghapus murid.")).finally(()=>setConfirmRemove(null))}}>Hapus</button></div></div></Modal>}
+  </section>;
+}
+
+function ParentSection({ notify }: { notify: (s: string) => void }) {
+  const { children: kids } = useAuth();
+  const [childStats,setChildStats]=useState<Record<number,StatsResponse>>({});
+  const [showEncouragement,setShowEncouragement]=useState(false);
+  useEffect(()=>{
+    if (kids.length === 0) return;
+    Promise.all(kids.map(child =>
+      getChildStats(child.id).then(stats => ({ childId: child.id, stats })).catch(() => null)
+    )).then(results => {
+      const map: Record<number, StatsResponse> = {};
+      results.forEach(r => { if (r) map[r.childId] = r.stats; });
+      setChildStats(map);
+    });
+  },[kids]);
+  const totalXp = Object.values(childStats).reduce((s,st)=>s+st.totalXp,0);
+
+  return <section style={{marginTop:24}}>
+    <div className="dash-top">
+      <div className="stat-grid">
+        <Stat icon={Users} value={String(kids.length)} label="Profil anak"/>
+        <Stat icon={Trophy} value={String(totalXp)} label="Total XP anak"/>
+        <Stat icon={Flame} value={kids.length?`${Math.round(Object.values(childStats).reduce((s,st)=>s+st.streak,0)/Math.max(Object.keys(childStats).length,1))} hari`:"0 hari"} label="Rata-rata streak"/>
+        <Stat icon={BookOpen} value={String(Object.values(childStats).reduce((s,st)=>s+st.ayahsMastered,0))} label="Total ayat dikuasai"/>
+      </div>
+    </div>
+    <section className="card table-card" style={{marginTop:20}}>
+      <div className="card-head"><div><h3>Progres anak</h3><p>Terakhir diperbarui hari ini</p></div></div>
+      {kids.length===0 && <p className="empty-state">Belum ada profil anak. Tambah lewat menu profil di sidebar.</p>}
+      {kids.length>0 && <StatsTable nameHeader="ANAK" rows={kids.map(child=>{const s=childStats[child.id];return {
+        id: child.id, name: child.displayName,
+        meta: child.birthDate && <small className="child-meta">{calculateAge(child.birthDate)} tahun • {child.gender==="P"?"Perempuan":"Laki-laki"}</small>,
+        ayahsMastered: s?.ayahsMastered??"\u2026", streak: s?.streak??"\u2026", totalXp: s?.totalXp??"\u2026",
+      };})} />}
+    </section>
+    <button className="primary" disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Plus/> Kirim dukungan</button>
+    {showEncouragement && <SendEncouragementModal kids={kids} onClose={()=>setShowEncouragement(false)} notify={notify}/>}
+  </section>;
+}
+
+function AdminSection() {
+  const [stats,setStats]=useState<AdminStatsResponse|null>(null);
+  useEffect(()=>{ getAdminStats().then(setStats).catch(()=>setStats(null)); },[]);
+  return <section style={{marginTop:24}}>
+    <div className="stat-grid">
+      <Stat icon={Users} value={String(stats?.totalUsers??0)} label="Total pengguna"/>
+      <Stat icon={BookOpen} value={String(stats?.totalStudents??0)} label="Murid"/>
+      <Stat icon={Target} value={String(stats?.totalTeachers??0)} label="Guru"/>
+      <Stat icon={Award} value={String(stats?.totalParents??0)} label="Orang tua"/>
+    </div>
+    <div className="stat-grid" style={{marginTop:20}}>
+      <Stat icon={Trophy} value={String(stats?.totalXpAwarded??0)} label="Total XP diberikan"/>
+      <Stat icon={Repeat2} value={String(stats?.totalPracticeSessions??0)} label="Total sesi latihan"/>
+      <Stat icon={Users} value={String(stats?.totalClasses??0)} label="Total kelas"/>
+    </div>
+  </section>;
+}
+
+export function HomePage({ go, notify }: { go: (p: Page) => void; notify: (s: string) => void }) {
   const { user } = useAuth();
   const firstName = user?.displayName.split(" ")[0] ?? "";
   const [assignments, setAssignments] = useState<AssignmentResponse[]>([]);
@@ -48,6 +176,7 @@ export function HomePage({ go }: { go: (p: Page) => void }) {
   const hasPracticeHistory = stats && (stats.totalDurationSeconds > 0 || stats.totalRepetitions > 0);
   const isNewUser = loaded && !hasPracticeHistory;
   const streakCount = stats?.streak ?? 0;
+  const role: Role = (ROLE_LABEL[user?.role ?? "student"] as Role) ?? "Murid";
 
   return <>
     <section className="welcome"><div><span className="eyebrow">{todayLabel}</span><h1>Assalamu'alaikum, {firstName}!</h1><p>{isNewUser ? "Siap memulai perjalanan hafalan? Setup-nya cuma semenit." : "Siap menambah hafalan hari ini? Kamu hebat karena terus berusaha."}</p></div>
@@ -70,7 +199,11 @@ export function HomePage({ go }: { go: (p: Page) => void }) {
         </div>
         <div className="card"><div className="card-head"><div><h3>Perjalanan minggu ini</h3><p>Terus konsisten!</p></div><button className="more" onClick={() => go("achievements")}>Detail</button></div><div className="week-chart">{(stats?.weeklyChart ?? []).map((d,i)=>{const maxMin=Math.max(...(stats?.weeklyChart??[]).map(w=>w.minutes),1);const pct=Math.max(3,(d.minutes/maxMin)*100);return <div key={i}><span className={i===new Date().getDay()?"today":""} style={{height:`${pct}%`}}>{d.minutes>0&&<i>{d.minutes}m</i>}</span><small>{d.day}</small></div>})}</div><div className="week-summary"><span><b>{stats?.weeklyMinutes??0}</b><small>Menit latihan</small></span><span><b>{stats?.weeklyRepetitions??0}</b><small>Ayat diulang</small></span><span><b>+{stats?.weeklyXp??0}</b><small>XP didapat</small></span></div></div>
       </section>
+      {role === "Murid" && <StudentSection stats={stats} />}
     </>}
     {latestEncouragement && <section className="support"><div className="parent-avatar">{latestEncouragement.parentName[0]}</div><div><span><Heart /> PESAN DARI {latestEncouragement.parentName.toUpperCase()}</span><p>"{latestEncouragement.message}"</p></div></section>}
+    {role === "Guru" && <TeacherSection notify={notify} />}
+    {role === "Orang Tua" && <ParentSection notify={notify} />}
+    {role === "Admin" && <AdminSection />}
   </>;
 }
