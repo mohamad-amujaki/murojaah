@@ -13,7 +13,7 @@ import type { Role } from "../types";
 import { ROLE_LABEL, initials } from "../lib/constants";
 
 function ProfileRow({ user, extra, onEdit }: { user: PublicUser; extra?: string; onEdit: () => void }) {
-  return <div className="table-row" key={user.id}>
+  return <div className="tbl-row" key={user.id}>
     <span><i className="avatar">{initials(user.displayName)}</i><span><b>{user.displayName}</b>
       {user.birthDate && <small className="child-meta">{calculateAge(user.birthDate)} tahun • {user.gender==="P"?"Perempuan":"Laki-laki"}</small>}
       {!user.birthDate && <small className="child-meta">Data lahir belum diisi</small>}
@@ -32,7 +32,7 @@ function ParentChildrenView({ notify }: { notify: (s: string) => void }) {
     <div className="card-head"><div><h3>Profil Anak</h3><p>{kids.length} profil anak terdaftar</p></div></div>
     {kids.length===0 && <p className="empty-state">Belum ada profil anak. Tambah lewat menu profil di sidebar.</p>}
     {kids.length>0 && <div className="student-table">
-      <div className="table-row table-header"><span>ANAK</span><span>PERAN</span><span>TARGET</span><span></span></div>
+      <div className="tbl-row table-header"><span>ANAK</span><span>PERAN</span><span>TARGET</span><span></span></div>
       {kids.map(child => <ProfileRow key={child.id} user={child} onEdit={()=>setEditing(child)} />)}
     </div>}
     {editing && <EditProfileModal user={editing} onClose={()=>setEditing(null)} onSave={async updates => {
@@ -53,7 +53,7 @@ function TeacherStudentsView({ notify }: { notify: (s: string) => void }) {
     <div className="card-head"><div><h3>Profil Murid</h3><p>{students.length} murid di kelas kamu</p></div></div>
     {students.length===0 && <p className="empty-state">Belum ada murid. Bagikan kode kelas agar murid bisa bergabung.</p>}
     {students.length>0 && <div className="student-table">
-      <div className="table-row table-header"><span>MURID</span><span>KELAS</span><span>TARGET</span><span></span></div>
+      <div className="tbl-row table-header"><span>MURID</span><span>KELAS</span><span>TARGET</span><span></span></div>
       {students.map(s => <ProfileRow key={s.id} user={s} extra={s.classNames.join(", ")} onEdit={()=>setEditing(s)} />)}
     </div>}
     {editing && <EditProfileModal user={editing} onClose={()=>setEditing(null)} onSave={async updates => {
@@ -84,7 +84,7 @@ function AdminUsersView({ notify }: { notify: (s: string) => void }) {
     </div>
     {users.length===0 && <p className="empty-state">Tidak ada pengguna.</p>}
     {users.length>0 && <div className="student-table">
-      <div className="table-row table-header"><span>PENGGUNA</span><span>PERAN</span><span>TARGET</span><span></span></div>
+      <div className="tbl-row table-header"><span>PENGGUNA</span><span>PERAN</span><span>TARGET</span><span></span></div>
       {users.map(u => <ProfileRow key={u.id} user={u} onEdit={()=>setEditing(u)} />)}
     </div>}
     {editing && <EditProfileModal user={editing} allowRoleEdit onClose={()=>setEditing(null)} onSave={async updates => {

@@ -14,10 +14,10 @@ export interface StatsTableRow {
 
 export function StatsTable({ nameHeader, rows }: { nameHeader: string; rows: StatsTableRow[] }) {
   const hasAction = rows.some(r => r.action);
-  return <div className="student-table">
-    <div className="table-row table-header"><span>{nameHeader}</span><span>AYAT DIKUASAI</span><span>STREAK</span><span>XP</span>{hasAction && <span></span>}</div>
-    {rows.map((r, i) => <div className="table-row" key={r.id}>
-      <span><i className={`avatar av${i % 4}`}>{initials(r.name)}</i><span><b>{r.name}</b>{r.meta}</span></span>
+  return <div className="stats-table">
+    <div className="tbl-row table-header"><span>{nameHeader}</span><span>AYAT DIKUASAI</span><span>STREAK</span><span>XP</span>{hasAction && <span></span>}</div>
+    {rows.map((r, i) => <div className="tbl-row" key={r.id}>
+      <span><i className={`avatar av${i % 4}`}>{initials(r.name)}</i><span className="flex flex-col"><b>{r.name}</b>{r.meta}</span></span>
       <span>{r.ayahsMastered} ayat</span>
       <span><Flame /> {r.streak} hari</span>
       <span>{r.totalXp} XP</span>
