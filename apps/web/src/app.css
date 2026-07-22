@@ -143,7 +143,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .landing-footer p { @apply w-full text-center text-xs text-muted mt-[10px] m-0 }
 
 .auth-page { @apply min-h-screen flex bg-cream }
-.auth-visual { @apply flex-[0_0_42%] min-h-screen relative overflow-hidden text-white bg-gradient-to-br from-[#0c735b] to-[#08503f] }
+.auth-visual { @apply flex-[0_0_42%] min-h-screen relative overflow-hidden text-white bg-gradient-to-br from-[#0c735b] to-[#08503f] flex flex-col p-12 }
 .auth-visual-brand { @apply flex items-center gap-[10px] text-lg font-extrabold z-[2] }
 .auth-visual-brand span:last-of-type span { @apply text-[#a9e6cf] }
 .auth-visual-brand .brandmark { @apply bg-[#ffffff26] }
@@ -156,8 +156,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .auth-visual-copy { @apply z-[2] }
 .auth-visual-copy p { @apply text-xl leading-[1.5] font-semibold max-w-[340px] m-0 }
 
-.auth-form-panel { @apply flex-1 flex flex-col justify-start px-[8vw] py-[90px_44px] relative min-h-screen }
-.auth-form-panel .back-link { @apply absolute top-8 left-[8vw] }
+.auth-form-panel { @apply flex-1 flex flex-col justify-center px-[8vw] py-[44px] relative min-h-screen }
+.auth-form-panel .back-link { @apply max-w-[420px] w-full mx-auto mb-6 }
 .auth-form-panel .auth-card { @apply max-w-[420px] mx-auto w-full p-0 gap-[14px] }
 .auth-form-panel .auth-card h1 { @apply text-[26px] m-0 mb-[2px] tracking-[-.5px] }
 .auth-form-panel .auth-subtitle { @apply text-xs text-muted m-0 mb-2 }
@@ -222,7 +222,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .progress { @apply flex-1 h-2 bg-[#eef6f2] rounded-full overflow-hidden }
 .progress > div { @apply h-full bg-green rounded-full }
 
-.section-title { @apply text-xs font-bold text-muted mb-[10px] mt-6 first:mt-0 }
+.section-title { @apply flex items-center justify-between text-xs font-bold text-muted mb-[10px] mt-6 first:mt-0 }
 .goals-grid { @apply grid grid-cols-4 gap-[10px] }
 .goal { @apply bg-surface border border-line rounded-[14px] p-[14px_12px] text-center }
 .goal-main { @apply flex-col }
@@ -238,6 +238,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .task-icon { @apply w-[34px] h-[34px] rounded-[9px] grid place-items-center flex-none }
 .task-icon.blue { @apply bg-[#e9f2fa] text-[#598fc2] }
 .empty-state { @apply text-xs text-muted text-center py-10 }
+.two-col .card:has(.empty-state) { @apply flex flex-col }
+.two-col .card:has(.empty-state) .empty-state { @apply flex-1 flex items-center justify-center py-0 }
 
 .week-chart { @apply flex items-end gap-[6px] h-[80px] }
 .week-chart > div { @apply flex-1 rounded-[4px_4px_0_0] bg-[#daeae1] min-h-[4px] }
@@ -339,7 +341,6 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
   .topbar { @apply justify-between }
   .menu-btn, .mobile-logo { @apply grid }
   .goals-grid { @apply grid-cols-3 }
-  .goal:last-child { @apply col-span-3 }
   .badges { @apply grid-cols-3 }
   .dashboard-grid { @apply grid-cols-1 }
   .class-card { @apply max-w-none }
