@@ -23,6 +23,7 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
   const [ayahs, setAyahs] = useState<Ayah[]>(fallbackAyahs);
   const [quranSource, setQuranSource] = useState("Menyiapkan data...");
   const [query, setQuery] = useState("");
+  const [surahConfirmed, setSurahConfirmed] = useState(false);
 
   const {
     started, playing, index, count, currentAyah, hidden, mastery, saving,
@@ -42,7 +43,7 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
     try {
       const s = JSON.parse(raw);
       const target = surahList.find(x => x.id === s.surahId) ?? FALLBACK_SURAH_LIST.find(x => x.id === s.surahId);
-      if (target) { suggestedRange.current = { surahId: s.surahId, startAyah: s.startAyah, endAyah: s.endAyah }; setSelectedSurah(target); }
+      if (target) { suggestedRange.current = { surahId: s.surahId, startAyah: s.startAyah, endAyah: s.endAyah }; setSelectedSurah(target); setSurahConfirmed(true); }
     } catch { /* ignore malformed */ }
   }, [surahList]);
 
@@ -66,21 +67,27 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
   }, [selectedSurah.id]);
 
   if (!started) {
+    if (!surahConfirmed) {
+      return (
+        <>
+          <PageTitle eyebrow="RUANG LATIHAN" title="Mau hafalan apa hari ini?" desc="Pilih surah untuk mulai atur sesi." />
+          <section className="card picker single">
+            <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => { setSelectedSurah(s); setSurahConfirmed(true); notify(`${s.latinName} siap dilatih`) }} />
+          </section>
+        </>
+      );
+    }
     return (
       <>
-        <PageTitle eyebrow="RUANG LATIHAN" title="Mau hafalan apa hari ini?" desc="Pilih surah dan atur sesi sesuai ritmemu." />
-        <div className="practice-layout">
-          <section className="card picker">
-            <h3><span>1</span>Pilih surah</h3>
-            <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => { setSelectedSurah(s); notify(`${s.latinName} siap dilatih`) }} />
-          </section>
-          <section className="card settings-card">
-            <h3><span>2</span>Atur latihan</h3>
-            <div className="selected-surah">
-              <BookOpen />
-              <div><small>SURAH DIPILIH</small><b>{selectedSurah.latinName}</b></div>
-              <span>{selectedSurah.ayahCount} ayat</span>
-            </div>
+        <PageTitle eyebrow="RUANG LATIHAN" title="Atur sesi latihanmu" desc="Sesuaikan rentang ayat dan ritme sebelum mulai." />
+        <section className="card settings-card single">
+          <button type="button" className="back-link" onClick={() => setSurahConfirmed(false)}><ChevronLeft /> Ganti surah</button>
+          <div className="selected-surah">
+            <BookOpen />
+            <div><small>SURAH DIPILIH</small><b>{selectedSurah.latinName}</b></div>
+            <span>{selectedSurah.ayahCount} ayat</span>
+          </div>
+          <div className="field-group">
             <div className="field-row">
               <label>Mulai ayat
                 <select value={start} onChange={e => { const value = +e.target.value; setStart(value); setEnd(c => Math.max(c, value)); setIndex(value - 1) }}>
@@ -94,16 +101,20 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
                 </select>
               </label>
             </div>
+          </div>
+          <div className="field-group">
             <label className="field-label">Jumlah pengulangan</label>
             <SegmentedControl options={["1", "3", "5", "10", "∞"]} value={loops} onChange={setLoops} />
+          </div>
+          <div className="field-group">
             <label className="field-label">Kecepatan audio</label>
             <SegmentedControl options={["0.75", "1", "1.25"]} value={speed} onChange={setSpeed} className="three" />
-            <button className="primary full" disabled={ayahs.length === 0} onClick={() => startPractice(start - 1)}>
-              <Play /> Mulai Hafalan
-            </button>
-            <p className="safe"><ShieldCheck /> {quranSource}</p>
-          </section>
-        </div>
+          </div>
+          <button className="primary full" disabled={ayahs.length === 0} onClick={() => startPractice(start - 1)}>
+            <Play /> Mulai Hafalan
+          </button>
+          <p className="safe"><ShieldCheck /> {quranSource}</p>
+        </section>
       </>
     );
   }
@@ -183,11 +194,7 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
         <div className="player-options">
           <span><Repeat2 /> Putaran <b>{count}/{loops}</b></span>
           <span><Volume2 /> Qari <b>Mishary Alafasy</b></span>
-          <select value={speed} onChange={e => changeSpeed(e.target.value)} aria-label="Kecepatan">
-            <option value="0.75">0.75&times;</option>
-            <option value="1">1&times;</option>
-            <option value="1.25">1.25&times;</option>
-          </select>
+          <SegmentedControl options={["0.75", "1", "1.25"]} value={speed} onChange={changeSpeed} className="three" />
         </div>
         <div className="mastery-inline">
           <span>Hafalan ayat ini?</span>

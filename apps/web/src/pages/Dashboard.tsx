@@ -39,7 +39,7 @@ function StudentDashboard(){
       <Stat icon={Repeat2} value={`${stats?.totalRepetitions??0}×`} label="Total pengulangan"/>
       <Stat icon={Trophy} value={`Level ${stats?.level??1}`} label={`${stats?.totalXp??0} XP total`}/>
     </div>
-    <section className="card table-card" style={{marginTop:15}}><div className="card-head"><div><h3>Tugas</h3><p>{assignments.filter(a=>a.status==="active").length} tugas aktif</p></div></div>
+    <section className="card table-card"><div className="card-head"><div><h3>Tugas</h3><p>{assignments.filter(a=>a.status==="active").length} tugas aktif</p></div></div>
       {assignments.length===0 && <p className="empty-state">Belum ada tugas dari guru.</p>}
       {assignments.map(a=><div className={`assignment ${a.status==="completed"?"done":""}`} key={a.id}><span className="task-icon">{a.status==="completed"?<Check/>:<BookOpen/>}</span><div><b>{surahName(a.surahId)}</b><p>Ayat {a.startAyah}–{a.endAyah} • Ulangi {a.targetLoops}×{a.status==="completed"?" • Selesai":""}</p></div></div>)}
     </section>
@@ -136,7 +136,7 @@ function ParentDashboard({notify}:{notify:(s:string)=>void}){
         ayahsMastered: s?.ayahsMastered??"…", streak: s?.streak??"…", totalXp: s?.totalXp??"…",
       };})} />}
     </section>
-    <button className="primary" style={{marginTop:15}} disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Plus/> Kirim dukungan</button>
+    <button className="primary" disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Plus/> Kirim dukungan</button>
     {showEncouragement && <SendEncouragementModal kids={kids} onClose={()=>setShowEncouragement(false)} notify={notify}/>}
   </>;
 }
@@ -151,7 +151,7 @@ function AdminDashboard(){
       <Stat icon={Target} value={String(stats?.totalTeachers??0)} label="Guru"/>
       <Stat icon={Award} value={String(stats?.totalParents??0)} label="Orang tua"/>
     </div>
-    <div className="stat-grid" style={{marginTop:15}}>
+    <div className="stat-grid">
       <Stat icon={Trophy} value={String(stats?.totalXpAwarded??0)} label="Total XP diberikan"/>
       <Stat icon={Repeat2} value={String(stats?.totalPracticeSessions??0)} label="Total sesi latihan"/>
       <Stat icon={Users} value={String(stats?.totalClasses??0)} label="Total kelas"/>
