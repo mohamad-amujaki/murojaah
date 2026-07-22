@@ -30,6 +30,11 @@ export default function AuthenticatedApp() {
   const toastTimer = useRef<number | undefined>(undefined);
   const [toast, setToast] = useState("");
   const [menu, setMenu] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const toggleSidebar = () => {
+    if (matchMedia("(max-width: 1000px)").matches) setMenu(m => !m);
+    else setCollapsed(c => !c);
+  };
   const [showAddChild, setShowAddChild] = useState(false);
   const [showRoleSetup, setShowRoleSetup] = useState(() => location.search.includes("role_setup=1"));
   const [roleSetupBusy, setRoleSetupBusy] = useState(false);
@@ -54,7 +59,7 @@ export default function AuthenticatedApp() {
     await switchProfile(Number(value)).catch(err => notify(err instanceof Error ? err.message : "Gagal berpindah profil."));
   };
 
-  return <div className="app-shell">
+  return <div className={collapsed ? "app-shell sidebar-collapsed" : "app-shell"}>
     <aside className={menu ? "sidebar open" : "sidebar"}>
       <div className="brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span><button className="icon-btn close-menu" onClick={() => setMenu(false)} aria-label="Tutup menu"><X /></button></div>
       <div className="profile-mini"><div className="avatar">{initials(user.displayName)}</div><div><b>{user.displayName}</b><span><i /> {role}</span></div></div>
@@ -67,7 +72,7 @@ export default function AuthenticatedApp() {
     {menu && <button className="backdrop" onClick={() => setMenu(false)} aria-label="Tutup menu" />}
     <main className="main">
       <header className="topbar">
-        <button className="icon-btn menu-btn" onClick={() => setMenu(true)} aria-label="Buka menu"><Menu /></button>
+        <button className="icon-btn menu-btn" onClick={toggleSidebar} aria-label={collapsed ? "Buka menu" : "Tutup menu"}><Menu /></button>
         <div className="mobile-logo">Muro<span>jaah</span></div>
         <div className="top-actions">
           {!online && <span className="offline"><WifiOff /> Offline</span>}

@@ -49,7 +49,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .recovery h1 { @apply text-2xl mt-5 mb-[7px] }
 .recovery p { @apply max-w-[420px] text-muted text-xs leading-[1.7] m-0 mb-5 }
 
-.sidebar { @apply fixed inset-y-0 left-0 w-[254px] bg-surface border-r border-line p-[26px_18px] flex flex-col z-30 }
+.sidebar { @apply fixed inset-y-0 left-0 w-[254px] bg-surface border-r border-line p-[26px_18px] flex flex-col z-30 transition-transform duration-200 }
+.sidebar-collapsed .sidebar { transform: translateX(-100%) }
+.sidebar-collapsed .main { @apply ml-0 }
 .brand { @apply flex items-center gap-[10px] text-xl font-extrabold px-2 pb-[25px] }
 .brand > span:last-of-type span, .mobile-logo span { @apply text-green }
 .brandmark { @apply grid place-items-center w-[38px] h-[38px] rounded-[12px] text-white bg-green }
@@ -69,9 +71,10 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .sidebar-tip p { @apply text-xs text-muted leading-[1.6] m-0 }
 .safe { @apply flex items-center justify-center gap-1 text-xs text-muted mt-auto text-center }
 .safe svg { @apply flex-none w-3.5 h-3.5 }
-.main { @apply ml-[254px] min-h-screen }
+.main { @apply ml-[254px] min-h-screen transition-[margin] duration-200 }
 .topbar { @apply flex items-center h-[66px] px-5 border-b border-line gap-3 sticky top-0 bg-surface z-20 }
-.menu-btn, .mobile-logo { @apply hidden }
+.menu-btn { @apply grid }
+.mobile-logo { @apply hidden }
 .mobile-logo { @apply font-extrabold }
 .top-actions { @apply flex items-center gap-2 ml-auto }
 .offline { @apply flex items-center gap-[5px] text-[#b8583d] text-xs font-semibold }
@@ -144,7 +147,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .landing-footer p { @apply w-full text-center text-xs text-muted mt-[10px] m-0 }
 
 .auth-page { @apply min-h-screen flex bg-cream }
-.auth-visual { @apply flex-[0_0_42%] min-h-screen relative overflow-hidden text-white bg-gradient-to-br from-[#0c735b] to-[#08503f] flex flex-col p-12 }
+.auth-visual { @apply flex-[0_0_35%] min-h-screen relative overflow-hidden text-white bg-gradient-to-br from-[#0c735b] to-[#08503f] flex flex-col p-10 }
 .auth-visual-brand { @apply flex items-center gap-[10px] text-lg font-extrabold z-[2] }
 .auth-visual-brand span:last-of-type span { @apply text-[#a9e6cf] }
 .auth-visual-brand .brandmark { @apply bg-[#ffffff26] }
@@ -157,14 +160,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .auth-visual-copy { @apply z-[2] }
 .auth-visual-copy p { @apply text-xl leading-[1.5] font-semibold max-w-[340px] m-0 }
 
-.auth-form-panel { @apply flex-1 flex flex-col justify-center px-[8vw] py-[44px] relative min-h-screen }
+.auth-form-panel { @apply flex-1 flex flex-col justify-center px-[6vw] py-[44px] relative min-h-screen }
 .auth-form-panel .back-link { @apply max-w-[420px] w-full mx-auto mb-6 }
 .auth-form-panel .auth-card { @apply max-w-[420px] mx-auto w-full p-0 gap-[14px] }
-.auth-form-panel .auth-card h1 { @apply text-[26px] m-0 mb-[2px] tracking-[-.5px] }
+.auth-form-panel .auth-card h1 { @apply text-[26px] m-0 tracking-[-.5px] }
 .auth-form-panel .auth-subtitle { @apply text-xs text-muted m-0 mb-2 }
-.auth-form-panel .auth-fields { @apply min-h-[300px] grid gap-3 }
+.auth-form-panel .auth-fields { @apply grid gap-3 }
 
-.auth-card { @apply w-full max-w-[630px] grid gap-4 p-8 bg-surface rounded-[20px] shadow-[0_2px_20px_#0f2b2112] }
+.auth-card { @apply w-full max-w-[440px] grid gap-4 p-8 bg-surface rounded-[20px] shadow-[0_2px_20px_#0f2b2112] }
 .auth-card .brand { @apply p-0 pb-[10px] justify-center }
 .auth-tabs { @apply grid grid-cols-2 bg-[#f3f6f4] p-1 rounded-[10px] gap-[3px] }
 .auth-tabs button { @apply border-0 bg-transparent rounded-[8px] min-h-10 text-xs font-bold text-muted }
@@ -396,11 +399,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 @media (max-width: 860px) {
   .auth-page { @apply flex-col }
   .auth-visual { @apply flex-none min-h-0 h-[220px] rounded-[0_0_28px_28px] p-[26px_28px] }
-  .auth-visual-art { @apply hidden }
+  .auth-visual-art { @apply flex-1 relative grid place-items-center scale-[.35] opacity-40 pointer-events-none }
   .auth-visual-copy p { @apply text-[15px] }
   .auth-form-panel { @apply min-h-0 p-[28px_24px_48px] -mt-6 }
   .auth-form-panel .back-link { @apply static mb-[10px] }
-  .auth-form-panel .auth-card { @apply bg-surface rounded-[20px] p-[24px_20px] }
+  .auth-form-panel .auth-card { @apply bg-surface rounded-[20px] p-[24px_20px] shadow-none }
 }
 @media (max-width: 820px) {
   .landing-hero h1 { @apply text-[32px] }
