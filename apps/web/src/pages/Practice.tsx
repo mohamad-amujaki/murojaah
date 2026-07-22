@@ -21,7 +21,7 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
   const [surahList, setSurahList] = useState<SurahResponse[]>(FALLBACK_SURAH_LIST);
   const [selectedSurah, setSelectedSurah] = useState<SurahResponse>(AL_IKHLAS);
   const [ayahs, setAyahs] = useState<Ayah[]>(fallbackAyahs);
-  const [quranSource, setQuranSource] = useState("Menyiapkan data…");
+  const [quranSource, setQuranSource] = useState("Menyiapkan data...");
   const [query, setQuery] = useState("");
 
   const {
@@ -48,7 +48,7 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setQuranSource("Memuat ayat…");
+    setQuranSource("Memuat ayat...");
     getQuranSurah(selectedSurah.id, controller.signal).then(result => {
       if (!result.ayahs.length) throw new Error("Data ayat kosong");
       setAyahs(result.ayahs);
@@ -66,9 +66,147 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
   }, [selectedSurah.id]);
 
   if (!started) {
-    return <><PageTitle eyebrow="RUANG LATIHAN" title="Mau hafalan apa hari ini?" desc="Pilih surah dan atur sesi sesuai ritmemu." /><div className="practice-layout"><section className="card picker"><h3><span>1</span>Pilih surah</h3><SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => { setSelectedSurah(s); notify(`${s.latinName} siap dilatih`) }} /></section><section className="card settings-card"><h3><span>2</span>Atur latihan</h3><div className="selected-surah"><BookOpen /><div><small>SURAH DIPILIH</small><b>{selectedSurah.latinName}</b></div><span>{selectedSurah.ayahCount} ayat</span></div><div className="field-row"><label>Mulai ayat<select value={start} onChange={e => { const value = +e.target.value; setStart(value); setEnd(c => Math.max(c, value)); setIndex(value - 1) }}>{ayahs.map(a => <option key={a.no}>{a.no}</option>)}</select></label><span>—</span><label>Sampai ayat<select value={end} onChange={e => setEnd(+e.target.value)}>{ayahs.filter(a => a.no >= start).map(a => <option key={a.no}>{a.no}</option>)}</select></label></div><label className="field-label">Jumlah pengulangan</label><SegmentedControl options={["1", "3", "5", "10", "∞"]} value={loops} onChange={setLoops} /><label className="field-label">Kecepatan audio</label><SegmentedControl options={["0.75", "1", "1.25"]} value={speed} onChange={setSpeed} className="three" /><button className="primary full" disabled={ayahs.length === 0} onClick={() => startPractice(start - 1)}><Play /> Mulai Hafalan</button><p className="safe"><ShieldCheck /> {quranSource}</p></section></div></>;
+    return (
+      <>
+        <PageTitle eyebrow="RUANG LATIHAN" title="Mau hafalan apa hari ini?" desc="Pilih surah dan atur sesi sesuai ritmemu." />
+        <div className="practice-layout">
+          <section className="card picker">
+            <h3><span>1</span>Pilih surah</h3>
+            <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => { setSelectedSurah(s); notify(`${s.latinName} siap dilatih`) }} />
+          </section>
+          <section className="card settings-card">
+            <h3><span>2</span>Atur latihan</h3>
+            <div className="selected-surah">
+              <BookOpen />
+              <div><small>SURAH DIPILIH</small><b>{selectedSurah.latinName}</b></div>
+              <span>{selectedSurah.ayahCount} ayat</span>
+            </div>
+            <div className="field-row">
+              <label>Mulai ayat
+                <select value={start} onChange={e => { const value = +e.target.value; setStart(value); setEnd(c => Math.max(c, value)); setIndex(value - 1) }}>
+                  {ayahs.map(a => <option key={a.no}>{a.no}</option>)}
+                </select>
+              </label>
+              <span>—</span>
+              <label>Sampai ayat
+                <select value={end} onChange={e => setEnd(+e.target.value)}>
+                  {ayahs.filter(a => a.no >= start).map(a => <option key={a.no}>{a.no}</option>)}
+                </select>
+              </label>
+            </div>
+            <label className="field-label">Jumlah pengulangan</label>
+            <SegmentedControl options={["1", "3", "5", "10", "∞"]} value={loops} onChange={setLoops} />
+            <label className="field-label">Kecepatan audio</label>
+            <SegmentedControl options={["0.75", "1", "1.25"]} value={speed} onChange={setSpeed} className="three" />
+            <button className="primary full" disabled={ayahs.length === 0} onClick={() => startPractice(start - 1)}>
+              <Play /> Mulai Hafalan
+            </button>
+            <p className="safe"><ShieldCheck /> {quranSource}</p>
+          </section>
+        </div>
+      </>
+    );
   }
 
   const a = currentAyah;
-  return <><button className="back-link" onClick={stopPractice}><ChevronLeft /> Kembali ke pilihan</button><div className="player-head"><div><span className="eyebrow">SEDANG MENGHAFAL</span><h1>Surah {selectedSurah.latinName}</h1><p>Ayat {start}–{end} • Putaran {count} dari {loops}</p></div><button className="outline" onClick={() => setHidden(!hidden)}>{hidden ? <BookOpen /> : <Lock />}{hidden ? "Tampilkan" : "Sembunyikan"} ayat</button></div><div className="player-card"><div className="ayah-number">{a.no}</div><div className={hidden ? "arabic hidden-text" : "arabic"} dir="rtl">{hidden ? "Coba lantunkan ayat ini dari ingatanmu…" : a.arabic}</div>{!hidden && <><p className="latin">{a.latin}</p><p className="meaning">“{a.meaning}”</p></>}<div className="timeline"><span style={{ width: playing ? "42%" : "5%" }} /><i>{playing ? "Sedang diputar" : "Siap diputar"}</i><i>Ayat {a.no}</i></div><div className="controls"><button disabled={index === start - 1} onClick={() => move(Math.max(start - 1, index - 1))} aria-label="Ayat sebelumnya"><ChevronLeft /></button><button className="play-main" onClick={toggle} aria-label={playing ? "Jeda" : "Putar"}>{playing ? <Pause /> : <Play />}</button><button disabled={index === end - 1} onClick={() => move(Math.min(end - 1, index + 1))} aria-label="Ayat berikutnya"><ChevronRight /></button></div><div className="player-options"><span><Repeat2 /> Putaran <b>{count}/{loops}</b></span><span><Volume2 /> Qari <b>Mishary Alafasy</b></span><select value={speed} onChange={e => changeSpeed(e.target.value)} aria-label="Kecepatan"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option></select></div><p className="safe">Ayat, terjemahan &amp; audio: EQuran.id</p></div><section className="mastery card"><div><h3>Bagaimana hafalan ayat ini?</h3><p>Jujur pada dirimu membantu kami menyusun latihan berikutnya.</p></div><div>{(["Belum hafal", "Perlu latihan", "Sudah hafal"] as Mastery[]).map((m, i) => <button key={i} className={mastery === m ? "selected" : ""} onClick={() => handleMastery(selectedSurah.id, a.no, m)}>{i === 0 ? <Target /> : i === 1 ? <Sparkles /> : <Check />}{m}</button>)}</div></section><button className="primary" disabled={saving} onClick={() => finish(selectedSurah.id)}><Sparkles /> {saving ? "Menyimpan…" : "Selesaikan sesi"}</button></>;
+  const rangeSize = end - start + 1;
+  const currentAyahInRange = index - start + 1;
+  const totalSteps = (loops === "\u221e" ? count : Number(loops)) * rangeSize;
+  const currentStep = ((count - 1) * rangeSize) + currentAyahInRange;
+  const sessionProgress = Math.min(100, Math.round((currentStep / totalSteps) * 100));
+  const maxDots = rangeSize > 60 ? 40 : rangeSize;
+  const showCompact = rangeSize > maxDots;
+  const dotEvery = showCompact ? Math.ceil(rangeSize / maxDots) : 1;
+
+  const ayahDots = Array.from({ length: maxDots }, (_, i) => {
+    const ayahPos = showCompact ? (i * dotEvery) + 1 : i + 1;
+    const isCompleted = ayahPos < currentAyahInRange;
+    const isActive = ayahPos === currentAyahInRange;
+    return (
+      <span
+        key={i}
+        className={`ayah-dot ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
+      />
+    );
+  });
+
+  return (
+    <>
+      <button className="back-link" onClick={stopPractice}>
+        <ChevronLeft /> Kembali ke pilihan
+      </button>
+      <div className="player-head">
+        <div>
+          <span className="eyebrow">SEDANG MENGHAFAL</span>
+          <h1>Surah {selectedSurah.latinName}</h1>
+          <p>Ayat {start}–{end} • Putaran {count} dari {loops}</p>
+        </div>
+        <button className="outline" onClick={() => setHidden(!hidden)}>
+          {hidden ? <BookOpen /> : <Lock />}
+          {hidden ? "Tampilkan" : "Sembunyikan"} ayat
+        </button>
+      </div>
+      <div className="player-card">
+        <div className="ayah-number">{a.no}</div>
+        <div className={hidden ? "arabic hidden-text" : "arabic"} dir="rtl">
+          {hidden ? "Coba lantunkan ayat ini dari ingatanmu..." : a.arabic}
+        </div>
+        {!hidden && (
+          <>
+            <p className="latin">{a.latin}</p>
+            <p className="meaning">&ldquo;{a.meaning}&rdquo;</p>
+          </>
+        )}
+        <div className="ayah-track">
+          {ayahDots}
+          {showCompact && <span className="ayah-dot-more">{rangeSize} ayat</span>}
+        </div>
+        <div className="position-info">
+          <span>Ayat {a.no}</span>
+          <span className="position-info-sep">•</span>
+          <span>Putaran {count}/{loops}</span>
+        </div>
+        <div className="session-bar" role="progressbar" aria-valuenow={sessionProgress} aria-valuemin={0} aria-valuemax={100}>
+          <span style={{ width: `${sessionProgress}%` }} />
+        </div>
+        <div className="controls">
+          <button disabled={index === start - 1} onClick={() => move(Math.max(start - 1, index - 1))} aria-label="Ayat sebelumnya">
+            <ChevronLeft />
+          </button>
+          <button className="play-main" onClick={toggle} aria-label={playing ? "Jeda" : "Putar"}>
+            {playing ? <Pause /> : <Play />}
+          </button>
+          <button disabled={index === end - 1} onClick={() => move(Math.min(end - 1, index + 1))} aria-label="Ayat berikutnya">
+            <ChevronRight />
+          </button>
+        </div>
+        <div className="player-options">
+          <span><Repeat2 /> Putaran <b>{count}/{loops}</b></span>
+          <span><Volume2 /> Qari <b>Mishary Alafasy</b></span>
+          <select value={speed} onChange={e => changeSpeed(e.target.value)} aria-label="Kecepatan">
+            <option value="0.75">0.75&times;</option>
+            <option value="1">1&times;</option>
+            <option value="1.25">1.25&times;</option>
+          </select>
+        </div>
+        <div className="mastery-inline">
+          <span>Hafalan ayat ini?</span>
+          <div>
+            {(["Belum hafal", "Perlu latihan", "Sudah hafal"] as Mastery[]).map((m, i) => (
+              <button
+                key={i}
+                className={mastery === m ? "active" : ""}
+                onClick={() => handleMastery(selectedSurah.id, a.no, m)}
+              >
+                {i === 0 ? <Target /> : i === 1 ? <Sparkles /> : <Check />}{m}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button className="primary full" disabled={saving} onClick={() => finish(selectedSurah.id)} style={{ marginTop: 16 }}>
+          <Sparkles /> {saving ? "Menyimpan..." : "Selesaikan sesi"}
+        </button>
+      </div>
+    </>
+  );
 }

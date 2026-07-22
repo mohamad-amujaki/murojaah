@@ -151,14 +151,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .auth-visual-brand { @apply flex items-center gap-[10px] text-lg font-extrabold z-[2] }
 .auth-visual-brand span:last-of-type span { @apply text-[#a9e6cf] }
 .auth-visual-brand .brandmark { @apply bg-[#ffffff26] }
-.auth-visual-art { @apply flex-1 relative grid place-items-center }
-.auth-visual-art .moon { @apply absolute w-[220px] h-[220px] rounded-full bg-[#faeac4] text-[#e2b958] shadow-[0_0_0_22px_#ffffff0d] }
-.auth-visual-art .quran { z-index: 2; width: 130px; height: 84px; display: grid; place-items: center; background: #ddb464; color: #4c735e; clip-path: polygon(50% 25%, 100% 0, 92% 78%, 50% 100%, 8% 78%, 0 0) }
-.auth-visual-art .star { @apply absolute text-[#ffe196] not-italic }
-.auth-visual-art .s1 { @apply left-[16%] top-[20%] text-xl }
-.auth-visual-art .s2 { @apply right-[14%] top-[14%] text-xs }
-.auth-visual-copy { @apply z-[2] }
+.auth-visual-copy { @apply z-[2] flex-1 flex items-center }
 .auth-visual-copy p { @apply text-xl leading-[1.5] font-semibold max-w-[340px] m-0 }
+.auth-visual-trust { @apply z-[2] grid gap-3 m-0 p-0 list-none }
+.auth-visual-trust li { @apply flex items-center gap-[10px] text-xs font-semibold text-[#d6ede3] }
+.auth-visual-trust svg { @apply w-4 h-4 text-[#a9e6cf] flex-none }
 
 .auth-form-panel { @apply flex-1 flex flex-col justify-center px-[6vw] py-[44px] relative min-h-screen }
 .auth-form-panel .back-link { @apply max-w-[420px] w-full mx-auto mb-6 }
@@ -169,16 +166,23 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 
 .auth-card { @apply w-full max-w-[440px] grid gap-4 p-8 bg-surface rounded-[20px] shadow-[0_2px_20px_#0f2b2112] }
 .auth-card .brand { @apply p-0 pb-[10px] justify-center }
-.auth-tabs { @apply grid grid-cols-2 bg-[#f3f6f4] p-1 rounded-[10px] gap-[3px] }
-.auth-tabs button { @apply border-0 bg-transparent rounded-[8px] min-h-10 text-xs font-bold text-muted }
-.auth-tabs button.active { @apply bg-surface text-green }
 .auth-card label { @apply text-xs font-bold text-muted block }
+.role-cards { @apply grid gap-2 }
+.role-cards-grid { @apply grid grid-cols-3 gap-2 }
+.role-card { @apply flex flex-col items-center gap-1 text-center border border-line rounded-[12px] p-3 bg-surface cursor-pointer text-muted }
+.role-card svg { @apply w-5 h-5 text-muted }
+.role-card b { @apply text-xs text-ink }
+.role-card span { @apply text-[10px] leading-[1.3] }
+.role-card.selected { @apply border-green bg-mint }
+.role-card.selected svg, .role-card.selected b { @apply text-green }
+.auth-switch { @apply max-w-[420px] w-full mx-auto mt-5 text-center text-xs text-muted }
+.auth-switch button { @apply border-0 bg-transparent text-green font-bold cursor-pointer p-0 }
 .auth-card input, .auth-card select { @apply block w-full h-11 border border-line rounded-[10px] px-3 bg-surface mt-[5px] text-ink text-xs }
 .auth-card textarea { @apply block w-full border border-line rounded-[10px] p-3 bg-surface mt-[5px] text-ink text-xs font-[inherit] resize-y }
 .auth-card .google-btn { @apply min-h-11 text-xs }
 .auth-card .primary.full { @apply h-11 text-xs }
 .auth-error { @apply text-[#b8583d] text-xs m-0 bg-[#fff5f1] border border-[#f3d2c4] rounded-[8px] p-[8px_10px] }
-.google-btn { @apply no-underline gap-2 justify-center }
+.google-btn { @apply no-underline flex items-center gap-2 justify-center }
 .auth-divider { @apply flex items-center gap-[10px] text-muted text-xs }
 .auth-divider::before, .auth-divider::after { @apply content-[''] flex-1 h-[1px] bg-line }
 
@@ -357,6 +361,15 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .timeline { @apply flex items-center gap-[6px] mt-5 }
 .timeline > div { @apply flex-1 h-[3px] rounded-full bg-line }
 .timeline .active { @apply bg-green }
+.ayah-track { @apply flex items-center justify-center gap-[3px] mt-5 flex-wrap }
+.ayah-dot { @apply w-[6px] h-[6px] rounded-full bg-line flex-none transition-all duration-200 }
+.ayah-dot.completed { @apply bg-[#bcd9cd] }
+.ayah-dot.active { @apply w-[10px] h-[10px] bg-green shadow-[0_0_0_3px_#106b5530] }
+.ayah-dot-more { @apply text-[10px] text-muted ml-1 }
+.position-info { @apply flex items-center justify-center gap-[6px] mt-2 text-xs text-muted }
+.position-info-sep { @apply opacity-30 }
+.session-bar { @apply w-full h-1 bg-line rounded-full mt-3 overflow-hidden }
+.session-bar span { @apply block h-full bg-gradient-to-r from-green to-[#0e8f72] rounded-full transition-[width] duration-300 ease-out }
 .controls { @apply flex items-center gap-[6px] mt-5 justify-center }
 .controls button { @apply w-[44px] h-[44px] grid place-items-center border border-line rounded-full bg-surface cursor-pointer text-muted }
 .play-main { @apply w-[56px]! h-[56px]! bg-green! text-white! border-green! }
@@ -367,6 +380,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .mastery-1.active { @apply bg-[#fcf5e7] text-gold border-[#efe3c4] }
 .mastery-2.active { @apply bg-mint text-green border-[#cfe7dc] }
 .primary.finish { @apply bg-deep w-full mt-5 }
+.mastery-inline { @apply flex items-center justify-between gap-3 mt-4 pt-4 border-t border-line }
+.mastery-inline > span { @apply text-xs text-muted font-semibold flex-none }
+.mastery-inline > div { @apply flex gap-1 }
+.mastery-inline button { @apply text-xs gap-1 px-3 py-1.5 rounded-lg border border-line bg-transparent text-muted cursor-pointer }
+.mastery-inline button.active { @apply border-green text-green bg-mint }
 
 @media (max-width: 1000px) {
   .sidebar { @apply -translate-x-full }
@@ -399,7 +417,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 @media (max-width: 860px) {
   .auth-page { @apply flex-col }
   .auth-visual { @apply flex-none min-h-0 h-[220px] rounded-[0_0_28px_28px] p-[26px_28px] }
-  .auth-visual-art { @apply flex-1 relative grid place-items-center scale-[.35] opacity-40 pointer-events-none }
+  .auth-visual-trust { @apply hidden }
   .auth-visual-copy p { @apply text-[15px] }
   .auth-form-panel { @apply min-h-0 p-[28px_24px_48px] -mt-6 }
   .auth-form-panel .back-link { @apply static mb-[10px] }
@@ -456,7 +474,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 @media (max-width: 560px) {
   .landing-hero h1 { @apply text-[28px] }
   .landing-features { @apply grid-cols-1 }
-  .landing-nav-actions .link-btn { @apply hidden }
+  .landing-nav-actions .primary { @apply min-h-10 text-xs }
 }
 }
 
@@ -472,7 +490,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 [data-theme="dark"] .mastery-0.active { background: #3a2418; color: #f0a683 }
 [data-theme="dark"] .mastery-1.active { background: #3a2f14; color: #e7c25f }
 [data-theme="dark"] .auth-error { background: #3a2418; color: #f0a683; border-color: #4a3327 }
-[data-theme="dark"] .search, [data-theme="dark"] .segmented, [data-theme="dark"] .controls button, [data-theme="dark"] .profile-mini, [data-theme="dark"] .assignment button, [data-theme="dark"] .surah-list button.selected, [data-theme="dark"] .selected-surah, [data-theme="dark"] .auth-tabs { background: #101c18 }
+[data-theme="dark"] .auth-page { background: #0e1613 }
+[data-theme="dark"] .search, [data-theme="dark"] .segmented, [data-theme="dark"] .controls button, [data-theme="dark"] .profile-mini, [data-theme="dark"] .assignment button, [data-theme="dark"] .surah-list button.selected, [data-theme="dark"] .selected-surah { background: #101c18 }
+[data-theme="dark"] .role-card.selected { background: #16261f }
 [data-theme="dark"] .toggle:not(.on) { background: #2c3d36 }
 [data-theme="dark"] .sidebar nav button.active, [data-theme="dark"] .help:hover { background: #101c18 }
 [data-theme="dark"] .landing { background: #0e1613 }

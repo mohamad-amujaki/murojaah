@@ -8,6 +8,7 @@ import { Stat } from "../components/Stat";
 import { StatsTable } from "../components/StatsTable";
 import { CreateClassModal } from "../components/CreateClassModal";
 import { CreateAssignmentModal } from "../components/CreateAssignmentModal";
+import { Modal } from "../components/Modal";
 import { SendEncouragementModal } from "../components/SendEncouragementModal";
 import { useAuth } from "../lib/auth-context";
 import { calculateAge } from "../lib/age";
@@ -51,6 +52,7 @@ function TeacherDashboard({notify}:{notify:(s:string)=>void}){
   const [members,setMembers]=useState<ClassMember[]>([]);
   const [showCreateClass,setShowCreateClass]=useState(false);
   const [showCreateAssignment,setShowCreateAssignment]=useState(false);
+  const [confirmRemove,setConfirmRemove]=useState<{id:number;name:string}|null>(null);
 
   const loadClasses = async () => {
     const res = await getClasses();
@@ -83,7 +85,7 @@ function TeacherDashboard({notify}:{notify:(s:string)=>void}){
         {selected && members.length===0 && <p className="empty-state">Belum ada murid yang bergabung. Bagikan kode: <b>{selected.joinCode}</b></p>}
         {members.length>0 && <StatsTable nameHeader="MURID" rows={members.map(m=>({
           id: m.id, name: m.displayName, ayahsMastered: m.ayahsMastered, streak: m.streak, totalXp: m.totalXp,
-          action: <button className="outline" style={{color:"#b8583d",borderColor:"#f0d0c4",minHeight:30,padding:"0 8px"}} onClick={()=>{if(confirm(`Hapus ${m.displayName} dari kelas?`)){removeClassMember(selected!.id,m.id).then(()=>{getClassMembers(selected!.id).then(r=>setMembers(r.members));notify(`${m.displayName} dihapus dari kelas.`);}).catch(()=>notify("Gagal menghapus murid."))}}}>Hapus</button>,
+          action: <button className="outline" style={{color:"#b8583d",borderColor:"#f0d0c4",minHeight:30,padding:"0 8px"}} onClick={()=>setConfirmRemove({id:m.id,name:m.displayName})}>Hapus</button>,
         }))} />}
       </div>
       <aside className="card class-card">
@@ -96,6 +98,7 @@ function TeacherDashboard({notify}:{notify:(s:string)=>void}){
     </section>
     {showCreateClass && <CreateClassModal onClose={()=>setShowCreateClass(false)} onCreated={cls=>{loadClasses(); setSelected(cls);}}/>}
     {showCreateAssignment && selected && <CreateAssignmentModal classes={classes} selectedClass={selected} onClose={()=>setShowCreateAssignment(false)} notify={notify}/>}
+    {confirmRemove && <Modal onClose={()=>setConfirmRemove(null)}><div className="card" style={{maxWidth:360,margin:"0 auto",textAlign:"center"}}><h3 style={{margin:"0 0 8px"}}>Hapus {confirmRemove.name}?</h3><p className="text-xs text-muted" style={{margin:"0 0 16px"}}>Murid akan dihapus dari kelas ini. Data latihannya tetap tersimpan.</p><div style={{display:"flex",gap:8,justifyContent:"center"}}><button className="outline" onClick={()=>setConfirmRemove(null)}>Batal</button><button className="primary" style={{background:"#b8583d"}} onClick={()=>{removeClassMember(selected!.id,confirmRemove.id).then(()=>{getClassMembers(selected!.id).then(r=>setMembers(r.members));notify(`${confirmRemove.name} dihapus dari kelas.`);}).catch(()=>notify("Gagal menghapus murid.")).finally(()=>setConfirmRemove(null))}}>Hapus</button></div></div></Modal>}
   </>;
 }
 
@@ -104,7 +107,14 @@ function ParentDashboard({notify}:{notify:(s:string)=>void}){
   const [childStats,setChildStats]=useState<Record<number,StatsResponse>>({});
   const [showEncouragement,setShowEncouragement]=useState(false);
   useEffect(()=>{
-    kids.forEach(child=>{ getChildStats(child.id).then(stats=>setChildStats(prev=>({...prev,[child.id]:stats}))).catch(()=>undefined); });
+    if (kids.length === 0) return;
+    Promise.all(kids.map(child =>
+      getChildStats(child.id).then(stats => ({ childId: child.id, stats })).catch(() => null)
+    )).then(results => {
+      const map: Record<number, StatsResponse> = {};
+      results.forEach(r => { if (r) map[r.childId] = r.stats; });
+      setChildStats(map);
+    });
   },[kids]);
   const totalXp = Object.values(childStats).reduce((s,st)=>s+st.totalXp,0);
 

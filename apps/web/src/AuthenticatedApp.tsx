@@ -99,7 +99,7 @@ export default function AuthenticatedApp() {
         </Suspense>
       </div>
     </main>
-    <nav className="bottom-nav">{visibleNav.slice(0,4).map(item => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => go(item.id)}><item.icon /><span>{item.label}</span></button>)}</nav>
+    <nav className="bottom-nav">{visibleNav.map(item => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => go(item.id)}><item.icon /><span>{item.label}</span></button>)}</nav>
     {toast && <div className="toast"><Check />{toast}</div>}
     {showAddChild && <AddChildModal onClose={() => setShowAddChild(false)} notify={notify} />}
     {showHelp && <Modal onClose={() => setShowHelp(false)}>

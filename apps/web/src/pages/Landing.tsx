@@ -23,7 +23,7 @@ export function LandingPage({ onLogin, onRegister }: { onLogin: () => void; onRe
       <div className="brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span></div>
       <div className="landing-nav-actions">
         <button className="icon-btn" onClick={toggleTheme} aria-label={darkMode ? "Ganti ke mode terang" : "Ganti ke mode gelap"}>{darkMode ? <Sun /> : <Moon />}</button>
-        <button className="link-btn" onClick={onLogin}>Masuk</button>
+        <button className="link-btn login-btn" onClick={onLogin}>Masuk</button>
         <button className="primary" onClick={onRegister}>Daftar Gratis</button>
       </div>
     </header>
