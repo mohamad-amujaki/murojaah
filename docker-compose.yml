@@ -1,21 +1,4 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: murojaah-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root123}
-      MYSQL_DATABASE: ${DB_NAME:-murojaah}
-      MYSQL_USER: ${DB_USER:-murojaah}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-murojaah123}
-    volumes:
-      - mysql-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   app:
     image: easypanel/murojaah/app
     container_name: murojaah-app
@@ -26,24 +9,18 @@ services:
       - NODE_ENV=production
       - PORT=8787
       - STATIC_DIR=/app/static
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_USER=${DB_USER:-murojaah}
-      - DB_PASSWORD=${DB_PASSWORD:-murojaah123}
-      - DB_NAME=${DB_NAME:-murojaah}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - APP_URL=${APP_URL:-https://murojaah.web.id}
       - JWT_SECRET=${JWT_SECRET}
       - SESSION_SECRET=${SESSION_SECRET}
-    depends_on:
-      mysql:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8787/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-volumes:
-  mysql-data:
