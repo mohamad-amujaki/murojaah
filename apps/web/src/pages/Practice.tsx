@@ -210,7 +210,7 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
             ))}
           </div>
         </div>
-        <button className="primary full" disabled={saving} onClick={() => finish(selectedSurah.id)} style={{ marginTop: 16 }}>
+        <button className="primary full" disabled={saving} onClick={() => finish(selectedSurah.id)}>
           <Sparkles /> {saving ? "Menyimpan..." : "Selesaikan sesi"}
         </button>
       </div>

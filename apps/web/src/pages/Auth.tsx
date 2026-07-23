@@ -42,13 +42,13 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: "
 
   return <div className="auth-card">
     <div className="auth-dialog-brand">
+      <button type="button" className="icon-btn auth-dialog-back" onClick={onClose} aria-label="Kembali"><ChevronLeft /></button>
       <span className="brandmark"><BookOpen /></span>
       <div>
         <b>Murojaah</b>
         <p>Muraja'ah Al-Qur'an, sedikit demi sedikit, setiap hari.</p>
       </div>
     </div>
-    <button type="button" className="back-link" onClick={onClose}><ChevronLeft /> Kembali</button>
     <form aria-label={mode==="login"?"Masuk":"Daftar"} onSubmit={submit}>
       <h1>{mode==="login" ? "Selamat datang kembali" : "Buat akun baru"}</h1>
       <p className="auth-subtitle">{mode==="login" ? "Masuk untuk melanjutkan muraja'ah." : "Mulai perjalanan hafalanmu bersama Murojaah."}</p>
