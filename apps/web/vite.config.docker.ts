@@ -37,7 +37,7 @@ export default defineConfig({
   // Node/MySQL server.mjs backend started alongside it by scripts/dev.mjs.
   server: {
     proxy: {
-      "/api": "http://localhost:8787",
+      "/api": { target: "http://localhost:8787", changeOrigin: false },
     },
   },
 });

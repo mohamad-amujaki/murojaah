@@ -24,7 +24,7 @@ self.addEventListener("fetch", event => {
       event.respondWith(
         fetch(event.request)
           .then(response => {
-            if (response.ok) caches.open(CACHE).then(cache => cache.put(event.request, response.clone()));
+            try { if (response.ok) caches.open(CACHE).then(cache => cache.put(event.request, response.clone())); } catch {}
             return response;
           })
           .catch(async () => (await caches.match(event.request)) || new Response(JSON.stringify({ error: "Offline" }), { status: 503, headers: { "content-type": "application/json" } }))
@@ -38,7 +38,7 @@ self.addEventListener("fetch", event => {
           if (cached) return cached;
           const response = await fetch(event.request);
           // Cross-origin no-cors audio responses are opaque (status always 0, ok always false) — still safe and worth caching.
-          if (response.ok || response.type === "opaque") cache.put(event.request, response.clone());
+          if (response.ok || response.type === "opaque") try { cache.put(event.request, response.clone()); } catch {}
           return response;
         })
       );
@@ -50,7 +50,7 @@ self.addEventListener("fetch", event => {
     event.respondWith(
       fetch(event.request, { cache: "no-store" })
         .then(response => {
-          if (response.ok) caches.open(CACHE).then(cache => cache.put("/offline", response.clone()));
+          try { if (response.ok) caches.open(CACHE).then(cache => cache.put("/offline", response.clone())); } catch {}
           return response;
         })
         .catch(() => caches.match("/offline"))
@@ -62,7 +62,7 @@ self.addEventListener("fetch", event => {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          if (response.ok) caches.open(CACHE).then(cache => cache.put(event.request, response.clone()));
+          try { if (response.ok) caches.open(CACHE).then(cache => cache.put(event.request, response.clone())); } catch {}
           return response;
         })
         .catch(() => caches.match(event.request))
@@ -70,5 +70,5 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).catch(() => new Response("Offline", { status: 503 }))));
 });

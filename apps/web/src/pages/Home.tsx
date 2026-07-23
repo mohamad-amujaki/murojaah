@@ -9,7 +9,7 @@ import { Modal } from "../components/Modal";
 import { SendEncouragementModal } from "../components/SendEncouragementModal";
 import type { StatsResponse } from "@murojaah/shared";
 import type { AdminStatsResponse, ClassMember, ClassResponse, AssignmentResponse, EncouragementResponse, Suggestion, SurahResponse } from "../lib/api";
-import { getAdminStats, getAssignments, getChildStats, getClassMembers, getClasses, getEncouragements, getMyStats, getSuggestion, getSurahs, markEncouragementRead, removeClassMember } from "../lib/api";
+import { getAdminStats, getAssignments, getChildStats, getClassMembers, getClasses, getEncouragements, getMyStats, getSuggestion, getSurahs, joinClass, markEncouragementRead, removeClassMember } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { ROLE_LABEL } from "../lib/constants";
 import { calculateAge } from "../lib/age";
@@ -18,12 +18,69 @@ import type { Page, Role } from "../types";
 const formatDue = (iso: string | null) => iso ? new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "long" }) : "Tanpa tenggat";
 
 function StudentSection({ stats }: { stats: StatsResponse | null }) {
-  return <div className="stat-grid" style={{ marginTop: 20 }}>
-    <Stat icon={Flame} value={`${stats?.streak??0} hari`} label="Streak saat ini"/>
-    <Stat icon={BookOpen} value={`${stats?.ayahsMastered??0} ayat`} label="Sudah dikuasai"/>
-    <Stat icon={Repeat2} value={`${stats?.totalRepetitions??0}×`} label="Total pengulangan"/>
-    <Stat icon={Trophy} value={`Level ${stats?.level??1}`} label={`${stats?.totalXp??0} XP total`}/>
-  </div>;
+  const [classes, setClasses] = useState<ClassResponse[]>([]);
+  const [showJoin, setShowJoin] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
+  const [joinedName, setJoinedName] = useState("");
+
+  const loadClasses = () => getClasses().then(r => setClasses(r.classes)).catch(() => undefined);
+  useEffect(() => { loadClasses(); }, []);
+
+  const handleJoin = async () => {
+    setJoinError("");
+    setJoining(true);
+    try {
+      const res = await joinClass(joinCode.trim().toUpperCase());
+      setJoinedName(res.class.name);
+      setJoinCode("");
+      loadClasses();
+    } catch (err) {
+      setJoinError(err instanceof Error ? err.message : "Gagal bergabung. Periksa kode dan coba lagi.");
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  return <>
+    <div className="stat-grid" style={{ marginTop: 20 }}>
+      <Stat icon={Flame} value={`${stats?.streak??0} hari`} label="Streak saat ini"/>
+      <Stat icon={BookOpen} value={`${stats?.ayahsMastered??0} ayat`} label="Sudah dikuasai"/>
+      <Stat icon={Repeat2} value={`${stats?.totalRepetitions??0}×`} label="Total pengulangan"/>
+      <Stat icon={Trophy} value={`Level ${stats?.level??1}`} label={`${stats?.totalXp??0} XP total`}/>
+    </div>
+    {classes.length > 0 && <section className="card" style={{marginTop:20}}>
+      <div className="card-head"><div><h3>Kelas saya</h3><p>{classes.length} kelas</p></div></div>
+      <ul style={{listStyle:"none",margin:0,padding:0}}>{classes.map(c => <li key={c.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",fontSize:"0.75rem",borderBottom:"1px solid var(--line)"}}>
+        <BookOpen style={{flex:"none",width:14,height:14,color:"var(--muted)"}}/>
+        <span style={{fontWeight:600}}>{c.name}</span>
+      </li>)}</ul>
+    </section>}
+    <div style={{display:"flex",gap:8,marginTop:classes.length>0?12:20}}>
+      <button className="outline" style={{flex:1}} onClick={()=>setShowJoin(true)}><Plus/> Gabung kelas</button>
+    </div>
+    {showJoin && <Modal onClose={()=>{setShowJoin(false); setJoinError(""); setJoinedName("");}}>
+      <div className="card" style={{maxWidth:400,margin:"0 auto"}}>
+        {joinedName ? <>
+          <h3 style={{margin:"0 0 8px",textAlign:"center"}}>Berhasil bergabung!</h3>
+          <p style={{margin:"0 0 16px",textAlign:"center",fontSize:"0.75rem",color:"var(--muted)"}}>Kamu sekarang anggota kelas <b>{joinedName}</b>.</p>
+          <button className="primary full" onClick={()=>{setShowJoin(false); setJoinedName("");}}>Selesai</button>
+        </> : <>
+          <h3 style={{margin:"0 0 4px"}}>Gabung kelas</h3>
+          <p style={{margin:"0 0 16px",fontSize:"0.75rem",color:"var(--muted)"}}>Masukkan kode yang diberikan oleh guru kamu.</p>
+          <label style={{fontSize:"0.75rem",fontWeight:700,color:"var(--muted)",display:"block",marginBottom:4}}>Kode kelas
+            <input autoFocus value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())} placeholder="Contoh: X3K9M7" maxLength={6}
+              style={{display:"block",width:"100%",height:44,border:"1px solid var(--line)",borderRadius:10,padding:"0 12px",marginTop:5,fontSize:"0.75rem",textAlign:"center",letterSpacing:4,fontWeight:700,textTransform:"uppercase"}} />
+          </label>
+          {joinError && <p style={{margin:"8px 0 0",fontSize:"0.75rem",color:"#b8583d"}}>{joinError}</p>}
+          <button className="primary full" style={{marginTop:16}} disabled={joining||joinCode.length!==6} onClick={handleJoin}>
+            {joining?"Memproses...":"Gabung"}
+          </button>
+        </>}
+      </div>
+    </Modal>}
+  </>;
 }
 
 function TeacherSection({ notify }: { notify: (s: string) => void }) {
@@ -184,7 +241,7 @@ export function HomePage({ go, notify }: { go: (p: Page) => void; notify: (s: st
   return <>
     <section className="welcome"><div><span className="eyebrow">{todayLabel}</span><h1>Assalamu'alaikum, {firstName}!</h1><p>{isNewUser ? "Siap memulai perjalanan hafalan? Setup-nya cuma semenit." : "Siap menambah hafalan hari ini? Kamu hebat karena terus berusaha."}</p></div>
       {streakCount > 0 ? <div className="streak"><span><Flame /></span><div><b>{streakCount} hari</b><small>Streak saat ini</small></div></div>
-      : <div className="streak" style={{background:"#f3f6f4",color:"var(--muted)"}}><span><Flame /></span><div><b>Belum dimulai</b><small>Latihan hari ini untuk streak pertamamu</small></div></div>}</section>
+      : !isNewUser && <div className="streak" style={{background:"#f3f6f4",color:"var(--muted)"}}><span><Flame /></span><b>Belum dimulai</b></div>}</section>
     {isNewUser ? <section className="hero-card" style={{background:"linear-gradient(135deg,#0c735b,#08503f)",color:"#fff"}}><div className="hero-copy" style={{color:"#fff"}}><span className="pill" style={{background:"#ffffff26",color:"#fff",borderColor:"transparent"}}><Sparkles /> MULAI PERJALANAN</span><h2 style={{color:"#fff"}}>Pilih surah pertamamu</h2><p style={{color:"#ffffffb3",maxWidth:400,margin:"0 0 16px"}}>Pilih surah, atur jumlah pengulangan, dan mulai hafalan. Gampang, tanpa ribet.</p><button className="primary light" style={{width:"100%"}} onClick={() => go("practice")}><BookOpen /> Mulai Hafalan Pertama</button></div></section>
     : suggestion ? <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> MURAJA'AH DISARANKAN</span><h2>{surahName(suggestion.surahId)}</h2><p>Ayat {suggestion.startAyah}–{suggestion.endAyah} • {suggestion.mastery}</p><button className="primary light" onClick={startSuggested}><Play /> Latihan yang Disarankan</button></div></section>
     : <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> LANJUTKAN HAFALAN</span><h2>{lastSurahName ?? "Pilih surah"}</h2>{lastDate && <p>Terakhir latihan {lastDate}</p>}{heroProgress > 0 && <div className="progress-row"><div className="progress"><i style={{width:`${heroProgress}%`}} /></div><b>{heroProgress}%</b></div>}<button className="primary light" onClick={() => go("practice")}><Play /> Mulai Latihan</button></div></section>}
@@ -202,8 +259,8 @@ export function HomePage({ go, notify }: { go: (p: Page) => void; notify: (s: st
         </div>
         <div className="card"><div className="card-head"><div><h3>Perjalanan minggu ini</h3><p>Terus konsisten!</p></div><button className="more" onClick={() => go("achievements")}>Detail</button></div><div className="week-chart">{(stats?.weeklyChart ?? []).map((d,i)=>{const maxMin=Math.max(...(stats?.weeklyChart??[]).map(w=>w.minutes),1);const pct=Math.max(3,(d.minutes/maxMin)*100);return <div key={i}><span className={i===new Date().getDay()?"today":""} style={{height:`${pct}%`}}>{d.minutes>0&&<i>{d.minutes}m</i>}</span><small>{d.day}</small></div>})}</div><div className="week-summary"><span><b>{stats?.weeklyMinutes??0}</b><small>Menit latihan</small></span><span><b>{stats?.weeklyRepetitions??0}</b><small>Ayat diulang</small></span><span><b>+{stats?.weeklyXp??0}</b><small>XP didapat</small></span></div></div>
       </section>
-      {role === "Murid" && <StudentSection stats={stats} />}
     </>}
+    {role === "Murid" && <StudentSection stats={stats} />}
     {latestEncouragement && <section className="support"><div className="parent-avatar">{latestEncouragement.parentName[0]}</div><div><span><Heart /> PESAN DARI {latestEncouragement.parentName.toUpperCase()}</span><p>"{latestEncouragement.message}"</p></div></section>}
     {role === "Guru" && <TeacherSection notify={notify} />}
     {role === "Orang Tua" && <ParentSection notify={notify} />}

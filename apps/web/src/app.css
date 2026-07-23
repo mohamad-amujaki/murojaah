@@ -945,6 +945,10 @@ select:focus-visible {
     @apply grid grid-cols-4 gap-[14px]
   }
 
+  .stat-grid.stat-grid-3 {
+    @apply grid-cols-3
+  }
+
   .stat {
     @apply flex items-center gap-3 bg-surface border border-line rounded-[14px] p-[14px]
   }

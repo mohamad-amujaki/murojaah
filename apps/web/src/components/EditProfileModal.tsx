@@ -4,7 +4,7 @@ import type { Gender, PublicUser, UserRole } from "@murojaah/shared";
 import { Modal } from "./Modal";
 import type { ProfileFieldUpdates } from "../lib/api";
 
-import { ROLE_OPTIONS as ROLE_OPTIONS_ALL } from "../lib/constants";
+import { ROLE_OPTIONS_ALL } from "../lib/constants";
 const todayStr = new Date().toISOString().slice(0, 10);
 
 export function EditProfileModal({ user, allowRoleEdit, onClose, onSave }: {
