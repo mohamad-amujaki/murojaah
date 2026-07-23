@@ -40,45 +40,44 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: "
     }
   };
 
-  return <div className="auth-page">
-    <div className="auth-visual">
-      <div className="auth-visual-brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span></div>
-      <div className="auth-visual-copy">
+  return <div className="auth-card">
+    <div className="auth-dialog-brand">
+      <span className="brandmark"><BookOpen /></span>
+      <div>
+        <b>Murojaah</b>
         <p>Muraja'ah Al-Qur'an, sedikit demi sedikit, setiap hari.</p>
       </div>
-      <ul className="auth-visual-trust">
-        <li><ShieldCheck /> 5.000+ ayat siap dihafal</li>
-        <li><ShieldCheck /> Progres tak pernah hilang</li>
-        <li><ShieldCheck /> Tetap jalan walau offline</li>
-      </ul>
     </div>
-    <div className="auth-form-panel">
-      <button type="button" className="back-link" onClick={onClose}><ChevronLeft /> Kembali</button>
-      <form className="auth-card" aria-label={mode==="login"?"Masuk":"Daftar"} onSubmit={submit}>
-        <h1>{mode==="login" ? "Selamat datang kembali" : "Buat akun baru"}</h1>
-        <p className="auth-subtitle">{mode==="login" ? "Masuk untuk melanjutkan muraja'ah." : "Mulai perjalanan hafalanmu bersama Murojaah."}</p>
-        <div className="auth-fields">
-          <a className="outline full google-btn" href={`/api/auth/google/start?intent=${mode}`}><GoogleIcon/> {mode==="login"?"Masuk":"Daftar"} dengan Google</a>
-          <div className="auth-divider"><span>atau</span></div>
-          {mode==="register" && <label>Nama tampilan<input required value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Nama kamu" /></label>}
-          <label>Email<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nama@email.com" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Masukkan alamat email yang valid" /></label>
-          <label>Kata sandi<input required type="password" minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimal 8 karakter" /></label>
-          {mode==="register" && <div className="role-cards">
-            <span className="field-label">Kamu daftar sebagai</span>
-            <div className="role-cards-grid">
-              {ROLE_CARDS.map(r => <button type="button" key={r.value} className={role===r.value?"role-card selected":"role-card"} onClick={()=>setRole(r.value)}>
-                <r.icon /><b>{r.label}</b><span>{r.desc}</span>
-              </button>)}
-            </div>
-          </div>}
-          {error && <p className="auth-error">{error}</p>}
-          <button className="primary full" disabled={busy} type="submit">{busy?"Memproses...":mode==="login"?"Masuk":"Buat akun"}</button>
-        </div>
-      </form>
-      <p className="auth-switch">
-        {mode==="login" ? <>Belum punya akun? <button type="button" onClick={()=>setMode("register")}>Daftar sekarang</button></>
-          : <>Sudah punya akun? <button type="button" onClick={()=>setMode("login")}>Masuk</button></>}
-      </p>
-    </div>
+    <button type="button" className="back-link" onClick={onClose}><ChevronLeft /> Kembali</button>
+    <form aria-label={mode==="login"?"Masuk":"Daftar"} onSubmit={submit}>
+      <h1>{mode==="login" ? "Selamat datang kembali" : "Buat akun baru"}</h1>
+      <p className="auth-subtitle">{mode==="login" ? "Masuk untuk melanjutkan muraja'ah." : "Mulai perjalanan hafalanmu bersama Murojaah."}</p>
+      <div className="auth-fields">
+        <a className="outline full google-btn" href={`/api/auth/google/start?intent=${mode}`}><GoogleIcon/> {mode==="login"?"Masuk":"Daftar"} dengan Google</a>
+        <div className="auth-divider"><span>atau</span></div>
+        {mode==="register" && <label>Nama tampilan<input required value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Nama kamu" /></label>}
+        <label>Email<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nama@email.com" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Masukkan alamat email yang valid" /></label>
+        <label>Kata sandi<input required type="password" minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimal 8 karakter" /></label>
+        {mode==="register" && <div className="role-cards">
+          <span className="field-label">Kamu daftar sebagai</span>
+          <div className="role-cards-grid">
+            {ROLE_CARDS.map(r => <button type="button" key={r.value} className={role===r.value?"role-card selected":"role-card"} onClick={()=>setRole(r.value)}>
+              <r.icon /><b>{r.label}</b><span>{r.desc}</span>
+            </button>)}
+          </div>
+        </div>}
+        {error && <p className="auth-error">{error}</p>}
+        <button className="primary full" disabled={busy} type="submit">{busy?"Memproses...":mode==="login"?"Masuk":"Buat akun"}</button>
+      </div>
+    </form>
+    <ul className="auth-dialog-trust">
+      <li><ShieldCheck /> 5.000+ ayat siap dihafal</li>
+      <li><ShieldCheck /> Progres tak pernah hilang</li>
+      <li><ShieldCheck /> Tetap jalan walau offline</li>
+    </ul>
+    <p className="auth-switch">
+      {mode==="login" ? <>Belum punya akun? <button type="button" onClick={()=>setMode("register")}>Daftar sekarang</button></>
+        : <>Sudah punya akun? <button type="button" onClick={()=>setMode("login")}>Masuk</button></>}
+    </p>
   </div>;
 }

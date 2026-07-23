@@ -28,8 +28,8 @@ export function App() {
   }, [auth.user]);
   if (auth.loading) return null;
   if (!auth.user) {
-    if (authView) return <Suspense fallback={null}><AuthDialog initialMode={authView} onClose={() => setAuthView(null)} /></Suspense>;
-    return <LandingPage onLogin={() => setAuthView("login")} onRegister={() => setAuthView("register")} />;
+    return <><LandingPage onLogin={() => setAuthView("login")} onRegister={() => setAuthView("register")} />
+      {authView && <div className="auth-modal-backdrop"><div className="auth-modal"><Suspense fallback={null}><AuthDialog initialMode={authView} onClose={() => setAuthView(null)} /></Suspense></div></div>}</>;
   }
   return (
     <Suspense fallback={<main className="auth-shell"><span className="brandmark"><BookOpen /></span></main>}>
