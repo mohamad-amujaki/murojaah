@@ -11,7 +11,7 @@ import type { Page, Role } from "./types";
 import { useAuth } from "./lib/auth-context";
 import { getTheme, setTheme } from "./lib/theme";
 import { syncPendingSessions } from "./lib/sync";
-import { ROLE_LABEL, ROLE_OPTIONS, initials } from "./lib/constants";
+import { ROLE_CARDS, ROLE_LABEL, initials } from "./lib/constants";
 
 const HomePage = lazy(() => import("./pages/Home").then(m => ({ default: m.HomePage })));
 const PracticePage = lazy(() => import("./pages/Practice").then(m => ({ default: m.PracticePage })));
@@ -36,6 +36,7 @@ export default function AuthenticatedApp() {
   const [showAddChild, setShowAddChild] = useState(false);
   const [showRoleSetup, setShowRoleSetup] = useState(() => location.search.includes("role_setup=1"));
   const [roleSetupBusy, setRoleSetupBusy] = useState(false);
+  const [roleSetupValue, setRoleSetupValue] = useState<Exclude<UserRole, "admin">>("student");
   const [showHelp, setShowHelp] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const [darkMode, setDarkMode] = useState(() => getTheme() === "dark");
@@ -112,10 +113,16 @@ export default function AuthenticatedApp() {
       <p className="help-footer">Kami menghargai setiap masukan untuk membuat Murojaah lebih baik.</p>
       </div>
     </Modal>}
-    {showRoleSetup && <div className="auth-modal-backdrop" onClick={()=>{}}><div className="auth-modal"><form className="card auth-card" onSubmit={async e => { e.preventDefault(); const form = new FormData(e.currentTarget); const role = form.get("role") as Exclude<UserRole, "admin">; if (!role) return; setRoleSetupBusy(true); try { await updateProfile({ role }); setShowRoleSetup(false); const url = new URL(location.href); url.searchParams.delete("role_setup"); history.replaceState({}, "", url.href); notify(`Peran berhasil diatur: ${ROLE_LABEL[role]}`); } catch (err) { notify(err instanceof Error ? err.message : "Gagal mengatur peran."); } finally { setRoleSetupBusy(false); } }}>
-      <div className="brand"><span className="brandmark"><BookOpen /></span><span>Atur Peran</span></div>
-      <p className="text-xs" style={{color:"var(--muted)",margin:0}}>Terima kasih sudah mendaftar! Kamu ini siapa?</p>
-      {ROLE_OPTIONS.map(r => <label key={r.value} className="text-xs" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:8,padding:"10px 14px",border:"1px solid var(--line)",borderRadius:9}}><input type="radio" name="role" value={r.value} defaultChecked={r.value==="student"} style={{margin:0}}/>{r.label}</label>)}
+    {showRoleSetup && <div className="auth-modal-backdrop" onClick={()=>{}}><div className="auth-modal"><form className="card auth-card" onSubmit={async e => { e.preventDefault(); setRoleSetupBusy(true); try { await updateProfile({ role: roleSetupValue }); setShowRoleSetup(false); const url = new URL(location.href); url.searchParams.delete("role_setup"); history.replaceState({}, "", url.href); notify(`Peran berhasil diatur: ${ROLE_LABEL[roleSetupValue]}`); } catch (err) { notify(err instanceof Error ? err.message : "Gagal mengatur peran."); } finally { setRoleSetupBusy(false); } }}>
+      <h1>Atur Peran</h1>
+      <p className="auth-subtitle">Terima kasih sudah mendaftar! Kamu ini siapa?</p>
+      <div className="role-cards">
+        <div className="role-cards-grid">
+          {ROLE_CARDS.map(r => <button type="button" key={r.value} className={roleSetupValue===r.value?"role-card selected":"role-card"} onClick={()=>setRoleSetupValue(r.value)}>
+            <r.icon /><b>{r.label}</b><span>{r.desc}</span>
+          </button>)}
+        </div>
+      </div>
       <button className="primary full" disabled={roleSetupBusy} type="submit">{roleSetupBusy?"Menyimpan...":"Simpan"}</button>
     </form></div></div>}
   </div>;

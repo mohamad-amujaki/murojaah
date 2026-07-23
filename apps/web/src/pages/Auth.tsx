@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { BookOpen, ChevronLeft, GraduationCap, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, ChevronLeft, ShieldCheck } from "lucide-react";
 import type { UserRole } from "@murojaah/shared";
 import { useAuth } from "../lib/auth-context";
+import { ROLE_CARDS } from "../lib/constants";
 
 const GoogleIcon = () => <svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true">
   <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.9 5.1 29.7 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-3.5z"/>
@@ -9,12 +10,6 @@ const GoogleIcon = () => <svg viewBox="0 0 48 48" width="16" height="16" aria-hi
   <path fill="#4CAF50" d="M24 45c5.6 0 10.7-2.1 14.5-5.6l-6.7-5.7C29.7 35.5 27 36.5 24 36.5c-5.2 0-9.6-3.3-11.3-7.9l-6.6 5.1C9.5 40.6 16.2 45 24 45z"/>
   <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.7 5.7C41.6 36 45 30.6 45 24c0-1.4-.1-2.7-.4-3.5z"/>
 </svg>;
-
-const ROLE_CARDS: { value: Exclude<UserRole, "admin">; label: string; desc: string; icon: typeof BookOpen }[] = [
-  { value: "student", label: "Murid", desc: "Menghafal & mengulang ayat", icon: BookOpen },
-  { value: "teacher", label: "Guru", desc: "Memantau kelas & murid", icon: GraduationCap },
-  { value: "parent", label: "Orang Tua", desc: "Mendampingi hafalan anak", icon: Users },
-];
 
 export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: "login" | "register"; onClose: () => void }) {
   const { login, register } = useAuth();
