@@ -114,7 +114,10 @@ function ParentSection({ notify }: { notify: (s: string) => void }) {
         ayahsMastered: s?.ayahsMastered??"\u2026", streak: s?.streak??"\u2026", totalXp: s?.totalXp??"\u2026",
       };})} />}
     </section>
-    <button className="primary" disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Plus/> Kirim dukungan</button>
+    <div className="card" style={{marginTop:20,padding:20}}>
+      <p style={{margin:"0 0 12px",fontSize:"0.75rem",color:"var(--muted)",textAlign:"center"}}>Ingin memberi semangat?</p>
+      <button className="primary" style={{width:"100%"}} disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Heart/> Kirim Dukungan</button>
+    </div>
     {showEncouragement && <SendEncouragementModal kids={kids} onClose={()=>setShowEncouragement(false)} notify={notify}/>}
   </section>;
 }
@@ -182,7 +185,7 @@ export function HomePage({ go, notify }: { go: (p: Page) => void; notify: (s: st
     <section className="welcome"><div><span className="eyebrow">{todayLabel}</span><h1>Assalamu'alaikum, {firstName}!</h1><p>{isNewUser ? "Siap memulai perjalanan hafalan? Setup-nya cuma semenit." : "Siap menambah hafalan hari ini? Kamu hebat karena terus berusaha."}</p></div>
       {streakCount > 0 ? <div className="streak"><span><Flame /></span><div><b>{streakCount} hari</b><small>Streak saat ini</small></div></div>
       : <div className="streak" style={{background:"#f3f6f4",color:"var(--muted)"}}><span><Flame /></span><div><b>Belum dimulai</b><small>Latihan hari ini untuk streak pertamamu</small></div></div>}</section>
-    {isNewUser ? <section className="hero-card" style={{background:"linear-gradient(135deg,#0c735b,#08503f)",color:"#fff"}}><div className="hero-copy" style={{color:"#fff"}}><span className="pill" style={{background:"#ffffff26",color:"#fff",borderColor:"transparent"}}><Sparkles /> MULAI PERJALANAN</span><h2 style={{color:"#fff"}}>Pilih surah pertamamu</h2><p style={{color:"#ffffffb3",maxWidth:400}}>Pilih surah, atur jumlah pengulangan, dan mulai hafalan. Gampang, tanpa ribet.</p><button className="primary light" onClick={() => go("practice")}><Play /> Mulai Hafalan Pertama</button></div></section>
+    {isNewUser ? <section className="hero-card" style={{background:"linear-gradient(135deg,#0c735b,#08503f)",color:"#fff"}}><div className="hero-copy" style={{color:"#fff"}}><span className="pill" style={{background:"#ffffff26",color:"#fff",borderColor:"transparent"}}><Sparkles /> MULAI PERJALANAN</span><h2 style={{color:"#fff"}}>Pilih surah pertamamu</h2><p style={{color:"#ffffffb3",maxWidth:400,margin:"0 0 16px"}}>Pilih surah, atur jumlah pengulangan, dan mulai hafalan. Gampang, tanpa ribet.</p><button className="primary light" style={{width:"100%"}} onClick={() => go("practice")}><BookOpen /> Mulai Hafalan Pertama</button></div></section>
     : suggestion ? <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> MURAJA'AH DISARANKAN</span><h2>{surahName(suggestion.surahId)}</h2><p>Ayat {suggestion.startAyah}–{suggestion.endAyah} • {suggestion.mastery}</p><button className="primary light" onClick={startSuggested}><Play /> Latihan yang Disarankan</button></div></section>
     : <section className="hero-card"><div className="hero-copy"><span className="pill"><Zap /> LANJUTKAN HAFALAN</span><h2>{lastSurahName ?? "Pilih surah"}</h2>{lastDate && <p>Terakhir latihan {lastDate}</p>}{heroProgress > 0 && <div className="progress-row"><div className="progress"><i style={{width:`${heroProgress}%`}} /></div><b>{heroProgress}%</b></div>}<button className="primary light" onClick={() => go("practice")}><Play /> Mulai Latihan</button></div></section>}
     {!isNewUser && <>

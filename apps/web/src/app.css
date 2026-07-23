@@ -100,7 +100,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .landing-hero h1 { @apply text-[38px] leading-[1.15] tracking-[-.8px] mx-0 my-[18px_0_14px] }
 .landing-hero-copy > p { @apply text-muted text-sm leading-[1.7] m-0 mb-[22px] }
 .landing-cta-row { @apply flex items-center gap-[18px] mb-[14px] }
-.primary { @apply border-0 bg-green text-white min-h-10 px-[18px] rounded-[10px] font-bold text-xs cursor-pointer }
+.primary { @apply border-0 bg-green text-white min-h-10 px-[18px] rounded-[10px] font-bold text-xs cursor-pointer inline-flex items-center gap-[6px] }
 .primary.large { @apply min-h-[50px] px-[26px] text-xs }
 .primary.light { @apply bg-white text-green }
 
@@ -212,11 +212,12 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .selected-surah .link-btn { @apply ml-auto }
 
 .page-title { @apply mb-5 }
-.welcome { @apply flex items-center gap-3 mb-4 }
-.welcome h1 { @apply text-lg m-0 }
-.welcome p { @apply text-xs text-muted m-0 max-w-[230px] }
-.streak { @apply flex items-center gap-[6px] bg-[#fff3e8] text-[#c27838] text-xs font-extrabold px-3 py-[7px] rounded-[10px] }
-.streak small { @apply font-normal text-[#c2783880] }
+.welcome { @apply flex items-start gap-4 mb-6 }
+.welcome > div:first-child { @apply min-w-0 flex-1 }
+.welcome h1 { @apply text-lg m-0 mt-[2px] }
+.welcome p { @apply text-xs text-muted mt-[4px] max-w-[300px] }
+.streak { @apply flex items-center gap-[8px] bg-[#fff3e8] text-[#c27838] text-xs font-extrabold px-[14px] py-[10px] rounded-[10px] shrink-0 }
+.streak small { @apply font-normal text-[#c2783880] whitespace-nowrap }
 
 .hero-card { @apply relative overflow-hidden bg-surface border border-line rounded-[20px] }
 .hero-copy { @apply relative z-[2] p-[28px_28px_28px_24px] }
@@ -271,7 +272,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .avatar[class*="av3"] { background: #b87aae }
 .child-meta { @apply block text-xs text-muted }
 .compact { @apply text-[10px] }
-.outline { @apply border border-line bg-transparent text-ink rounded-[8px] font-semibold text-xs cursor-pointer min-h-9 px-[14px] }
+.outline { @apply border border-line bg-transparent text-ink rounded-[8px] font-semibold text-xs cursor-pointer min-h-9 px-[14px] inline-flex items-center gap-[6px] }
 .outline.full { @apply w-full }
 
 .dashboard-grid { @apply grid gap-[14px] mt-5 }
@@ -342,7 +343,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .search { @apply w-full h-[36px] flex items-center gap-2 border border-line rounded-[8px] px-3 bg-surface text-ink text-xs }
 .search svg { @apply flex-none text-muted }
 .search input { @apply w-full border-0 bg-transparent outline-none text-xs }
-.surah-list { @apply grid grid-cols-2 gap-[6px] }
+.surah-list { @apply grid grid-cols-3 gap-[6px] }
 .surah-list button { @apply flex items-center gap-3 border-0 bg-transparent text-left p-[10px] rounded-[10px] cursor-pointer }
 .surah-list button:hover { @apply bg-mint }
 .surah-list button.selected { @apply bg-[#e4f3eb] }
@@ -351,7 +352,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .surah-list button svg { @apply flex-none }
 .surah-list b { @apply block text-xs }
 .surah-list small { @apply text-[10px] text-muted }
-.card.picker, .card.settings-card { @apply max-h-[440px] overflow-y-auto }
+.card.picker { @apply w-full max-h-none max-w-none }
+.card.settings-card { @apply max-h-[440px] overflow-y-auto }
 .selected-surah { @apply flex items-center gap-2 p-3 rounded-[10px] bg-mint text-xs }
 .field-group { @apply grid gap-2 }
 .field-row { @apply flex items-end gap-3 }

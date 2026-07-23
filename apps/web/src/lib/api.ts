@@ -17,6 +17,7 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const data = await response.json() as T | ApiError;
   if (!response.ok) throw new Error((data as ApiError).error || "Terjadi kesalahan. Silakan coba lagi.");
   if (isGet) getCache.set(cacheKey, { data, at: Date.now() });
+  else getCache.clear();
   return data as T;
 }
 export const completePractice = (payload: CompletePracticePayload) => api<CompletePracticeResponse>("/practice/complete", { method:"POST", body:JSON.stringify(payload) });
