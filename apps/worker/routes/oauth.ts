@@ -55,12 +55,12 @@ async function verifyWithJwks(idToken: string): Promise<boolean> {
 
 export const handleGoogleStart: RouteHandler = async (request, url, env) => {
   if (url.pathname !== "/api/auth/google/start" || request.method !== "GET") return null;
-  if (!env.GOOGLE_CLIENT_ID) return json({ error: "Masuk dengan Google belum dikonfigurasi." }, 501, {}, "no-store");
+  if (!env.MU_GOOGLE_CLIENT_ID) return json({ error: "Masuk dengan Google belum dikonfigurasi." }, 501, {}, "no-store");
 
   const state = generateSessionToken();
   const redirectUri = `${url.origin}/api/auth/google/callback`;
   const authUrl = new URL(GOOGLE_AUTH_URL);
-  authUrl.searchParams.set("client_id", env.GOOGLE_CLIENT_ID as string);
+  authUrl.searchParams.set("client_id", env.MU_GOOGLE_CLIENT_ID as string);
   authUrl.searchParams.set("redirect_uri", redirectUri);
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("scope", "openid email profile");
@@ -91,7 +91,7 @@ export const handleGoogleCallback: RouteHandler = async (request, url, env) => {
   if (!code || !state || !stateCookie || state !== stateCookie) {
     return Response.redirect(`${url.origin}/?error=oauth_state`, 302);
   }
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+  if (!env.MU_GOOGLE_CLIENT_ID || !env.MU_GOOGLE_CLIENT_SECRET) {
     const h = new Headers({ location: `${url.origin}/?error=oauth_unconfigured` });
     h.append("set-cookie", clearStateCookie);
     return new Response(null, { status: 302, headers: h });
@@ -108,8 +108,8 @@ export const handleGoogleCallback: RouteHandler = async (request, url, env) => {
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       code: code!,
-      client_id: env.GOOGLE_CLIENT_ID as string,
-      client_secret: env.GOOGLE_CLIENT_SECRET as string,
+      client_id: env.MU_GOOGLE_CLIENT_ID as string,
+      client_secret: env.MU_GOOGLE_CLIENT_SECRET as string,
       redirect_uri: `${url.origin}/api/auth/google/callback`,
       grant_type: "authorization_code",
     }),
@@ -133,7 +133,7 @@ export const handleGoogleCallback: RouteHandler = async (request, url, env) => {
   }
 
   const valid = claims
-    && claims.aud === env.GOOGLE_CLIENT_ID
+    && claims.aud === env.MU_GOOGLE_CLIENT_ID
     && GOOGLE_ISSUERS.includes(claims.iss)
     && claims.email_verified
     && claims.email

@@ -17,18 +17,18 @@ const STATIC_DIR = process.env.STATIC_DIR ?? resolve(__dirname, "static");
 
 // ——— MySQL connection pool ———
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT ?? "3306", 10),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: process.env.MU_DB_HOST,
+  port: parseInt(process.env.MU_DB_PORT ?? "3306", 10),
+  user: process.env.MU_DB_USER,
+  password: process.env.MU_DB_PASSWORD,
+  database: process.env.MU_DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
 });
 
 try {
   await pool.query("SELECT 1");
-  console.log(`✓ Database: ${process.env.DB_HOST}/${process.env.DB_NAME}`);
+  console.log(`✓ Database: ${process.env.MU_DB_HOST}/${process.env.MU_DB_NAME}`);
 } catch (e) {
   console.error("✘ Database error:", e.message);
   process.exit(1);
@@ -79,11 +79,11 @@ try {
 // worker's in-memory fallback is used (fine for a single container).
 let redis = null;
 let rateLimitStore = undefined;
-if (process.env.REDIS_URL) {
+if (process.env.MU_REDIS_URL) {
   try {
     const { createClient } = await import("redis");
     redis = createClient({
-      url: process.env.REDIS_URL,
+      url: process.env.MU_REDIS_URL,
       // Without this, commands queue forever while Redis is down and every
       // rate-limited request hangs; with it they reject instantly and
       // rateLimit() fails open (verified by killing Redis mid-run).
@@ -92,7 +92,7 @@ if (process.env.REDIS_URL) {
     });
     redis.on("error", (e) => console.error("Redis error:", e.message));
     await redis.connect();
-    console.log(`✓ Redis: ${process.env.REDIS_URL}`);
+    console.log(`✓ Redis: ${process.env.MU_REDIS_URL}`);
     rateLimitStore = {
       async hit(key, windowMs) {
         const count = await redis.incr(key);
@@ -110,8 +110,8 @@ if (process.env.REDIS_URL) {
 // ——— Env ———
 const env = {
   DB: pool,
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? "",
+  MU_GOOGLE_CLIENT_ID: process.env.MU_GOOGLE_CLIENT_ID ?? "",
+  MU_GOOGLE_CLIENT_SECRET: process.env.MU_GOOGLE_CLIENT_SECRET ?? "",
   NODE_ENV: process.env.NODE_ENV ?? "production",
   RATE_LIMIT_STORE: rateLimitStore,
 };

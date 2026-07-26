@@ -1,0 +1,6 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindCSS.classAttributes.highlight": false,
+  "tailwindCSS.validate": false,
+  "tailwindCSS.suggestCanonicalClasses": false
+}

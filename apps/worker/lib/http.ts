@@ -4,8 +4,8 @@ import type { RateLimitStore } from "./rate-limit";
 
 export interface Env {
   DB: Pool;
-  GOOGLE_CLIENT_ID?: string;
-  GOOGLE_CLIENT_SECRET?: string;
+  MU_GOOGLE_CLIENT_ID?: string;
+  MU_GOOGLE_CLIENT_SECRET?: string;
   NODE_ENV?: string;
   /** Injected by server.mjs when REDIS_URL is configured (VPS); absent elsewhere. */
   RATE_LIMIT_STORE?: RateLimitStore;

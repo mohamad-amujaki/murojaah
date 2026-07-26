@@ -9,16 +9,16 @@ services:
       - NODE_ENV=production
       - PORT=8787
       - STATIC_DIR=/app/static
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT:-3306}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - APP_URL=${APP_URL:-https://murojaah.web.id}
-      - JWT_SECRET=${JWT_SECRET}
-      - SESSION_SECRET=${SESSION_SECRET}
+      - MU_DB_HOST=${MU_DB_HOST}
+      - MU_DB_PORT=${MU_DB_PORT:-3306}
+      - MU_DB_USER=${MU_DB_USER}
+      - MU_DB_PASSWORD=${MU_DB_PASSWORD}
+      - MU_DB_NAME=${MU_DB_NAME}
+      - MU_GOOGLE_CLIENT_ID=${MU_GOOGLE_CLIENT_ID}
+      - MU_GOOGLE_CLIENT_SECRET=${MU_GOOGLE_CLIENT_SECRET}
+      - MU_APP_URL=${MU_APP_URL:-https://murojaah.web.id}
+      - MU_JWT_SECRET=${MU_JWT_SECRET}
+      - MU_SESSION_SECRET=${MU_SESSION_SECRET}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8787/health"]
       interval: 30s

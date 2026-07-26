@@ -26,11 +26,11 @@ const TABLES = [
 
 const sqlite = new Database(sqlitePath, { readonly: true });
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT ?? "3306", 10),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: process.env.MU_DB_HOST,
+  port: parseInt(process.env.MU_DB_PORT ?? "3306", 10),
+  user: process.env.MU_DB_USER,
+  password: process.env.MU_DB_PASSWORD,
+  database: process.env.MU_DB_NAME,
 });
 
 try {
