@@ -12,6 +12,9 @@
   --color-muted: #42524c;
   --color-line: #d3ddd7;
   --color-surface: #fff;
+  --color-error: #b8583d;
+  --color-blue: #598fc2;
+  --color-purple: #7c64c8;
   --font-primary: "Manrope", system-ui, sans-serif;
   --font-arabic: "Noto Naskh Arabic", serif;
   --animate-fade-in: fade-in 0.18s ease;
@@ -244,7 +247,7 @@ select:focus-visible {
   }
 
   .offline {
-    @apply flex items-center gap-[5px] text-[#b8583d] text-xs font-semibold
+    @apply flex items-center gap-[5px] text-error text-xs font-semibold
   }
 
   .role-select {
@@ -273,10 +276,6 @@ select:focus-visible {
 
   .toast svg {
     @apply w-[15px]
-  }
-
-  .authentication-loading {
-    @apply min-h-screen grid place-items-center p-6 bg-cream
   }
 
   .landing {
@@ -420,7 +419,7 @@ select:focus-visible {
   }
 
   .goal-icon.purple {
-    @apply bg-[#f2eff8] text-[#7c64c8]
+    @apply bg-[#f2eff8] text-purple
   }
 
   .landing-steps {
@@ -594,7 +593,7 @@ select:focus-visible {
   }
 
   .auth-error {
-    @apply text-[#b8583d] text-xs m-0 bg-[#fff5f1] border border-[#f3d2c4] rounded-[8px] p-[8px_10px]
+    @apply text-error text-xs m-0 bg-[#fff5f1] border border-[#f3d2c4] rounded-[8px] p-[8px_10px]
   }
 
   .google-btn {
@@ -733,34 +732,6 @@ select:focus-visible {
     @apply relative z-[2] p-[28px_28px_28px_24px]
   }
 
-  .hero-card h2 {
-    @apply text-xl m-0 mb-[6px]
-  }
-
-  .hero-art {
-    @apply absolute right-0 top-0 bottom-0 w-[42%] grid place-items-center
-  }
-
-  .hero-art .moon {
-    @apply w-[130px] h-[130px] rounded-full bg-mint text-green grid place-items-center text-4xl
-  }
-
-  .hero-art .quran {
-    @apply absolute w-[110px] h-[70px] grid place-items-center
-  }
-
-  .hero-art .star {
-    @apply absolute text-green text-lg not-italic
-  }
-
-  .hero-art .s1 {
-    @apply left-[12%] top-[10%]
-  }
-
-  .hero-art .s2 {
-    @apply right-[10%] top-[8%] text-xs
-  }
-
   .progress-row {
     @apply flex items-center gap-[10px] text-xs text-muted mt-[14px]
   }
@@ -830,7 +801,7 @@ select:focus-visible {
   }
 
   .task-icon.blue {
-    @apply bg-[#e9f2fa] text-[#598fc2]
+    @apply bg-[#e9f2fa] text-blue
   }
 
   .empty-state {
@@ -897,28 +868,8 @@ select:focus-visible {
     @apply pt-0 pb-[7px]
   }
 
-  .avatar[class*="av0"] {
-    background: #d4a06f
-  }
-
-  .avatar[class*="av1"] {
-    background: #6fa8d4
-  }
-
-  .avatar[class*="av2"] {
-    background: #72b87a
-  }
-
-  .avatar[class*="av3"] {
-    background: #b87aae
-  }
-
   .child-meta {
     @apply block text-xs text-muted
-  }
-
-  .compact {
-    @apply text-[10px]
   }
 
   .outline {
@@ -987,10 +938,6 @@ select:focus-visible {
 
   .gray-dot {
     @apply bg-line
-  }
-
-  .table-card {
-    @apply overflow-hidden
   }
 
   .profile-grid {
@@ -1130,7 +1077,7 @@ select:focus-visible {
   }
 
   .badge-card span.purple {
-    @apply text-[#7c64c8]
+    @apply text-purple
   }
 
   .badge-card b {
@@ -1178,7 +1125,7 @@ select:focus-visible {
   }
 
   .history-icon.h2 {
-    @apply bg-[#f0e8fc] text-[#7c64c8]
+    @apply bg-[#f0e8fc] text-purple
   }
 
   .history-icon.h3 {
@@ -1401,30 +1348,6 @@ select:focus-visible {
     @apply grid grid-cols-[1fr_1fr_auto] items-center gap-[10px] mt-5
   }
 
-  .mastery {
-    @apply grid grid-cols-[1fr_auto] items-center gap-3 p-[14px_16px] mt-5
-  }
-
-  .mastery button {
-    @apply text-xs gap-[5px] px-[12px] py-[6px]
-  }
-
-  .mastery-0.active {
-    @apply bg-[#fce8e8] text-[#c86464] border-[#f3c4c4]
-  }
-
-  .mastery-1.active {
-    @apply bg-[#fcf5e7] text-gold border-[#efe3c4]
-  }
-
-  .mastery-2.active {
-    @apply bg-mint text-green border-[#cfe7dc]
-  }
-
-  .primary.finish {
-    @apply bg-deep w-full mt-5
-  }
-
   .mastery-inline {
     @apply flex items-center justify-between gap-3 mt-4 pt-4 border-t border-line
   }
@@ -1492,10 +1415,6 @@ select:focus-visible {
 
     .class-card {
       @apply max-w-none
-    }
-
-    .practice-layout {
-      @apply grid-cols-1
     }
 
     .profile-grid {
@@ -1618,10 +1537,6 @@ select:focus-visible {
       @apply text-xl
     }
 
-    .hero-art {
-      @apply right-[-15%] opacity-50
-    }
-
     .goals-grid, .two-col {
       @apply grid-cols-1
     }
@@ -1662,18 +1577,6 @@ select:focus-visible {
       @apply gap-[10px] flex-wrap
     }
 
-    .mastery {
-      @apply block
-    }
-
-    .mastery>div:last-child {
-      @apply grid mt-3
-    }
-
-    .mastery button {
-      @apply justify-center
-    }
-
     .level-card {
       @apply p-5 flex-wrap
     }
@@ -1696,18 +1599,6 @@ select:focus-visible {
 
     .dash-top>.primary {
       @apply mb-[15px]
-    }
-
-    .table-card {
-      @apply p-[14px]
-    }
-
-    .table-card .card-head {
-      @apply block
-    }
-
-    .compact {
-      @apply mt-[10px]
     }
 
     .table-header {
@@ -1748,10 +1639,6 @@ select:focus-visible {
       @apply min-h-10 text-xs
     }
   }
-}
-
-.dark\:bg-surface-dark {
-  background: #182420
 }
 
 [data-theme="dark"] .sidebar-tip {
@@ -1821,16 +1708,21 @@ select:focus-visible {
 }
 
 [data-theme="dark"] .role-card.selected {
-  background: #16261f
+  background: #1b352b;
+  border-color: #106b55
 }
 
 [data-theme="dark"] .toggle:not(.on) {
   background: #2c3d36
 }
 
+[data-theme="dark"] .stat {
+  border-color: #3a5048
+}
+
 [data-theme="dark"] .sidebar nav button.active,
 [data-theme="dark"] .help:hover {
-  background: #101c18
+  background: #1d3128
 }
 
 [data-theme="dark"] .landing {
