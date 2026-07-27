@@ -3,6 +3,7 @@ import { BookOpen, Flame, Lock, Repeat2, Star, Target, Trophy, Zap } from "lucid
 import type { StatsResponse } from "@murojaah/shared";
 import { PageTitle } from "../components/PageTitle";
 import { Stat } from "../components/Stat";
+import { useToast } from "../lib/toast-context";
 import { getBadges, getMyStats, getSurahs } from "../lib/api";
 import type { BadgeResponse, SurahResponse } from "../lib/api";
 
@@ -17,12 +18,13 @@ const relativeDay = (iso: string) => {
 };
 
 export function Achievements(){
+  const notify = useToast();
   const [badges, setBadges] = useState<BadgeResponse[]>([]);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [surahList, setSurahList] = useState<SurahResponse[]>([]);
-  useEffect(() => { getBadges().then(res => setBadges(res.badges)).catch(() => setBadges([])); }, []);
-  useEffect(() => { getMyStats().then(setStats).catch(() => setStats(null)); }, []);
-  useEffect(() => { getSurahs().then(setSurahList).catch(() => setSurahList([])); }, []);
+  useEffect(() => { getBadges().then(res => setBadges(res.badges)).catch(() => { setBadges([]); notify("Gagal memuat lencana."); }); }, []);
+  useEffect(() => { getMyStats().then(setStats).catch(() => { setStats(null); notify("Gagal memuat statistik."); }); }, []);
+  useEffect(() => { getSurahs().then(setSurahList).catch(() => { setSurahList([]); notify("Gagal memuat daftar surah."); }); }, []);
   const earnedCount = badges.filter(b => b.earned).length;
   const surahName = (id: number) => surahList.find(s => s.id === id)?.latinName ?? `Surah #${id}`;
   const levelProgressPct = stats ? Math.round((stats.xpIntoLevel / stats.xpPerLevel) * 100) : 0;

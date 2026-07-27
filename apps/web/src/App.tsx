@@ -2,6 +2,7 @@ import { Component, lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { BookOpen } from "lucide-react";
 import { LandingPage } from "./pages/Landing";
+import { ResetPasswordPage } from "./pages/ResetPassword";
 import { useAuth } from "./lib/auth-context";
 
 const AuthDialog = lazy(() => import("./pages/Auth").then(m => ({ default: m.AuthDialog })));
@@ -13,12 +14,13 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, { faile
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(error: Error, info: ErrorInfo) { console.error("Murojaah gagal dimuat", error, info); }
   render() {
-    if (this.state.failed) return <main className="recovery"><span className="brandmark"><BookOpen /></span><h1>Murojaah perlu dimuat ulang</h1><p>Kami menemukan kendala saat membuka aplikasi. Data latihanmu tetap aman.</p><button className="primary" onClick={() => { localStorage.removeItem("hafizayat-settings"); location.assign("/"); }}>Muat ulang aplikasi</button></main>;
+    if (this.state.failed) return <main className="recovery"><span className="brandmark"><BookOpen /></span><h1>Murojaah perlu dimuat ulang</h1><p>Kami menemukan kendala saat membuka aplikasi. Data latihanmu tetap aman.</p><button className="primary" onClick={() => { location.assign("/"); }}>Muat ulang aplikasi</button></main>;
     return this.props.children;
   }
 }
 
 export function App() {
+  const isResetPage = location.pathname === "/reset-password";
   const auth = useAuth();
   const [authView, setAuthView] = useState<"login" | "register" | null>(null);
   const wasAuthenticated = useRef(false);
@@ -26,10 +28,11 @@ export function App() {
     if (auth.user) wasAuthenticated.current = true;
     else if (wasAuthenticated.current) { setAuthView(null); wasAuthenticated.current = false; }
   }, [auth.user]);
+  if (isResetPage) return <ResetPasswordPage />;
   if (auth.loading) return null;
   if (!auth.user) {
     return <><LandingPage onLogin={() => setAuthView("login")} onRegister={() => setAuthView("register")} />
-      {authView && <div className="auth-modal-backdrop"><div className="auth-modal"><Suspense fallback={null}><AuthDialog initialMode={authView} onClose={() => setAuthView(null)} /></Suspense></div></div>}</>;
+      {authView && <div className="auth-modal-backdrop"><div className="auth-modal"><Suspense fallback={<div className="card auth-card"><div className="w-full text-center text-xs text-muted">Memuat…</div></div>}><AuthDialog initialMode={authView} onClose={() => setAuthView(null)} /></Suspense></div></div>}</>;
   }
   return (
     <Suspense fallback={<main className="auth-shell"><span className="brandmark"><BookOpen /></span></main>}>

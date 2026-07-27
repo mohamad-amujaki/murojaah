@@ -1,10 +1,11 @@
 import { and, eq, inArray, or } from "drizzle-orm";
 import { assignments, classMembers, practiceSessions, xpLedger } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json } from "../lib/http";
+import { json, parseBody } from "../lib/http";
 import { requireAuth } from "../lib/guards";
 import { evaluateBadges } from "../lib/badges";
 import { getClientIp, rateLimit, rateLimitResponse } from "../lib/rate-limit";
+import { practiceCompleteSchema } from "@murojaah/shared/schemas";
 
 const SUCCESS_MESSAGE = "MasyaAllah, sesi berhasil diselesaikan!";
 
@@ -18,26 +19,10 @@ export const handlePracticeComplete: RouteHandler = async (request, url, env, ct
   if (!allowed) return rateLimitResponse(retryAfterMs);
   const userId = user.id;
 
-  let body: Record<string, unknown>;
-  try {
-    body = await request.json() as Record<string, unknown>;
-  } catch {
-    return json({ error: "Format data sesi tidak valid." }, 400, {}, "no-store");
-  }
-
-  const surahId = Number(body.surahId);
-  const start = Number(body.startAyah);
-  const end = Number(body.endAyah);
-  const loops = Number(body.loops);
-  const duration = Number(body.duration);
-  const clientId = typeof body.clientId === "string" && body.clientId.length > 0 ? body.clientId : null;
-  const valid = Number.isInteger(surahId) && surahId > 0
-    && Number.isInteger(start) && start > 0
-    && Number.isInteger(end) && end >= start
-    && Number.isInteger(loops) && loops > 0 && loops <= 1000
-    && Number.isFinite(duration) && duration >= 0;
-
-  if (!valid) return json({ error: "Data sesi latihan tidak valid." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, practiceCompleteSchema);
+  if (parsed instanceof Response) return parsed;
+  const { surahId, startAyah: start, endAyah: end, loops, duration, clientId: rawClientId } = parsed;
+  const clientId = rawClientId ?? null;
 
   try {
 
@@ -46,19 +31,16 @@ export const handlePracticeComplete: RouteHandler = async (request, url, env, ct
       if (existing) return json({ xp: 35, message: SUCCESS_MESSAGE }, 201, {}, "no-store");
     }
 
-    const [inserted] = await db.insert(practiceSessions).values({
-      userId,
-      surahId,
-      startAyah: start,
-      endAyah: end,
-      loops,
-      duration: Math.round(duration),
-      status: "completed",
-      clientId,
+    await db.transaction(async (tx) => {
+      const [inserted] = await tx.insert(practiceSessions).values({
+        userId, surahId, startAyah: start, endAyah: end,
+        loops, duration: Math.round(duration), status: "completed", clientId,
+      });
+      const sid = inserted.insertId;
+      if (!sid) throw new Error("Sesi tidak berhasil dibuat");
+      await tx.insert(xpLedger).values({ userId, source: `practice:${sid}`, amount: 35 });
     });
-    const sessionId = inserted.insertId;
-    if (!sessionId) throw new Error("Sesi tidak berhasil dibuat");
-    await db.insert(xpLedger).values({ userId, source: `practice:${sessionId}`, amount: 35 });
+
     await evaluateBadges(db, userId).catch(err => console.error("Gagal mengevaluasi lencana", err));
 
     const memberOf = await db.select({ classId: classMembers.classId }).from(classMembers).where(eq(classMembers.studentId, userId));

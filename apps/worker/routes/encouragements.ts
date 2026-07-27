@@ -1,9 +1,10 @@
 import { desc, eq } from "drizzle-orm";
 import { encouragements, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json, readJsonBody } from "../lib/http";
+import { json, parseBody } from "../lib/http";
 import { requireAuth, requireOwnedChild, requireRole } from "../lib/guards";
 import { findOrNotFound, insertReturning } from "../lib/db-helpers";
+import { createEncouragementSchema } from "@murojaah/shared/schemas";
 
 export const handleCreateEncouragement: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/encouragements" || request.method !== "POST") return null;
@@ -11,10 +12,9 @@ export const handleCreateEncouragement: RouteHandler = async (request, url, env,
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await readJsonBody(request);
-  const childId = Number(body?.childId);
-  const message = String(body?.message ?? "").trim();
-  if (!Number.isInteger(childId) || !message) return json({ error: "Pesan dan penerima wajib diisi." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, createEncouragementSchema);
+  if (parsed instanceof Response) return parsed;
+  const { childId, message } = parsed;
 
   const child = await requireOwnedChild(db, childId, user.id);
   if (child instanceof Response) return child;

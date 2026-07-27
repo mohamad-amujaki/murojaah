@@ -7,6 +7,7 @@ import { Stat } from "../components/Stat";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { deleteAdminUsers, getAdminClasses, getAdminStats, getAdminUsers, getClassMembers, updateAdminUser } from "../lib/api";
 import type { AdminClassResponse, AdminStatsResponse, ClassMember } from "../lib/api";
+import { useToast } from "../lib/toast-context";
 import { ROLE_LABEL } from "../lib/constants";
 
 const PAGE_SIZE = 25;
@@ -30,7 +31,7 @@ function getPageNumbers(current: number, total: number): (number | "ellipsis")[]
   return pages;
 }
 
-export function Admin({ notify }: { notify?: (s: string) => void }) {
+export function Admin() {
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
   const [users, setUsers] = useState<PublicUser[]>([]);
   const [total, setTotal] = useState(0);
@@ -47,6 +48,7 @@ export function Admin({ notify }: { notify?: (s: string) => void }) {
   const [expandedClassId, setExpandedClassId] = useState<number | null>(null);
   const [classMembers, setClassMembers] = useState<ClassMember[]>([]);
   const [classSearch, setClassSearch] = useState("");
+  const notify = useToast();
 
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => {
@@ -55,8 +57,8 @@ export function Admin({ notify }: { notify?: (s: string) => void }) {
     return () => clearTimeout(timer.current);
   }, [search]);
 
-  useEffect(() => { getAdminStats().then(setStats).catch(() => setStats(null)); }, []);
-  useEffect(() => { getAdminClasses().then(r => setAdminClasses(r.classes)).catch(() => setAdminClasses([])); }, []);
+  useEffect(() => { getAdminStats().then(setStats).catch(() => { setStats(null); notify("Gagal memuat statistik."); }); }, []);
+  useEffect(() => { getAdminClasses().then(r => setAdminClasses(r.classes)).catch(() => { setAdminClasses([]); notify("Gagal memuat daftar kelas."); }); }, []);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -103,12 +105,12 @@ export function Admin({ notify }: { notify?: (s: string) => void }) {
       await deleteAdminUsers([...selected]);
       setSelected(new Set());
       setConfirmDelete(false);
-      notify?.("Pengguna berhasil dihapus.");
+      notify("Pengguna berhasil dihapus.");
       await loadUsers();
       const s = await getAdminStats();
       setStats(s);
     } catch {
-      notify?.("Gagal menghapus pengguna.");
+      notify("Gagal menghapus pengguna.");
     }
     setDeleting(false);
   };

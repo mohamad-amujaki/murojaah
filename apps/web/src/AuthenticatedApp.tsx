@@ -1,7 +1,7 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { UserRole } from "@murojaah/shared";
 import {
-  Bell, BookOpen, Check, ChevronDown, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
+  Bell, BookOpen, ChevronDown, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
 } from "lucide-react";
 import { Modal } from "./components/Modal";
 
@@ -10,6 +10,7 @@ import { nav, pageFromHash } from "./types";
 import type { Page, Role } from "./types";
 import { useAuth } from "./lib/auth-context";
 import { getTheme, setTheme } from "./lib/theme";
+import { ToastProvider, useToast } from "./lib/toast-context";
 import { syncPendingSessions } from "./lib/sync";
 import { ROLE_CARDS, ROLE_LABEL, initials } from "./lib/constants";
 
@@ -21,6 +22,7 @@ const Profile = lazy(() => import("./pages/Profile").then(m => ({ default: m.Pro
 
 export default function AuthenticatedApp() {
   const { user, loginUser, children: kids, isActingAsChild, logout, switchProfile, updateProfile } = useAuth();
+  const notify = useToast();
   if (!user || !loginUser) return null;
   const role: Role = (ROLE_LABEL[user.role] as Role) ?? "Murid";
   const visibleNav = nav.filter(item => {
@@ -30,8 +32,6 @@ export default function AuthenticatedApp() {
   });
 
   const [page, setPage] = useState<Page>(pageFromHash);
-  const toastTimer = useRef<number | undefined>(undefined);
-  const [toast, setToast] = useState("");
   const [menu, setMenu] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const toggleSidebar = () => {
@@ -47,7 +47,10 @@ export default function AuthenticatedApp() {
   const [darkMode, setDarkMode] = useState(() => getTheme() === "dark");
   const toggleTheme = () => { const next = darkMode ? "light" : "dark"; setDarkMode(!darkMode); setTheme(next); };
   const go = (next: Page) => { setPage(next); location.hash = next; scrollTo({ top: 0, behavior: "smooth" }); setMenu(false); };
-  const notify = useCallback((text: string) => { setToast(text); if(toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current=window.setTimeout(() => setToast(""), 2800); }, []);
+  useEffect(() => {
+    const el = document.querySelector<HTMLHeadingElement>(".content h1");
+    if (el) { el.setAttribute("tabindex", "-1"); el.focus(); }
+  }, [page]);
   useEffect(() => {
     const hash = () => setPage(pageFromHash());
     const on = () => { setOnline(true); syncPendingSessions(notify); };
@@ -55,7 +58,7 @@ export default function AuthenticatedApp() {
     addEventListener("hashchange", hash); addEventListener("online", on); addEventListener("offline", off);
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     syncPendingSessions(notify);
-    return () => { removeEventListener("hashchange", hash); removeEventListener("online", on); removeEventListener("offline", off); if(toastTimer.current) clearTimeout(toastTimer.current); };
+    return () => { removeEventListener("hashchange", hash); removeEventListener("online", on); removeEventListener("offline", off); };
   }, [notify]);
 
   const handleProfileSelect = async (value: string) => {
@@ -63,7 +66,7 @@ export default function AuthenticatedApp() {
     await switchProfile(Number(value)).catch(err => notify(err instanceof Error ? err.message : "Gagal berpindah profil."));
   };
 
-  return <div className={collapsed ? "app-shell sidebar-collapsed" : "app-shell"}>
+  return <ToastProvider><div className={collapsed ? "app-shell sidebar-collapsed" : "app-shell"}>
     <aside className={menu ? "sidebar open" : "sidebar"}>
       <div className="brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span><button className="icon-btn close-menu" onClick={() => setMenu(false)} aria-label="Tutup menu"><X /></button></div>
       <div className="profile-mini"><div className="avatar">{initials(user.displayName)}</div><div><b>{user.displayName}</b><span><i /> {role}</span></div></div>
@@ -93,18 +96,17 @@ export default function AuthenticatedApp() {
         </div>
       </header>
       <div className="content">
-        <Suspense fallback={null}>
-          {page === "home" && <HomePage go={go} notify={notify} />}
-          {page === "admin" && <Admin notify={notify} />}
-          {page === "practice" && <PracticePage notify={notify} />}
+        <Suspense fallback={<div className="grid gap-5"><div className="w-1/3 h-5 rounded bg-line animate-pulse" /><div className="grid grid-cols-4 gap-[14px]"><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /></div><div className="grid grid-cols-2 gap-[14px]"><div className="h-40 rounded-[16px] bg-line animate-pulse" /><div className="h-40 rounded-[16px] bg-line animate-pulse" /></div></div>}>
+          {page === "home" && <HomePage go={go} />}
+          {page === "admin" && <Admin />}
+          {page === "practice" && <PracticePage />}
           {page === "achievements" && <Achievements />}
-          {page === "profile" && <Profile notify={notify} />}
+          {page === "profile" && <Profile />}
         </Suspense>
       </div>
     </main>
     <nav className="bottom-nav">{visibleNav.map(item => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => go(item.id)}><item.icon /><span>{item.label}</span></button>)}</nav>
-    {toast && <div className="toast"><Check />{toast}</div>}
-    {showAddChild && <AddChildModal onClose={() => setShowAddChild(false)} notify={notify} />}
+    {showAddChild && <AddChildModal onClose={() => setShowAddChild(false)} />}
     {showHelp && <Modal onClose={() => setShowHelp(false)}>
       <div className="card help-modal"><div className="brand"><span className="brandmark"><CircleHelp /></span><span>Pusat Bantuan</span></div>
       <p className="help-desc">Butuh bantuan, nemu bug, atau punya usulan fitur? Hubungi kami lewat salah satu saluran di bawah.</p>
@@ -131,5 +133,5 @@ export default function AuthenticatedApp() {
       </div>
       <button className="primary full" disabled={roleSetupBusy} type="submit">{roleSetupBusy?"Menyimpan...":"Simpan"}</button>
     </form></div></div>}
-  </div>;
+  </div></ToastProvider>;
 }

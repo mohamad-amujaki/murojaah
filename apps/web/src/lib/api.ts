@@ -6,6 +6,30 @@ import type {
 const getCache = new Map<string, { data: unknown; at: number }>();
 const CACHE_TTL = 15_000;
 
+function invalidateCache(mutPath: string) {
+  const groups: [string, string[]][] = [
+    ["/practice/complete", ["/me/stats", "/badges", "/me/suggestion", "/children/"]],
+    ["/ayah-progress", []],
+    ["/auth/", ["*"]],
+    ["/classes/", ["/classes", "/admin/classes"]],
+    ["/classes", ["/classes", "/admin/classes"]],
+    ["/assignments", ["/assignments", "/me/suggestion"]],
+    ["/encouragements/", ["/encouragements"]],
+    ["/encouragements", ["/encouragements"]],
+    ["/children/", ["/children/", "/me/stats"]],
+    ["/students/", ["/teacher/students"]],
+    ["/admin/", ["/admin/"]],
+    ["/me", ["/auth/me", "/me/stats", "/me/suggestion"]],
+  ];
+  const targets = groups.find(([prefix]) => mutPath.startsWith(prefix))?.[1];
+  if (!targets) { getCache.clear(); return; }
+  if (targets.length === 0) return;
+  const isWildcard = targets[0] === "*";
+  for (const key of getCache.keys()) {
+    if (isWildcard || targets.some(t => key.startsWith(t))) getCache.delete(key);
+  }
+}
+
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const isGet = !options?.method || options.method === "GET";
   const cacheKey = isGet ? path : "";
@@ -17,7 +41,7 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const data = await response.json() as T | ApiError;
   if (!response.ok) throw new Error((data as ApiError).error || "Terjadi kesalahan. Silakan coba lagi.");
   if (isGet) getCache.set(cacheKey, { data, at: Date.now() });
-  else getCache.clear();
+  else invalidateCache(path);
   return data as T;
 }
 export const completePractice = (payload: CompletePracticePayload) => api<CompletePracticeResponse>("/practice/complete", { method:"POST", body:JSON.stringify(payload) });
@@ -90,3 +114,6 @@ export const getAdminUsers = (params?: { role?: string; q?: string; offset?: num
 };
 export const deleteAdminUsers = (ids: number[]) => api<{ ok: boolean }>("/admin/users/delete", { method: "POST", body: JSON.stringify({ ids }) });
 export const updateAdminUser = (userId:number, payload: ProfileFieldUpdates) => api<{ user: PublicUser }>(`/admin/users/${userId}`, { method:"PATCH", body:JSON.stringify(payload) });
+
+export const forgotPassword = (email: string) => api<{ ok: boolean; message: string }>("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) });
+export const resetPassword = (token: string, password: string) => api<{ ok: boolean; message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify({ token, password }) });

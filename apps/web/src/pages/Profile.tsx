@@ -7,9 +7,10 @@ import { Toggle } from "../components/Toggle";
 import { useAuth } from "../lib/auth-context";
 import { getMyStats } from "../lib/api";
 import { getTheme, setTheme } from "../lib/theme";
+import { useToast } from "../lib/toast-context";
 import { ROLE_LABEL, initials } from "../lib/constants";
 
-export function Profile({notify}:{notify:(s:string)=>void}){
+export function Profile(){
   const { user, loginUser, updateProfile } = useAuth();
   const [name,setName]=useState(user?.displayName ?? "");
   const [dailyTarget,setDailyTarget]=useState(user?.dailyTarget ?? 10);
@@ -17,6 +18,7 @@ export function Profile({notify}:{notify:(s:string)=>void}){
   const [saving,setSaving]=useState(false);
   const [stats,setStats]=useState<StatsResponse|null>(null);
   const [darkMode,setDarkMode]=useState(()=>getTheme()==="dark");
+  const notify = useToast();
 
   useEffect(()=>{
     if(!user) return;
@@ -24,7 +26,7 @@ export function Profile({notify}:{notify:(s:string)=>void}){
     setDailyTarget(user.dailyTarget);
     setPrefs(user.preferences);
   },[user]);
-  useEffect(()=>{ getMyStats().then(setStats).catch(()=>setStats(null)); },[]);
+  useEffect(()=>{ getMyStats().then(setStats).catch(()=>{ setStats(null); notify("Gagal memuat statistik profil."); }); },[]);
 
   const save = async () => {
     setSaving(true);

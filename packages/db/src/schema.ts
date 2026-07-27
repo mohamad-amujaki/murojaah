@@ -51,3 +51,9 @@ export const badges = mysqlTable("mu_badges", { id:int("id").autoincrement().pri
 export const userBadges = mysqlTable("mu_user_badges", { id:int("id").autoincrement().primaryKey(), userId:int("user_id").notNull().references(()=>users.id), badgeId:int("badge_id").notNull().references(()=>badges.id), earnedAt:nowText("earned_at") },t=>[uniqueIndex("user_badge").on(t.userId,t.badgeId)]);
 export const xpLedger = mysqlTable("mu_xp_ledger", { id:int("id").autoincrement().primaryKey(), userId:int("user_id").notNull().references(()=>users.id), source:varchar("source", { length: 64 }).notNull().unique(), amount:int("amount").notNull(), createdAt:nowText("created_at") });
 export const encouragements = mysqlTable("mu_encouragements", { id:int("id").autoincrement().primaryKey(), parentId:int("parent_id").notNull().references(()=>users.id), childId:int("child_id").notNull().references(()=>users.id), message:text("message").notNull(), isRead:boolean("is_read").notNull().default(false), createdAt:nowText("created_at") });
+export const passwordResetTokens = mysqlTable("mu_password_reset_tokens", {
+  token: varchar("token", { length: 128 }).primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: nowText("created_at"),
+});

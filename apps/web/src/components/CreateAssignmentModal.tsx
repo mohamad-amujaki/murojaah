@@ -3,10 +3,12 @@ import { BookOpen, Check } from "lucide-react";
 import { Modal } from "./Modal";
 import { SurahPicker } from "./SurahPicker";
 import { SegmentedControl } from "./SegmentedControl";
+import { useToast } from "../lib/toast-context";
 import { createAssignment, getSurahs } from "../lib/api";
 import type { ClassResponse, SurahResponse } from "../lib/api";
 
-export function CreateAssignmentModal({ classes, selectedClass, onClose, notify }: { classes: ClassResponse[]; selectedClass: ClassResponse; onClose: () => void; notify: (s: string) => void }) {
+export function CreateAssignmentModal({ classes, selectedClass, onClose }: { classes: ClassResponse[]; selectedClass: ClassResponse; onClose: () => void }) {
+  const notify = useToast();
   const [classId, setClassId] = useState(selectedClass.id);
   const [surahList, setSurahList] = useState<SurahResponse[]>([]);
   const [query, setQuery] = useState("");
@@ -18,7 +20,7 @@ export function CreateAssignmentModal({ classes, selectedClass, onClose, notify 
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { getSurahs().then(setSurahList).catch(() => setSurahList([])); }, []);
+  useEffect(() => { getSurahs().then(setSurahList).catch(() => { setSurahList([]); notify("Gagal memuat daftar surah."); }); }, []);
 
   const pickSurah = (s: SurahResponse) => { setSurah(s); setStart(1); setEnd(Math.min(4, s.ayahCount)); };
 

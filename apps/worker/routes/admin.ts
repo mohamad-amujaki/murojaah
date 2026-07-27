@@ -4,11 +4,12 @@ import {
   oauthAccounts, parentChildren, practiceSessions, sessions, userBadges, users, xpLedger,
 } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json, readJsonBody } from "../lib/http";
+import { json, parseBody, readJsonBody } from "../lib/http";
 import { requireAuth, requireOwnedChild, requireRole } from "../lib/guards";
 import { computeUserStats } from "../lib/stats";
 import { findOrNotFound, updateReturning } from "../lib/db-helpers";
 import { parseProfileFieldUpdates, publicUser } from "../lib/profile";
+import { adminDeleteUsersSchema } from "@murojaah/shared/schemas";
 
 export const handleAdminStats: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/admin/stats" || request.method !== "GET") return null;
@@ -141,24 +142,26 @@ export const handleDeleteAdminUsers: RouteHandler = async (request, url, env, ct
   if (guard instanceof Response) return guard;
   const { db } = guard;
 
-  const body = await readJsonBody(request);
-  const ids = (body?.ids as number[]) ?? [];
-  if (!ids.length) return json({ error: "Tidak ada pengguna yang dipilih." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, adminDeleteUsersSchema);
+  if (parsed instanceof Response) return parsed;
+  const ids = parsed.ids;
 
-  await db.delete(credentials).where(inArray(credentials.userId, ids));
-  await db.delete(oauthAccounts).where(inArray(oauthAccounts.userId, ids));
-  await db.delete(sessions).where(or(inArray(sessions.userId, ids), inArray(sessions.activeUserId, ids)));
-  await db.delete(parentChildren).where(or(inArray(parentChildren.parentId, ids), inArray(parentChildren.childId, ids)));
-  await db.update(users).set({ managedBy: null }).where(inArray(users.managedBy, ids));
-  await db.delete(practiceSessions).where(inArray(practiceSessions.userId, ids));
-  await db.delete(ayahProgress).where(inArray(ayahProgress.userId, ids));
-  await db.delete(userBadges).where(inArray(userBadges.userId, ids));
-  await db.delete(xpLedger).where(inArray(xpLedger.userId, ids));
-  await db.delete(encouragements).where(or(inArray(encouragements.parentId, ids), inArray(encouragements.childId, ids)));
-  await db.delete(classMembers).where(inArray(classMembers.studentId, ids));
-  await db.delete(assignments).where(or(inArray(assignments.creatorId, ids), inArray(assignments.studentId, ids)));
-  await db.update(classes).set({ teacherId: null }).where(inArray(classes.teacherId, ids));
-  await db.delete(users).where(inArray(users.id, ids));
+  await db.transaction(async (tx) => {
+    await tx.delete(credentials).where(inArray(credentials.userId, ids));
+    await tx.delete(oauthAccounts).where(inArray(oauthAccounts.userId, ids));
+    await tx.delete(sessions).where(or(inArray(sessions.userId, ids), inArray(sessions.activeUserId, ids)));
+    await tx.delete(parentChildren).where(or(inArray(parentChildren.parentId, ids), inArray(parentChildren.childId, ids)));
+    await tx.update(users).set({ managedBy: null }).where(inArray(users.managedBy, ids));
+    await tx.delete(practiceSessions).where(inArray(practiceSessions.userId, ids));
+    await tx.delete(ayahProgress).where(inArray(ayahProgress.userId, ids));
+    await tx.delete(userBadges).where(inArray(userBadges.userId, ids));
+    await tx.delete(xpLedger).where(inArray(xpLedger.userId, ids));
+    await tx.delete(encouragements).where(or(inArray(encouragements.parentId, ids), inArray(encouragements.childId, ids)));
+    await tx.delete(classMembers).where(inArray(classMembers.studentId, ids));
+    await tx.delete(assignments).where(or(inArray(assignments.creatorId, ids), inArray(assignments.studentId, ids)));
+    await tx.update(classes).set({ teacherId: null }).where(inArray(classes.teacherId, ids));
+    await tx.delete(users).where(inArray(users.id, ids));
+  });
 
   return json({ ok: true }, 200, {}, "no-store");
 };

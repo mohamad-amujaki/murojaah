@@ -11,6 +11,7 @@ import type { StatsResponse } from "@murojaah/shared";
 import type { AdminStatsResponse, ClassMember, ClassResponse, AssignmentResponse, EncouragementResponse, Suggestion, SurahResponse } from "../lib/api";
 import { getAdminStats, getAssignments, getChildStats, getClassMembers, getClasses, getEncouragements, getMyStats, getSuggestion, getSurahs, joinClass, markEncouragementRead, removeClassMember } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
+import { useToast } from "../lib/toast-context";
 import { ROLE_LABEL } from "../lib/constants";
 import { calculateAge } from "../lib/age";
 import type { Page, Role } from "../types";
@@ -18,6 +19,7 @@ import type { Page, Role } from "../types";
 const formatDue = (iso: string | null) => iso ? new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "long" }) : "Tanpa tenggat";
 
 function StudentSection({ stats }: { stats: StatsResponse | null }) {
+  const notify = useToast();
   const [classes, setClasses] = useState<ClassResponse[]>([]);
   const [showJoin, setShowJoin] = useState(false);
   const [joinCode, setJoinCode] = useState("");
@@ -25,7 +27,7 @@ function StudentSection({ stats }: { stats: StatsResponse | null }) {
   const [joinError, setJoinError] = useState("");
   const [joinedName, setJoinedName] = useState("");
 
-  const loadClasses = () => getClasses().then(r => setClasses(r.classes)).catch(() => undefined);
+  const loadClasses = () => getClasses().then(r => setClasses(r.classes)).catch(() => notify("Gagal memuat daftar kelas."));
   useEffect(() => { loadClasses(); }, []);
 
   const handleJoin = async () => {
@@ -83,7 +85,8 @@ function StudentSection({ stats }: { stats: StatsResponse | null }) {
   </>;
 }
 
-function TeacherSection({ notify }: { notify: (s: string) => void }) {
+function TeacherSection() {
+  const notify = useToast();
   const [classes,setClasses]=useState<ClassResponse[]>([]);
   const [selected,setSelected]=useState<ClassResponse|null>(null);
   const [members,setMembers]=useState<ClassMember[]>([]);
@@ -97,10 +100,10 @@ function TeacherSection({ notify }: { notify: (s: string) => void }) {
     setSelected(current => current ?? res.classes[0] ?? null);
     return res.classes;
   };
-  useEffect(()=>{ loadClasses().catch(()=>undefined); },[]);
+  useEffect(()=>{ loadClasses().catch(()=>{}); },[]);
   useEffect(()=>{
     if(!selected){ setMembers([]); return; }
-    getClassMembers(selected.id).then(res=>setMembers(res.members)).catch(()=>setMembers([]));
+    getClassMembers(selected.id).then(res=>setMembers(res.members)).catch(()=>{ setMembers([]); notify("Gagal memuat anggota kelas."); });
   },[selected]);
 
   return <section className="dashboard-grid" style={{marginTop:24}}>
@@ -132,12 +135,13 @@ function TeacherSection({ notify }: { notify: (s: string) => void }) {
       <button className="outline full" onClick={()=>setShowCreateClass(true)}><Plus/> Buat kelas baru</button>
     </aside>
     {showCreateClass && <CreateClassModal onClose={()=>setShowCreateClass(false)} onCreated={cls=>{loadClasses(); setSelected(cls);}}/>}
-    {showCreateAssignment && selected && <CreateAssignmentModal classes={classes} selectedClass={selected} onClose={()=>setShowCreateAssignment(false)} notify={notify}/>}
+    {showCreateAssignment && selected && <CreateAssignmentModal classes={classes} selectedClass={selected} onClose={()=>setShowCreateAssignment(false)}/>}
     {confirmRemove && <Modal onClose={()=>setConfirmRemove(null)}><div className="card" style={{maxWidth:360,margin:"0 auto",textAlign:"center"}}><h3 style={{margin:"0 0 8px"}}>Hapus {confirmRemove.name}?</h3><p className="text-xs text-muted" style={{margin:"0 0 16px"}}>Murid akan dihapus dari kelas ini. Data latihannya tetap tersimpan.</p><div style={{display:"flex",gap:8,justifyContent:"center"}}><button className="outline" onClick={()=>setConfirmRemove(null)}>Batal</button><button className="primary" style={{background:"#b8583d"}} onClick={()=>{removeClassMember(selected!.id,confirmRemove.id).then(()=>{getClassMembers(selected!.id).then(r=>setMembers(r.members));notify(`${confirmRemove.name} dihapus dari kelas.`);}).catch(()=>notify("Gagal menghapus murid.")).finally(()=>setConfirmRemove(null))}}>Hapus</button></div></div></Modal>}
   </section>;
 }
 
-function ParentSection({ notify }: { notify: (s: string) => void }) {
+function ParentSection() {
+  const notify = useToast();
   const { children: kids } = useAuth();
   const [childStats,setChildStats]=useState<Record<number,StatsResponse>>({});
   const [showEncouragement,setShowEncouragement]=useState(false);
@@ -175,13 +179,14 @@ function ParentSection({ notify }: { notify: (s: string) => void }) {
       <p style={{margin:"0 0 12px",fontSize:"0.75rem",color:"var(--muted)",textAlign:"center"}}>Ingin memberi semangat?</p>
       <button className="primary" style={{width:"100%"}} disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Heart/> Kirim Dukungan</button>
     </div>
-    {showEncouragement && <SendEncouragementModal kids={kids} onClose={()=>setShowEncouragement(false)} notify={notify}/>}
+    {showEncouragement && <SendEncouragementModal kids={kids} onClose={()=>setShowEncouragement(false)}/>}
   </section>;
 }
 
 function AdminSection() {
+  const notify = useToast();
   const [stats,setStats]=useState<AdminStatsResponse|null>(null);
-  useEffect(()=>{ getAdminStats().then(setStats).catch(()=>setStats(null)); },[]);
+  useEffect(()=>{ getAdminStats().then(setStats).catch(()=>{ setStats(null); notify("Gagal memuat statistik admin."); }); },[]);
   return <section style={{marginTop:24}}>
     <div className="stat-grid">
       <Stat icon={Users} value={String(stats?.totalUsers??0)} label="Total pengguna"/>
@@ -197,7 +202,8 @@ function AdminSection() {
   </section>;
 }
 
-export function HomePage({ go, notify }: { go: (p: Page) => void; notify: (s: string) => void }) {
+export function HomePage({ go }: { go: (p: Page) => void }) {
+  const notify = useToast();
   const { user } = useAuth();
   const firstName = user?.displayName.split(" ")[0] ?? "";
   const [assignments, setAssignments] = useState<AssignmentResponse[]>([]);
@@ -209,11 +215,11 @@ export function HomePage({ go, notify }: { go: (p: Page) => void; notify: (s: st
   const surahName = (surahId: number) => surahList.find(s => s.id === surahId)?.latinName ?? `Surah #${surahId}`;
   useEffect(() => {
     Promise.all([
-      getAssignments().then(res => setAssignments(res.assignments)).catch(() => setAssignments([])),
-      getEncouragements().then(res => setEncouragements(res.encouragements)).catch(() => setEncouragements([])),
-      getSurahs().then(setSurahList).catch(() => setSurahList([])),
-      getMyStats().then(setStats).catch(() => setStats(null)),
-      getSuggestion().then(res => setSuggestion(res.suggestion)).catch(() => setSuggestion(null)),
+      getAssignments().then(res => setAssignments(res.assignments)).catch(() => { setAssignments([]); notify("Gagal memuat tugas."); }),
+      getEncouragements().then(res => setEncouragements(res.encouragements)).catch(() => { setEncouragements([]); notify("Gagal memuat pesan dukungan."); }),
+      getSurahs().then(setSurahList).catch(() => { setSurahList([]); notify("Gagal memuat daftar surah."); }),
+      getMyStats().then(setStats).catch(() => { setStats(null); notify("Gagal memuat statistik."); }),
+      getSuggestion().then(res => setSuggestion(res.suggestion)).catch(() => { setSuggestion(null); notify("Gagal memuat saran latihan."); }),
     ]).then(() => setLoaded(true));
   }, []);
   const startSuggested = () => {
@@ -262,8 +268,8 @@ export function HomePage({ go, notify }: { go: (p: Page) => void; notify: (s: st
     </>}
     {role === "Murid" && <StudentSection stats={stats} />}
     {latestEncouragement && <section className="support"><div className="parent-avatar">{latestEncouragement.parentName[0]}</div><div><span><Heart /> PESAN DARI {latestEncouragement.parentName.toUpperCase()}</span><p>"{latestEncouragement.message}"</p></div></section>}
-    {role === "Guru" && <TeacherSection notify={notify} />}
-    {role === "Orang Tua" && <ParentSection notify={notify} />}
+    {role === "Guru" && <TeacherSection />}
+    {role === "Orang Tua" && <ParentSection />}
     {role === "Admin" && <AdminSection />}
   </>;
 }

@@ -9,6 +9,13 @@ export interface Env {
   NODE_ENV?: string;
   /** Injected by server.mjs when REDIS_URL is configured (VPS); absent elsewhere. */
   RATE_LIMIT_STORE?: RateLimitStore;
+  MU_SMTP_HOST?: string;
+  MU_SMTP_PORT?: string;
+  MU_SMTP_USER?: string;
+  MU_SMTP_PASS?: string;
+  MU_FROM_EMAIL?: string;
+  MU_FROM_NAME?: string;
+  MU_APP_URL?: string;
 }
 
 export type CurrentUser = PublicUser;
@@ -39,4 +46,20 @@ export type RouteHandler = (request: Request, url: URL, env: Env, ctx: RequestCo
 
 export async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
   return request.json().catch(() => null) as Promise<Record<string, unknown> | null>;
+}
+
+type ZodSafeParseResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: { issues: { message?: string }[] } };
+
+export async function parseBody<T>(request: Request, schema: { safeParse(input: unknown): ZodSafeParseResult<T> }): Promise<T | Response> {
+  const raw = await readJsonBody(request);
+  if (raw === null) return json({ error: "Format data tidak valid." }, 400, {}, "no-store");
+  const result = schema.safeParse(raw);
+  if (!result.success) {
+    const firstIssue = result.error.issues[0];
+    const message = firstIssue?.message ?? "Data tidak valid.";
+    return json({ error: message }, 400, {}, "no-store");
+  }
+  return result.data;
 }

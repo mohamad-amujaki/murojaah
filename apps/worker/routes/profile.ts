@@ -1,14 +1,12 @@
 import { and, asc, eq, ne } from "drizzle-orm";
 import { ayahProgress, ayahs, surahs, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json, readJsonBody } from "../lib/http";
+import { json, parseBody } from "../lib/http";
 import { requireAuth } from "../lib/guards";
 import { publicUser } from "../lib/profile";
 import { computeUserStats } from "../lib/stats";
 import { updateReturning } from "../lib/db-helpers";
-
-const TEXT_SIZES = ["Sedang", "Besar", "Sangat besar"];
-const SELF_ROLE_VALUES = ["student", "teacher", "parent"] as const;
+import { updateProfileSchema } from "@murojaah/shared/schemas";
 
 export const handleUpdateProfile: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/me" || request.method !== "PATCH") return null;
@@ -16,32 +14,21 @@ export const handleUpdateProfile: RouteHandler = async (request, url, env, ctx) 
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await readJsonBody(request);
+  const parsed = await parseBody(request, updateProfileSchema);
+  if (parsed instanceof Response) return parsed;
   const updates: Record<string, unknown> = {};
 
-  if (body?.displayName !== undefined) {
-    const displayName = String(body.displayName).trim();
-    if (!displayName) return json({ error: "Nama tampilan tidak boleh kosong." }, 400, {}, "no-store");
-    updates.displayName = displayName;
-  }
-  if (body?.dailyTarget !== undefined) {
-    const dailyTarget = Number(body.dailyTarget);
-    if (!Number.isInteger(dailyTarget) || dailyTarget < 1 || dailyTarget > 240) return json({ error: "Target harian tidak valid." }, 400, {}, "no-store");
-    updates.dailyTarget = dailyTarget;
-  }
-  if (body?.preferences !== undefined && typeof body.preferences === "object" && body.preferences !== null) {
-    const incoming = body.preferences as Record<string, unknown>;
+  if (parsed.displayName !== undefined) updates.displayName = parsed.displayName;
+  if (parsed.dailyTarget !== undefined) updates.dailyTarget = parsed.dailyTarget;
+  if (parsed.preferences !== undefined) {
     const current = user.preferences;
-    const textSize = typeof incoming.textSize === "string" && TEXT_SIZES.includes(incoming.textSize) ? incoming.textSize : current.textSize;
-    const showTransliteration = typeof incoming.showTransliteration === "boolean" ? incoming.showTransliteration : current.showTransliteration;
-    const showTranslation = typeof incoming.showTranslation === "boolean" ? incoming.showTranslation : current.showTranslation;
-    updates.preferences = JSON.stringify({ textSize, showTransliteration, showTranslation });
+    updates.preferences = JSON.stringify({
+      textSize: parsed.preferences.textSize ?? current.textSize,
+      showTransliteration: parsed.preferences.showTransliteration ?? current.showTransliteration,
+      showTranslation: parsed.preferences.showTranslation ?? current.showTranslation,
+    });
   }
-  if (body?.role !== undefined) {
-    const role = String(body.role);
-    if (!SELF_ROLE_VALUES.includes(role as typeof SELF_ROLE_VALUES[number])) return json({ error: "Peran tidak valid." }, 400, {}, "no-store");
-    updates.role = role as "student" | "teacher" | "parent";
-  }
+  if (parsed.role !== undefined) updates.role = parsed.role;
 
   if (Object.keys(updates).length === 0) return json({ error: "Tidak ada perubahan yang dikirim." }, 400, {}, "no-store");
 

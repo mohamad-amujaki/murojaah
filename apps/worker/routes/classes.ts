@@ -1,11 +1,12 @@
 import { and, eq, sql } from "drizzle-orm";
 import { classMembers, classes, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json, readJsonBody } from "../lib/http";
+import { json, parseBody } from "../lib/http";
 import { requireAuth, requireRole } from "../lib/guards";
 import { generateJoinCode } from "../lib/codes";
 import { computeUserStats } from "../lib/stats";
 import { findOrNotFound, insertReturning } from "../lib/db-helpers";
+import { createClassSchema, joinClassSchema } from "@murojaah/shared/schemas";
 
 export const handleCreateClass: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/classes" || request.method !== "POST") return null;
@@ -13,12 +14,11 @@ export const handleCreateClass: RouteHandler = async (request, url, env, ctx) =>
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await readJsonBody(request);
-  const name = String(body?.name ?? "").trim();
-  if (!name) return json({ error: "Nama kelas wajib diisi." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, createClassSchema);
+  if (parsed instanceof Response) return parsed;
 
   const joinCode = generateJoinCode();
-  const created = await insertReturning(db, classes, { name, teacherId: user.id, joinCode });
+  const created = await insertReturning(db, classes, { name: parsed.name, teacherId: user.id, joinCode });
   return json({ class: created }, 201, {}, "no-store");
 };
 
@@ -28,9 +28,9 @@ export const handleJoinClass: RouteHandler = async (request, url, env, ctx) => {
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await readJsonBody(request);
-  const joinCode = String(body?.joinCode ?? "").trim().toUpperCase();
-  if (!joinCode) return json({ error: "Kode kelas wajib diisi." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, joinClassSchema);
+  if (parsed instanceof Response) return parsed;
+  const joinCode = parsed.joinCode;
 
   const target = await findOrNotFound(db, classes, eq(classes.joinCode, joinCode), "Kode kelas tidak ditemukan.");
   if (target instanceof Response) return target;

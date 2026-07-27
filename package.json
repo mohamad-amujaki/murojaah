@@ -25,6 +25,7 @@
     "@types/node": "^20.0.0",
     "better-sqlite3": "^11.7.0",
     "esbuild": "^0.28.1",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.10"
   }
 }

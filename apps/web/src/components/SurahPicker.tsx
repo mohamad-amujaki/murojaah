@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { Check, ChevronRight, Search } from "lucide-react";
 import type { SurahResponse } from "../lib/api";
 
-export function SurahPicker({ surahs, query, onQueryChange, onSelect, selectedId, limit, className }: {
+export const SurahPicker = memo(function SurahPicker({ surahs, query, onQueryChange, onSelect, selectedId, limit, className }: {
   surahs: SurahResponse[];
   query: string;
   onQueryChange: (q: string) => void;
@@ -25,4 +26,4 @@ export function SurahPicker({ surahs, query, onQueryChange, onSelect, selectedId
       {filtered.length === 0 && <p className="empty-state">Surah tidak ditemukan.</p>}
     </div>
   </>;
-}
+});

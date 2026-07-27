@@ -42,8 +42,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthValue>(() => ({
     ...state,
-    login: async (payload) => { await loginApi(payload); await refresh(); },
-    register: async (payload) => { await registerApi(payload); await refresh(); },
+    login: async (payload) => {
+      const { user } = await loginApi(payload);
+      setState({ user, loginUser: user, children: [], isActingAsChild: false, loading: false });
+      if (user.role === "parent") refresh();
+    },
+    register: async (payload) => {
+      const { user } = await registerApi(payload);
+      setState({ user, loginUser: user, children: [], isActingAsChild: false, loading: false });
+      if (user.role === "parent") refresh();
+    },
     logout: async () => { await logoutApi(); await refresh(); },
     createChild: async (payload) => { await createChildApi(payload); await refresh(); },
     switchProfile: async (userId) => { await switchProfileApi(userId); await refresh(); },

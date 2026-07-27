@@ -3,10 +3,12 @@ import { UserRound } from "lucide-react";
 import type { Gender } from "@murojaah/shared";
 import { Modal } from "./Modal";
 import { useAuth } from "../lib/auth-context";
+import { useToast } from "../lib/toast-context";
 
 const todayStr = new Date().toISOString().slice(0, 10);
 
-export function AddChildModal({ onClose, notify }: { onClose: () => void; notify: (s: string) => void }) {
+export function AddChildModal({ onClose }: { onClose: () => void }) {
+  const notify = useToast();
   const { createChild } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [gender, setGender] = useState<Gender>("L");

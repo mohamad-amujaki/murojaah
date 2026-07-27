@@ -1,4 +1,6 @@
-export function SegmentedControl({ options, value, onChange, className }: {
+import { memo } from "react";
+
+export const SegmentedControl = memo(function SegmentedControl({ options, value, onChange, className }: {
   options: string[];
   value: string;
   onChange: (v: string) => void;
@@ -7,4 +9,4 @@ export function SegmentedControl({ options, value, onChange, className }: {
   return <div className={className ? `segmented ${className}` : "segmented"}>
     {options.map(n => <button type="button" key={n} className={value === n ? "active" : ""} onClick={() => onChange(n)}>{n}{n === "∞" ? "" : "×"}</button>)}
   </div>;
-}
+});

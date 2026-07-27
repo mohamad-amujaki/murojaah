@@ -10,6 +10,7 @@ import { SurahPicker } from "../components/SurahPicker";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { fallbackAyahs, surahs as fallbackSurahList } from "../types";
 import type { Ayah, Mastery } from "../types";
+import { useToast } from "../lib/toast-context";
 import { useAyahPlayer } from "../hooks/useAyahPlayer";
 
 const AL_IKHLAS: SurahResponse = { id: 112, latinName: "Al-Ikhlas", arabicName: "الإخلاص", meaning: "Ketulusan", ayahCount: 4 };
@@ -17,22 +18,26 @@ const FALLBACK_SURAH_LIST: SurahResponse[] = fallbackSurahList.map(s => ({
   id: Number(s[0]), latinName: String(s[1]), arabicName: "", meaning: String(s[3]), ayahCount: parseInt(String(s[2]), 10) || 0,
 }));
 
-export function PracticePage({ notify }: { notify: (s: string) => void }) {
+export function PracticePage() {
+  const notify = useToast();
   const [surahList, setSurahList] = useState<SurahResponse[]>(FALLBACK_SURAH_LIST);
   const [selectedSurah, setSelectedSurah] = useState<SurahResponse>(AL_IKHLAS);
   const [ayahs, setAyahs] = useState<Ayah[]>(fallbackAyahs);
   const [quranSource, setQuranSource] = useState("Menyiapkan data...");
   const [query, setQuery] = useState("");
-  const [surahConfirmed, setSurahConfirmed] = useState(false);
 
   const {
     started, playing, index, count, currentAyah, hidden, mastery, saving,
     start, setStart, end, setEnd, setIndex, loops, setLoops, speed, setSpeed, changeSpeed,
     startPractice, stopPractice, move, toggle, finish, setHidden, handleMastery,
-  } = useAyahPlayer(ayahs, notify);
+  } = useAyahPlayer(ayahs);
 
   useEffect(() => {
-    getSurahs().then(list => { if (list.length) setSurahList(list); }).catch(() => undefined);
+    getSurahs().then(list => {
+      if (!list.length) return;
+      setSurahList(list);
+      setSelectedSurah(list[0]);
+    }).catch(() => notify("Gagal memuat daftar surah."));
   }, []);
 
   const suggestedRange = useRef<{ surahId: number; startAyah: number; endAyah: number } | null>(null);
@@ -43,7 +48,7 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
     try {
       const s = JSON.parse(raw);
       const target = surahList.find(x => x.id === s.surahId) ?? FALLBACK_SURAH_LIST.find(x => x.id === s.surahId);
-      if (target) { suggestedRange.current = { surahId: s.surahId, startAyah: s.startAyah, endAyah: s.endAyah }; setSelectedSurah(target); setSurahConfirmed(true); }
+      if (target) { suggestedRange.current = { surahId: s.surahId, startAyah: s.startAyah, endAyah: s.endAyah }; setSelectedSurah(target); }
     } catch { /* ignore malformed */ }
   }, [surahList]);
 
@@ -67,53 +72,47 @@ export function PracticePage({ notify }: { notify: (s: string) => void }) {
   }, [selectedSurah.id]);
 
   if (!started) {
-    if (!surahConfirmed) {
-      return (
-        <>
-          <PageTitle eyebrow="RUANG LATIHAN" title="Mau hafalan apa hari ini?" desc="Pilih surah untuk mulai atur sesi." />
-          <section className="card picker single">
-            <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => { setSelectedSurah(s); setSurahConfirmed(true); notify(`${s.latinName} siap dilatih`) }} />
-          </section>
-        </>
-      );
-    }
     return (
       <>
-        <PageTitle eyebrow="RUANG LATIHAN" title="Atur sesi latihanmu" desc="Sesuaikan rentang ayat dan ritme sebelum mulai." />
-        <section className="card settings-card single">
-          <button type="button" className="back-link" onClick={() => setSurahConfirmed(false)}><ChevronLeft /> Ganti surah</button>
-          <div className="selected-surah">
-            <BookOpen />
-            <div><small>SURAH DIPILIH</small><b>{selectedSurah.latinName}</b></div>
-            <span>{selectedSurah.ayahCount} ayat</span>
+        <PageTitle eyebrow="RUANG LATIHAN" title="Mau hafalan apa hari ini?" desc="Pilih surah, atur sesi, lalu mulai." />
+        <section className="two-col">
+          <div className="card picker">
+            <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => { setSelectedSurah(s); notify(`${s.latinName} siap dilatih`) }} />
           </div>
-          <div className="field-group">
-            <div className="field-row">
-              <label>Mulai ayat
-                <select value={start} onChange={e => { const value = +e.target.value; setStart(value); setEnd(c => Math.max(c, value)); setIndex(value - 1) }}>
-                  {ayahs.map(a => <option key={a.no}>{a.no}</option>)}
-                </select>
-              </label>
-              <span>—</span>
-              <label>Sampai ayat
-                <select value={end} onChange={e => setEnd(+e.target.value)}>
-                  {ayahs.filter(a => a.no >= start).map(a => <option key={a.no}>{a.no}</option>)}
-                </select>
-              </label>
+          <div className="card settings-card">
+            <div className="selected-surah">
+              <BookOpen />
+              <div><small>SURAH DIPILIH</small><b>{selectedSurah.latinName}</b></div>
+              <span>{selectedSurah.ayahCount} ayat</span>
             </div>
+            <div className="field-group">
+              <div className="field-row">
+                <label>Mulai ayat
+                  <select value={start} onChange={e => { const value = +e.target.value; setStart(value); setEnd(c => Math.max(c, value)); setIndex(value - 1) }}>
+                    {ayahs.length ? ayahs.map(a => <option key={a.no}>{a.no}</option>) : <option>1</option>}
+                  </select>
+                </label>
+                <span>—</span>
+                <label>Sampai ayat
+                  <select value={end} onChange={e => setEnd(+e.target.value)}>
+                    {ayahs.length ? ayahs.filter(a => a.no >= start).map(a => <option key={a.no}>{a.no}</option>) : <option>1</option>}
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div className="field-group">
+              <label className="field-label">Jumlah pengulangan</label>
+              <SegmentedControl options={["1", "3", "5", "10", "∞"]} value={loops} onChange={setLoops} />
+            </div>
+            <div className="field-group">
+              <label className="field-label">Kecepatan audio</label>
+              <SegmentedControl options={["0.75", "1", "1.25"]} value={speed} onChange={setSpeed} className="three" />
+            </div>
+            <button className="primary full" disabled={ayahs.length === 0} onClick={() => startPractice(start - 1)}>
+              <Play /> Mulai Hafalan
+            </button>
+            <p className="safe"><ShieldCheck /> {quranSource}</p>
           </div>
-          <div className="field-group">
-            <label className="field-label">Jumlah pengulangan</label>
-            <SegmentedControl options={["1", "3", "5", "10", "∞"]} value={loops} onChange={setLoops} />
-          </div>
-          <div className="field-group">
-            <label className="field-label">Kecepatan audio</label>
-            <SegmentedControl options={["0.75", "1", "1.25"]} value={speed} onChange={setSpeed} className="three" />
-          </div>
-          <button className="primary full" disabled={ayahs.length === 0} onClick={() => startPractice(start - 1)}>
-            <Play /> Mulai Hafalan
-          </button>
-          <p className="safe"><ShieldCheck /> {quranSource}</p>
         </section>
       </>
     );

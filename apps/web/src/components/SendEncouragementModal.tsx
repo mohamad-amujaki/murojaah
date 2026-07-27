@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Heart } from "lucide-react";
 import type { PublicUser } from "@murojaah/shared";
 import { Modal } from "./Modal";
+import { useToast } from "../lib/toast-context";
 import { sendEncouragement } from "../lib/api";
 
-export function SendEncouragementModal({ kids, onClose, notify }: { kids: PublicUser[]; onClose: () => void; notify: (s: string) => void }) {
+export function SendEncouragementModal({ kids, onClose }: { kids: PublicUser[]; onClose: () => void }) {
+  const notify = useToast();
   const [childId, setChildId] = useState<number>(kids[0]?.id ?? 0);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");

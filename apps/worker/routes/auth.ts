@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@murojaah/db/client";
-import { credentials, parentChildren, sessions, users } from "@murojaah/db";
+import { credentials, parentChildren, passwordResetTokens, sessions, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json, readJsonBody } from "../lib/http";
+import { json, parseBody } from "../lib/http";
 import { requireAuth, requireDb } from "../lib/guards";
 import {
   clearSessionCookieHeader, generateSessionToken, hashPassword,
@@ -11,11 +11,8 @@ import {
 import { publicUser } from "../lib/profile";
 import { getClientIp, rateLimit, rateLimitResponse } from "../lib/rate-limit";
 import { insertReturning } from "../lib/db-helpers";
-
-const REGISTERABLE_ROLES = ["student", "teacher", "parent"] as const;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const GENDER_VALUES = ["L", "P"] as const;
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+import { generateResetToken, resetTokenExpiry, sendPasswordResetEmail } from "../lib/email";
+import { forgotPasswordSchema, resetPasswordSchema, registerSchema, loginSchema, createChildSchema, switchProfileSchema } from "@murojaah/shared/schemas";
 
 export const handleRegister: RouteHandler = async (request, url, env) => {
   if (url.pathname !== "/api/auth/register" || request.method !== "POST") return null;
@@ -26,26 +23,23 @@ export const handleRegister: RouteHandler = async (request, url, env) => {
   if (guard instanceof Response) return guard;
   const { db } = guard;
 
-  const body = await readJsonBody(request);
-  const displayName = String(body?.displayName ?? "").trim();
-  const email = String(body?.email ?? "").trim().toLowerCase();
-  const password = String(body?.password ?? "");
-  const role = String(body?.role ?? "");
-
-  if (!displayName || !EMAIL_RE.test(email) || password.length < 8 || !REGISTERABLE_ROLES.includes(role as typeof REGISTERABLE_ROLES[number])) {
-    return json({ error: "Data pendaftaran tidak valid. Periksa nama, email, kata sandi (min. 8 karakter), dan peran." }, 400, {}, "no-store");
-  }
+  const parsed = await parseBody(request, registerSchema);
+  if (parsed instanceof Response) return parsed;
+  const { displayName, email, password, role } = parsed;
 
   const [existing] = await db.select({ id: credentials.id }).from(credentials).where(eq(credentials.email, email)).limit(1);
   if (existing) return json({ error: "Email sudah terdaftar." }, 409, {}, "no-store");
 
-  const user = await insertReturning(db, users, { displayName, role: role as typeof REGISTERABLE_ROLES[number] });
   const passwordHash = await hashPassword(password);
-  await db.insert(credentials).values({ userId: user.id, email, passwordHash });
-
   const token = generateSessionToken();
   const expiresAt = sessionExpiry();
-  await db.insert(sessions).values({ token, userId: user.id, activeUserId: user.id, expiresAt });
+
+  const { user } = await db.transaction(async (tx) => {
+    const user = await insertReturning(tx, users, { displayName, role });
+    await tx.insert(credentials).values({ userId: user.id, email, passwordHash });
+    await tx.insert(sessions).values({ token, userId: user.id, activeUserId: user.id, expiresAt });
+    return { user };
+  });
 
   return json({ user: publicUser(user) }, 201, { "set-cookie": setSessionCookieHeader(token, url) }, "no-store");
 };
@@ -59,10 +53,9 @@ export const handleLogin: RouteHandler = async (request, url, env) => {
   if (guard instanceof Response) return guard;
   const { db } = guard;
 
-  const body = await readJsonBody(request);
-  const email = String(body?.email ?? "").trim().toLowerCase();
-  const password = String(body?.password ?? "");
-  if (!email || !password) return json({ error: "Email dan kata sandi wajib diisi." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, loginSchema);
+  if (parsed instanceof Response) return parsed;
+  const { email, password } = parsed;
 
   const [row] = await db.select().from(credentials).where(eq(credentials.email, email)).limit(1);
   if (!row || !(await verifyPassword(password, row.passwordHash))) {
@@ -114,21 +107,17 @@ export const handleCreateChild: RouteHandler = async (request, url, env, ctx) =>
     return json({ error: "Hanya akun orang tua yang dapat menambah profil anak." }, 403, {}, "no-store");
   }
 
-  const body = await readJsonBody(request);
-  const displayName = String(body?.displayName ?? "").trim();
-  const gender = String(body?.gender ?? "");
-  const birthDate = String(body?.birthDate ?? "");
-  const validBirthDate = DATE_RE.test(birthDate) && !Number.isNaN(Date.parse(birthDate)) && new Date(birthDate).getTime() <= Date.now();
+  const parsed = await parseBody(request, createChildSchema);
+  if (parsed instanceof Response) return parsed;
+  const { displayName, gender, birthDate } = parsed;
 
-  if (!displayName) return json({ error: "Nama anak wajib diisi." }, 400, {}, "no-store");
-  if (!GENDER_VALUES.includes(gender as typeof GENDER_VALUES[number])) return json({ error: "Jenis kelamin wajib dipilih." }, 400, {}, "no-store");
-  if (!validBirthDate) return json({ error: "Tanggal lahir tidak valid." }, 400, {}, "no-store");
-
-  const child = await insertReturning(db, users, {
-    displayName, role: "student", managedBy: user.id,
-    gender: gender as typeof GENDER_VALUES[number], birthDate,
+  const { child } = await db.transaction(async (tx) => {
+    const child = await insertReturning(tx, users, {
+      displayName, role: "student", managedBy: user.id, gender, birthDate,
+    });
+    await tx.insert(parentChildren).values({ parentId: user.id, childId: child.id });
+    return { child };
   });
-  await db.insert(parentChildren).values({ parentId: user.id, childId: child.id });
 
   return json({ child: publicUser(child) }, 201, {}, "no-store");
 };
@@ -140,9 +129,9 @@ export const handleSwitchProfile: RouteHandler = async (request, url, env, ctx) 
   if (guard instanceof Response) return guard;
   const { db } = guard;
 
-  const body = await readJsonBody(request);
-  const targetId = Number(body?.userId);
-  if (!Number.isInteger(targetId)) return json({ error: "Profil tidak valid." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, switchProfileSchema);
+  if (parsed instanceof Response) return parsed;
+  const targetId = parsed.userId;
 
   const allowed = targetId === ctx.loginUserId
     || (await db.select({ id: users.id }).from(users).where(and(eq(users.id, targetId), eq(users.managedBy, ctx.loginUserId))).limit(1)).length > 0;
@@ -151,4 +140,51 @@ export const handleSwitchProfile: RouteHandler = async (request, url, env, ctx) 
   await db.update(sessions).set({ activeUserId: targetId }).where(eq(sessions.token, ctx.sessionToken));
   const [user] = await db.select().from(users).where(eq(users.id, targetId)).limit(1);
   return json({ user: publicUser(user) }, 200, {}, "no-store");
+};
+
+export const handleForgotPassword: RouteHandler = async (request, url, env) => {
+  if (url.pathname !== "/api/auth/forgot-password" || request.method !== "POST") return null;
+  const guard = requireDb(env);
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
+
+  const parsed = await parseBody(request, forgotPasswordSchema);
+  if (parsed instanceof Response) return parsed;
+  const { email } = parsed;
+
+  const [cred] = await db.select().from(credentials).where(eq(credentials.email, email)).limit(1);
+  if (!cred) return json({ error: "Email tidak ditemukan." }, 404, {}, "no-store");
+
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, cred.userId));
+
+  const token = generateResetToken();
+  const expiresAt = resetTokenExpiry();
+  await db.insert(passwordResetTokens).values({ token, userId: cred.userId, expiresAt });
+
+  const baseUrl = env.MU_APP_URL || `${url.protocol}//${url.host}`;
+  const resetLink = `${baseUrl}/reset-password?token=${token}`;
+  await sendPasswordResetEmail(env, email, resetLink);
+
+  return json({ ok: true, message: "Tautan reset dikirim ke email." }, 200, {}, "no-store");
+};
+
+export const handleResetPassword: RouteHandler = async (request, url, env) => {
+  if (url.pathname !== "/api/auth/reset-password" || request.method !== "POST") return null;
+  const guard = requireDb(env);
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
+
+  const parsed = await parseBody(request, resetPasswordSchema);
+  if (parsed instanceof Response) return parsed;
+  const { token, password } = parsed;
+
+  const [row] = await db.select().from(passwordResetTokens).where(eq(passwordResetTokens.token, token)).limit(1);
+  if (!row) return json({ error: "Tautan reset tidak valid." }, 404, {}, "no-store");
+  if (new Date(row.expiresAt) < new Date()) return json({ error: "Tautan reset sudah kedaluwarsa." }, 410, {}, "no-store");
+
+  const passwordHash = await hashPassword(password);
+  await db.update(credentials).set({ passwordHash }).where(eq(credentials.userId, row.userId));
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
+
+  return json({ ok: true, message: "Kata sandi berhasil diubah." }, 200, {}, "no-store");
 };

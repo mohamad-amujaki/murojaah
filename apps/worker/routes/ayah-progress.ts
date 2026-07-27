@@ -1,11 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
 import { ayahProgress, ayahs } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json, readJsonBody } from "../lib/http";
+import { json, parseBody } from "../lib/http";
 import { requireAuth } from "../lib/guards";
 import { findOrNotFound } from "../lib/db-helpers";
-
-const MASTERY_VALUES = ["Belum hafal", "Perlu latihan", "Sudah hafal"] as const;
+import { upsertAyahProgressSchema } from "@murojaah/shared/schemas";
 
 export const handleUpsertAyahProgress: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/ayah-progress" || request.method !== "POST") return null;
@@ -13,13 +12,9 @@ export const handleUpsertAyahProgress: RouteHandler = async (request, url, env, 
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await readJsonBody(request);
-  const surahId = Number(body?.surahId);
-  const number = Number(body?.number);
-  const mastery = String(body?.mastery ?? "");
-  if (!Number.isInteger(surahId) || !Number.isInteger(number) || !MASTERY_VALUES.includes(mastery as typeof MASTERY_VALUES[number])) {
-    return json({ error: "Data progres ayat tidak valid." }, 400, {}, "no-store");
-  }
+  const parsed = await parseBody(request, upsertAyahProgressSchema);
+  if (parsed instanceof Response) return parsed;
+  const { surahId, number, mastery } = parsed;
 
   const ayah = await findOrNotFound(db, ayahs, and(eq(ayahs.surahId, surahId), eq(ayahs.number, number))!, "Ayat belum tersedia di database.");
   if (ayah instanceof Response) return ayah;

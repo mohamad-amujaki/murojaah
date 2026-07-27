@@ -1,9 +1,10 @@
 import { eq, inArray, or } from "drizzle-orm";
 import { assignments, classMembers, classes } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
-import { json, readJsonBody } from "../lib/http";
+import { json, parseBody } from "../lib/http";
 import { requireAuth, requireRole } from "../lib/guards";
 import { insertReturning } from "../lib/db-helpers";
+import { createAssignmentSchema } from "@murojaah/shared/schemas";
 
 export const handleCreateAssignment: RouteHandler = async (request, url, env, ctx) => {
   if (url.pathname !== "/api/assignments" || request.method !== "POST") return null;
@@ -11,20 +12,9 @@ export const handleCreateAssignment: RouteHandler = async (request, url, env, ct
   if (guard instanceof Response) return guard;
   const { user, db } = guard;
 
-  const body = await readJsonBody(request);
-  const classId = body?.classId != null ? Number(body.classId) : null;
-  const studentId = body?.studentId != null ? Number(body.studentId) : null;
-  const surahId = Number(body?.surahId);
-  const startAyah = Number(body?.startAyah);
-  const endAyah = Number(body?.endAyah);
-  const targetLoops = Number(body?.targetLoops);
-  const dueAt = body?.dueAt ? String(body.dueAt) : null;
-
-  const valid = (classId || studentId) && Number.isInteger(surahId) && surahId > 0
-    && Number.isInteger(startAyah) && startAyah > 0
-    && Number.isInteger(endAyah) && endAyah >= startAyah
-    && Number.isInteger(targetLoops) && targetLoops > 0;
-  if (!valid) return json({ error: "Data tugas tidak valid." }, 400, {}, "no-store");
+  const parsed = await parseBody(request, createAssignmentSchema);
+  if (parsed instanceof Response) return parsed;
+  const { classId, studentId, surahId, startAyah, endAyah, targetLoops, dueAt } = parsed;
 
   if (classId) {
     const [target] = await db.select().from(classes).where(eq(classes.id, classId)).limit(1);

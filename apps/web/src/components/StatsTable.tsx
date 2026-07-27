@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { Flame } from "lucide-react";
 import { initials } from "../lib/constants";
 
@@ -12,7 +12,7 @@ export interface StatsTableRow {
   action?: ReactNode;
 }
 
-export function StatsTable({ nameHeader, rows }: { nameHeader: string; rows: StatsTableRow[] }) {
+export const StatsTable = memo(function StatsTable({ nameHeader, rows }: { nameHeader: string; rows: StatsTableRow[] }) {
   const hasAction = rows.some(r => r.action);
   return <div className="stats-table">
     <div className="tbl-row table-header"><span>{nameHeader}</span><span>AYAT DIKUASAI</span><span>STREAK</span><span>XP</span>{hasAction && <span></span>}</div>
@@ -24,4 +24,4 @@ export function StatsTable({ nameHeader, rows }: { nameHeader: string; rows: Sta
       {hasAction && <span>{r.action}</span>}
     </div>)}
   </div>;
-}
+});

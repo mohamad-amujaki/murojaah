@@ -167,7 +167,7 @@ select:focus-visible {
   }
 
   .profile-mini {
-    @apply flex gap-[11px] items-center bg-[#f2f8f5] p-3 rounded-[14px] mb-6
+    @apply flex gap-[11px] items-center bg-[#f2f8f5] p-3 rounded-[14px] mb-6 dark:bg-[#101c18]
   }
 
   .avatar {
@@ -199,11 +199,11 @@ select:focus-visible {
   }
 
   .sidebar nav button.active, .help:hover {
-    @apply bg-[#eef6f2] text-ink
+    @apply bg-[#eef6f2] text-ink dark:bg-[#1d3128]
   }
 
   .sidebar-tip {
-    @apply bg-[#f2faf5] p-[14px_12px] rounded-[12px] mt-auto mb-[20px] border border-[#daeae1]
+    @apply bg-[#f2faf5] p-[14px_12px] rounded-[12px] mt-auto mb-[20px] border border-[#daeae1] dark:bg-[#22321f] dark:border-[#3a4d33] dark:text-[#e3d6ab]
   }
 
   .sidebar-tip b {
@@ -279,7 +279,7 @@ select:focus-visible {
   }
 
   .landing {
-    @apply bg-cream min-h-screen
+    @apply bg-cream min-h-screen dark:bg-[#0e1613]
   }
 
   .landing-nav {
@@ -415,11 +415,11 @@ select:focus-visible {
   }
 
   .goal-icon.gold {
-    @apply bg-[#fcf5e7] text-gold
+    @apply bg-[#fcf5e7] text-gold dark:bg-[#3a2f14] dark:text-[#e7c25f]
   }
 
   .goal-icon.purple {
-    @apply bg-[#f2eff8] text-purple
+    @apply bg-[#f2eff8] text-purple dark:bg-[#2a2438] dark:text-[#b39ee8]
   }
 
   .landing-steps {
@@ -536,6 +536,16 @@ select:focus-visible {
     @apply grid gap-3
   }
 
+  .password-wrap {
+    @apply relative
+  }
+  .password-wrap input {
+    @apply w-full pr-9
+  }
+  .password-toggle {
+    @apply absolute right-2 top-1/2 -translate-y-1/2 text-muted!
+  }
+
   .role-cards {
     @apply grid gap-2
   }
@@ -561,7 +571,7 @@ select:focus-visible {
   }
 
   .role-card.selected {
-    @apply border-green bg-mint
+    @apply border-green bg-mint dark:bg-[#1b352b] dark:border-[#106b55]
   }
 
   .role-card.selected svg, .role-card.selected b {
@@ -593,7 +603,7 @@ select:focus-visible {
   }
 
   .auth-error {
-    @apply text-error text-xs m-0 bg-[#fff5f1] border border-[#f3d2c4] rounded-[8px] p-[8px_10px]
+    @apply text-error text-xs m-0 bg-[#fff5f1] border border-[#f3d2c4] rounded-[8px] p-[8px_10px] dark:bg-[#3a2418] dark:text-[#f0a683] dark:border-[#4a3327]
   }
 
   .google-btn {
@@ -719,6 +729,9 @@ select:focus-visible {
   .streak {
     @apply flex items-center gap-[8px] bg-[#fff3e8] text-[#c27838] text-xs font-extrabold px-[14px] py-[10px] rounded-[10px] shrink-0
   }
+  .streak>span {
+    @apply dark:bg-[#3a2418] dark:text-[#f0a683]
+  }
 
   .streak small {
     @apply font-normal text-[#c2783880] whitespace-nowrap
@@ -785,11 +798,14 @@ select:focus-visible {
   }
 
   .count {
-    @apply bg-[#fcf5e7] text-gold text-[10px] font-extrabold px-[7px] py-[3px] rounded-full
+    @apply bg-[#fcf5e7] text-gold text-[10px] font-extrabold px-[7px] py-[3px] rounded-full dark:bg-[#3a2418] dark:text-[#f0a683]
   }
 
   .assignment {
     @apply flex items-center gap-3 p-[10px_14px] border border-line rounded-[12px]
+  }
+  .assignment button {
+    @apply dark:bg-[#101c18]
   }
 
   .assignment.done {
@@ -801,7 +817,7 @@ select:focus-visible {
   }
 
   .task-icon.blue {
-    @apply bg-[#e9f2fa] text-blue
+    @apply bg-[#e9f2fa] text-blue dark:bg-[#1c2b36] dark:text-[#84b3d6]
   }
 
   .empty-state {
@@ -833,11 +849,11 @@ select:focus-visible {
   }
 
   .support {
-    @apply flex items-center gap-3 p-[12px_14px] bg-[#fcf9f0] border border-[#efe3c4] rounded-[12px] mt-5
+    @apply flex items-center gap-3 p-[12px_14px] bg-[#fcf9f0] border border-[#efe3c4] rounded-[12px] mt-5 dark:bg-[#241d13] dark:border-[#4a3a1f]
   }
 
   .support p {
-    @apply flex-1 text-xs text-muted m-0 leading-[1.5]
+    @apply flex-1 text-xs text-muted m-0 leading-[1.5] dark:text-[#d8cdb8]
   }
 
   .parent-avatar {
@@ -901,7 +917,7 @@ select:focus-visible {
   }
 
   .stat {
-    @apply flex items-center gap-3 bg-surface border border-line rounded-[14px] p-[14px]
+    @apply flex items-center gap-3 bg-surface border border-line rounded-[14px] p-[14px] dark:border-[#3a5048]
   }
 
   .stat svg {
@@ -1005,11 +1021,11 @@ select:focus-visible {
   }
 
   .toggle {
-    @apply relative inline-block w-9 h-5 rounded-full bg-line flex-none transition-colors
+    @apply relative inline-block w-9 h-5 rounded-full bg-line flex-none transition-colors dark:bg-[#2c3d36]
   }
 
   .toggle.on {
-    @apply bg-green
+    @apply bg-green dark:bg-green
   }
 
   .toggle b {
@@ -1065,7 +1081,7 @@ select:focus-visible {
   }
 
   .badge-card span.orange {
-    @apply text-[#c27838]
+    @apply text-[#c27838] dark:bg-[#3a2418] dark:text-[#f0a683]
   }
 
   .badge-card span.green {
@@ -1073,11 +1089,11 @@ select:focus-visible {
   }
 
   .badge-card span.gold {
-    @apply text-gold
+    @apply text-gold dark:text-[#e7c25f]
   }
 
   .badge-card span.purple {
-    @apply text-purple
+    @apply text-purple dark:text-[#b39ee8]
   }
 
   .badge-card b {
@@ -1149,7 +1165,7 @@ select:focus-visible {
   }
 
   .search {
-    @apply w-full h-[36px] flex items-center gap-2 border border-line rounded-[8px] px-3 bg-surface text-ink text-xs
+    @apply w-full h-[36px] flex items-center gap-2 border border-line rounded-[8px] px-3 bg-surface text-ink text-xs dark:bg-[#101c18]
   }
 
   .search svg {
@@ -1173,7 +1189,7 @@ select:focus-visible {
   }
 
   .surah-list button.selected {
-    @apply bg-[#e4f3eb]
+    @apply bg-[#e4f3eb] dark:bg-[#101c18]
   }
 
   .surah-list button>span:first-child {
@@ -1205,7 +1221,7 @@ select:focus-visible {
   }
 
   .selected-surah {
-    @apply flex items-center gap-2 p-3 rounded-[10px] bg-mint text-xs
+    @apply flex items-center gap-2 p-3 rounded-[10px] bg-mint text-xs dark:bg-[#101c18]
   }
 
   .field-group {
@@ -1233,7 +1249,7 @@ select:focus-visible {
   }
 
   .segmented {
-    @apply flex bg-[#f3f6f4] p-[3px] rounded-[8px]
+    @apply flex bg-[#f3f6f4] p-[3px] rounded-[8px] dark:bg-[#101c18]
   }
 
   .segmented.three>button {
@@ -1337,7 +1353,7 @@ select:focus-visible {
   }
 
   .controls button {
-    @apply w-[44px] h-[44px] grid place-items-center border border-line rounded-full bg-surface cursor-pointer text-muted
+    @apply w-[44px] h-[44px] grid place-items-center border border-line rounded-full bg-surface cursor-pointer text-muted dark:bg-[#101c18]
   }
 
   .play-main {
@@ -1641,46 +1657,6 @@ select:focus-visible {
   }
 }
 
-[data-theme="dark"] .sidebar-tip {
-  background: #22321f;
-  border-color: #3a4d33;
-  color: #e3d6ab
-}
-
-[data-theme="dark"] .streak>span,
-[data-theme="dark"] .badge-card span.orange,
-[data-theme="dark"] .count,
-[data-theme="dark"] .attention {
-  background: #3a2418;
-  color: #f0a683
-}
-
-[data-theme="dark"] .goal-icon.gold,
-[data-theme="dark"] .badge-card span.gold {
-  background: #3a2f14;
-  color: #e7c25f
-}
-
-[data-theme="dark"] .goal-icon.purple,
-[data-theme="dark"] .badge-card span.purple {
-  background: #2a2438;
-  color: #b39ee8
-}
-
-[data-theme="dark"] .task-icon.blue {
-  background: #1c2b36;
-  color: #84b3d6
-}
-
-[data-theme="dark"] .support {
-  background: #241d13;
-  border-color: #4a3a1f
-}
-
-[data-theme="dark"] .support p {
-  color: #d8cdb8
-}
-
 [data-theme="dark"] .mastery-0.active {
   background: #3a2418;
   color: #f0a683
@@ -1691,40 +1667,7 @@ select:focus-visible {
   color: #e7c25f
 }
 
-[data-theme="dark"] .auth-error {
+[data-theme="dark"] .attention {
   background: #3a2418;
-  color: #f0a683;
-  border-color: #4a3327
-}
-
-[data-theme="dark"] .search,
-[data-theme="dark"] .segmented,
-[data-theme="dark"] .controls button,
-[data-theme="dark"] .profile-mini,
-[data-theme="dark"] .assignment button,
-[data-theme="dark"] .surah-list button.selected,
-[data-theme="dark"] .selected-surah {
-  background: #101c18
-}
-
-[data-theme="dark"] .role-card.selected {
-  background: #1b352b;
-  border-color: #106b55
-}
-
-[data-theme="dark"] .toggle:not(.on) {
-  background: #2c3d36
-}
-
-[data-theme="dark"] .stat {
-  border-color: #3a5048
-}
-
-[data-theme="dark"] .sidebar nav button.active,
-[data-theme="dark"] .help:hover {
-  background: #1d3128
-}
-
-[data-theme="dark"] .landing {
-  background: #0e1613
+  color: #f0a683
 }

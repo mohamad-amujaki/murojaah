@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useToast } from "../lib/toast-context";
 import { saveAyahProgress } from "../lib/api";
 import type { Ayah, Mastery } from "../types";
 
-export function useAyahPlayer(ayahs: Ayah[], notify: (s: string) => void) {
+export function useAyahPlayer(ayahs: Ayah[]) {
+  const notify = useToast();
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [index, setIndex] = useState(0);
