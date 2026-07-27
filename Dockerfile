@@ -28,10 +28,18 @@ LABEL maintainer="Murojaah"
 
 WORKDIR /app
 
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init \
+  && corepack enable
 
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --no-audit --no-fund
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
+# pnpm needs all workspace package.json files to resolve lockfile references
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/worker/package.json ./apps/worker/package.json
+COPY packages/db/package.json ./packages/db/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
+RUN pnpm install --prod --frozen-lockfile
 
 # Built artifacts from the build stage
 COPY --from=build /build/dist/worker ./dist/worker
