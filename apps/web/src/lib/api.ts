@@ -52,7 +52,7 @@ export const getEncouragements = () => api<{ encouragements: EncouragementRespon
 export const sendEncouragement = (childId:number, message:string) => api<{ encouragement: unknown }>("/encouragements", { method:"POST", body:JSON.stringify({ childId, message }) });
 export const markEncouragementRead = (id:number) => api<{ ok:boolean }>(`/encouragements/${id}/read`, { method:"PATCH" });
 
-export interface ClassResponse { id:number; name:string; teacherId:number; joinCode:string; status:string }
+export interface ClassResponse { id:number; name:string; teacherId:number|null; joinCode:string; status:string }
 export interface ClassMember { id:number; displayName:string; streak:number; ayahsMastered:number; totalXp:number }
 export const getClasses = () => api<{ classes: ClassResponse[] }>("/classes");
 export const createClass = (name:string) => api<{ class: ClassResponse }>("/classes", { method:"POST", body:JSON.stringify({ name }) });
@@ -66,14 +66,27 @@ export const createAssignment = (payload: { classId?:number; studentId?:number; 
 export interface AdminStatsResponse { totalUsers:number; totalStudents:number; totalTeachers:number; totalParents:number; totalPracticeSessions:number; totalXpAwarded:number; totalClasses:number }
 export const getAdminStats = () => api<AdminStatsResponse>("/admin/stats");
 
+export interface AdminClassResponse { id:number; name:string; teacherId:number|null; teacherName:string|null; joinCode:string; status:string; memberCount:number }
+export const getAdminClasses = () => api<{ classes: AdminClassResponse[] }>("/admin/classes");
+
 export const getChildStats = (childId:number) => api<StatsResponse>(`/children/${childId}/stats`);
 
-export interface ProfileFieldUpdates { displayName?:string; gender?:"L"|"P"; birthDate?:string }
+export interface ProfileFieldUpdates { displayName?:string; gender?:"L"|"P"; birthDate?:string; role?:string }
 export const updateChildProfile = (childId:number, payload: ProfileFieldUpdates) => api<{ child: PublicUser }>(`/children/${childId}`, { method:"PATCH", body:JSON.stringify(payload) });
 
 export interface StudentWithClasses extends PublicUser { classNames: string[] }
 export const getTeacherStudents = () => api<{ students: StudentWithClasses[] }>("/teacher/students");
 export const updateStudentProfile = (studentId:number, payload: ProfileFieldUpdates) => api<{ student: PublicUser }>(`/students/${studentId}`, { method:"PATCH", body:JSON.stringify(payload) });
 
-export const getAdminUsers = (role?:string) => api<{ users: PublicUser[] }>(`/admin/users${role?`?role=${role}`:""}`);
+export interface AdminUsersResponse { users: PublicUser[]; total: number }
+export const getAdminUsers = (params?: { role?: string; q?: string; offset?: number; limit?: number }) => {
+  const sp = new URLSearchParams();
+  if (params?.role) sp.set("role", params.role);
+  if (params?.q) sp.set("q", params.q);
+  if (params?.offset) sp.set("offset", String(params.offset));
+  if (params?.limit) sp.set("limit", String(params.limit));
+  const qs = sp.toString();
+  return api<AdminUsersResponse>(`/admin/users${qs ? `?${qs}` : ""}`);
+};
+export const deleteAdminUsers = (ids: number[]) => api<{ ok: boolean }>("/admin/users/delete", { method: "POST", body: JSON.stringify({ ids }) });
 export const updateAdminUser = (userId:number, payload: ProfileFieldUpdates) => api<{ user: PublicUser }>(`/admin/users/${userId}`, { method:"PATCH", body:JSON.stringify(payload) });

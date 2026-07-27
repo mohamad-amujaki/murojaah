@@ -64,7 +64,7 @@ export const handleClassMembers: RouteHandler = async (request, url, env, ctx) =
   const classId = Number(match[1]);
   const target = await findOrNotFound(db, classes, eq(classes.id, classId), "Kelas tidak ditemukan.");
   if (target instanceof Response) return target;
-  if (target.teacherId !== user.id) return json({ error: "Kamu bukan pengajar kelas ini." }, 403, {}, "no-store");
+  if (target.teacherId !== user.id && user.role !== "admin") return json({ error: "Kamu bukan pengajar kelas ini." }, 403, {}, "no-store");
 
   const members = await db.select({ id: users.id, displayName: users.displayName })
     .from(classMembers).innerJoin(users, eq(classMembers.studentId, users.id)).where(eq(classMembers.classId, classId));

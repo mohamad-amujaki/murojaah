@@ -95,7 +95,7 @@ export default function AuthenticatedApp() {
       <div className="content">
         <Suspense fallback={null}>
           {page === "home" && <HomePage go={go} notify={notify} />}
-          {page === "admin" && <Admin />}
+          {page === "admin" && <Admin notify={notify} />}
           {page === "practice" && <PracticePage notify={notify} />}
           {page === "achievements" && <Achievements />}
           {page === "profile" && <Profile notify={notify} />}

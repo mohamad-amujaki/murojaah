@@ -1,0 +1,1 @@
+ALTER TABLE `mu_classes` MODIFY COLUMN `teacher_id` int;

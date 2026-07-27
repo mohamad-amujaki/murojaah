@@ -20,6 +20,7 @@ interface UserRow {
   id: number;
   displayName: string;
   role: "student" | "teacher" | "parent" | "admin";
+  status: string;
   managedBy: number | null;
   dailyTarget: number;
   preferences: string | null;
@@ -32,6 +33,7 @@ export function publicUser(user: UserRow) {
     id: user.id,
     displayName: user.displayName,
     role: user.role,
+    status: user.status,
     managedBy: user.managedBy,
     dailyTarget: user.dailyTarget,
     preferences: parsePreferences(user.preferences),
@@ -43,10 +45,13 @@ export function publicUser(user: UserRow) {
 const GENDER_VALUES = ["L", "P"] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+const ROLE_VALUES = ["student", "teacher", "parent", "admin"] as const;
+
 export interface ProfileFieldUpdates {
   displayName?: string;
   gender?: "L" | "P";
   birthDate?: string;
+  role?: typeof ROLE_VALUES[number];
 }
 
 export function parseProfileFieldUpdates(body: Record<string, unknown> | null): { updates: ProfileFieldUpdates } | { error: string } {
@@ -67,6 +72,11 @@ export function parseProfileFieldUpdates(body: Record<string, unknown> | null): 
       return { error: "Tanggal lahir tidak valid." };
     }
     updates.birthDate = birthDate;
+  }
+  if (body?.role !== undefined) {
+    const role = String(body.role);
+    if (!ROLE_VALUES.includes(role as typeof ROLE_VALUES[number])) return { error: "Peran tidak valid." };
+    updates.role = role as typeof ROLE_VALUES[number];
   }
   if (Object.keys(updates).length === 0) return { error: "Tidak ada perubahan yang dikirim." };
   return { updates };

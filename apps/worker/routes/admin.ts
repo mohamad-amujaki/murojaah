@@ -1,5 +1,8 @@
-import { eq, sql } from "drizzle-orm";
-import { classes, practiceSessions, users, xpLedger } from "@murojaah/db";
+import { and, eq, inArray, like, or, sql } from "drizzle-orm";
+import {
+  assignments, ayahProgress, classes, classMembers, credentials, encouragements,
+  oauthAccounts, parentChildren, practiceSessions, sessions, userBadges, users, xpLedger,
+} from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json, readJsonBody } from "../lib/http";
 import { requireAuth, requireOwnedChild, requireRole } from "../lib/guards";
@@ -77,10 +80,21 @@ export const handleListAdminUsers: RouteHandler = async (request, url, env, ctx)
   const { db } = guard;
 
   const roleFilter = url.searchParams.get("role");
-  const rows = roleFilter
-    ? await db.select().from(users).where(eq(users.role, roleFilter as "student" | "teacher" | "parent" | "admin"))
-    : await db.select().from(users);
-  return json({ users: rows.map(publicUser) }, 200, {}, "no-store");
+  const q = url.searchParams.get("q");
+  const offset = Math.max(0, Number(url.searchParams.get("offset")) || 0);
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit")) || 25), 100);
+
+  const conditions = [];
+  if (roleFilter) conditions.push(eq(users.role, roleFilter as "student" | "teacher" | "parent" | "admin"));
+  if (q) conditions.push(like(users.displayName, `%${q}%`));
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [rows, [{ total }]] = await Promise.all([
+    db.select().from(users).where(where).offset(offset).limit(limit),
+    db.select({ total: sql<number>`count(*)` }).from(users).where(where),
+  ]);
+  return json({ users: rows.map(publicUser), total }, 200, {}, "no-store");
 };
 
 export const handleUpdateAdminUser: RouteHandler = async (request, url, env, ctx) => {
@@ -100,4 +114,51 @@ export const handleUpdateAdminUser: RouteHandler = async (request, url, env, ctx
 
   const updated = await updateReturning(db, users, parsed.updates, targetId);
   return json({ user: publicUser(updated) }, 200, {}, "no-store");
+};
+
+export const handleAdminListClasses: RouteHandler = async (request, url, env, ctx) => {
+  if (url.pathname !== "/api/admin/classes" || request.method !== "GET") return null;
+  const guard = requireRole(env, ctx, "admin", "Hanya admin yang dapat mengakses data ini.");
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
+
+  const rows = await db.select({
+    id: classes.id,
+    name: classes.name,
+    teacherId: classes.teacherId,
+    teacherName: users.displayName,
+    joinCode: classes.joinCode,
+    status: classes.status,
+    memberCount: sql<number>`(select count(*) from ${classMembers} where ${classMembers.classId} = ${classes.id})`,
+  }).from(classes).leftJoin(users, eq(classes.teacherId, users.id));
+
+  return json({ classes: rows }, 200, {}, "no-store");
+};
+
+export const handleDeleteAdminUsers: RouteHandler = async (request, url, env, ctx) => {
+  if (url.pathname !== "/api/admin/users/delete" || request.method !== "POST") return null;
+  const guard = requireRole(env, ctx, "admin", "Hanya admin yang dapat menghapus pengguna.");
+  if (guard instanceof Response) return guard;
+  const { db } = guard;
+
+  const body = await readJsonBody(request);
+  const ids = (body?.ids as number[]) ?? [];
+  if (!ids.length) return json({ error: "Tidak ada pengguna yang dipilih." }, 400, {}, "no-store");
+
+  await db.delete(credentials).where(inArray(credentials.userId, ids));
+  await db.delete(oauthAccounts).where(inArray(oauthAccounts.userId, ids));
+  await db.delete(sessions).where(or(inArray(sessions.userId, ids), inArray(sessions.activeUserId, ids)));
+  await db.delete(parentChildren).where(or(inArray(parentChildren.parentId, ids), inArray(parentChildren.childId, ids)));
+  await db.update(users).set({ managedBy: null }).where(inArray(users.managedBy, ids));
+  await db.delete(practiceSessions).where(inArray(practiceSessions.userId, ids));
+  await db.delete(ayahProgress).where(inArray(ayahProgress.userId, ids));
+  await db.delete(userBadges).where(inArray(userBadges.userId, ids));
+  await db.delete(xpLedger).where(inArray(xpLedger.userId, ids));
+  await db.delete(encouragements).where(or(inArray(encouragements.parentId, ids), inArray(encouragements.childId, ids)));
+  await db.delete(classMembers).where(inArray(classMembers.studentId, ids));
+  await db.delete(assignments).where(or(inArray(assignments.creatorId, ids), inArray(assignments.studentId, ids)));
+  await db.update(classes).set({ teacherId: null }).where(inArray(classes.teacherId, ids));
+  await db.delete(users).where(inArray(users.id, ids));
+
+  return json({ ok: true }, 200, {}, "no-store");
 };

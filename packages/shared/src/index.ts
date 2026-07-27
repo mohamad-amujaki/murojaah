@@ -16,6 +16,7 @@ export interface PublicUser {
   id: number;
   displayName: string;
   role: UserRole;
+  status: string;
   managedBy: number | null;
   dailyTarget: number;
   preferences: UserPreferences;

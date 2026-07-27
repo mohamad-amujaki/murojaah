@@ -13,8 +13,8 @@ import { handleCreateEncouragement, handleListEncouragements, handleMarkEncourag
 import { handleGoogleCallback, handleGoogleStart } from "./routes/oauth";
 import { handleMyStats, handleSuggestion, handleUpdateProfile } from "./routes/profile";
 import {
-  handleAdminStats, handleChildStats, handleListAdminUsers,
-  handleUpdateAdminUser, handleUpdateChild,
+  handleAdminListClasses, handleAdminStats, handleChildStats, handleDeleteAdminUsers,
+  handleListAdminUsers, handleUpdateAdminUser, handleUpdateChild,
 } from "./routes/admin";
 import { handleListTeacherStudents, handleUpdateStudent } from "./routes/teacher";
 
@@ -29,7 +29,7 @@ const routes: RouteHandler[] = [
   handleListBadges,
   handleCreateEncouragement, handleListEncouragements, handleMarkEncouragementRead,
   handleAdminStats, handleChildStats, handleUpdateChild,
-  handleListAdminUsers, handleUpdateAdminUser,
+  handleAdminListClasses, handleListAdminUsers, handleUpdateAdminUser, handleDeleteAdminUsers,
   handleListTeacherStudents, handleUpdateStudent,
 ];
 
