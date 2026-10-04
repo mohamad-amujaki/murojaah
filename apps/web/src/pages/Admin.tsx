@@ -142,11 +142,11 @@ export function Admin() {
 
         <div className="relative w-full sm:w-auto sm:min-w-[200px] order-last sm:order-none">
           <Search size={14} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-          <input className="w-full h-9 rounded-[8px] border border-line bg-transparent pl-[30px] pr-[30px] text-xs text-ink placeholder:text-muted outline-none focus:border-[var(--accent)] transition-colors" type="text" placeholder="Cari pengguna..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="w-full h-9 rounded-[8px] border border-line bg-transparent pl-[30px] pr-[30px] text-xs text-ink placeholder:text-muted outline-none focus:border-green transition-colors" type="text" placeholder="Cari pengguna..." value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button className="absolute right-[8px] top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors cursor-pointer" onClick={() => setSearch("")}><X size={14} /></button>}
         </div>
 
-        <select className="h-9 rounded-[8px] border border-line bg-transparent px-[10px] text-xs text-ink outline-none cursor-pointer focus:border-[var(--accent)] transition-colors" value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setSelected(new Set()); }}>
+        <select className="h-9 rounded-[8px] border border-line bg-transparent px-[10px] text-xs text-ink outline-none cursor-pointer focus:border-green transition-colors" value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setSelected(new Set()); }}>
           <option value="">Semua peran</option>
           <option value="student">Murid</option>
           <option value="teacher">Guru</option>
@@ -173,8 +173,8 @@ export function Admin() {
 
       {users.length > 0 && (
         <div>
-          <div className="grid grid-cols-[20px_1fr_1fr_70px_70px_auto] items-center gap-3 px-[14px] py-[7px_14px] text-[11px] font-semibold text-muted border-b border-line bg-[#fafafa] dark:bg-[#111]">
-            <span><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4 cursor-pointer accent-[var(--accent)]" /></span>
+          <div className="grid grid-cols-[20px_1fr_1fr_70px_70px_auto] items-center gap-3 px-[14px] py-[7px_14px] text-xs font-semibold text-muted border-b border-line bg-[#fafafa] dark:bg-[#111]">
+            <span><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4 cursor-pointer accent-green" /></span>
             <span>PENGGUNA</span>
             <span>PERAN</span>
             <span>STATUS</span>
@@ -183,15 +183,15 @@ export function Admin() {
           </div>
           {users.map(u => (
             <div className="grid grid-cols-[20px_1fr_1fr_70px_70px_auto] items-center gap-3 px-[14px] py-[10px] text-xs border-b border-line last:border-0 hover:bg-[#f7f7f7] dark:hover:bg-[#181818] transition-colors" key={u.id}>
-              <span><input type="checkbox" checked={selected.has(u.id)} onChange={() => handleSelect(u.id)} className="w-4 h-4 cursor-pointer accent-[var(--accent)]" /></span>
+              <span><input type="checkbox" checked={selected.has(u.id)} onChange={() => handleSelect(u.id)} className="w-4 h-4 cursor-pointer accent-green" /></span>
               <span className="font-semibold truncate">{u.displayName}</span>
-              <span><span className={`inline-block rounded-full text-[10px] font-semibold px-[8px] py-[2px] ${ROLE_COLORS[u.role]}`}>{ROLE_LABEL[u.role]}</span></span>
+              <span><span className={`inline-block rounded-full text-xs font-semibold px-[8px] py-[2px] ${ROLE_COLORS[u.role]}`}>{ROLE_LABEL[u.role]}</span></span>
               <span className="flex items-center gap-[5px]">
                 <span className={`w-[7px] h-[7px] rounded-full ${u.status === "active" ? "bg-green-500" : "bg-red-400"}`} />
                 <span className="text-muted">{u.status === "active" ? "Aktif" : "Nonaktif"}</span>
               </span>
               <span className="text-muted">{u.dailyTarget} mnt</span>
-              <span><button className="inline-flex items-center gap-[5px] h-8 px-[10px] rounded-[8px] border border-line bg-transparent text-ink font-semibold text-[11px] cursor-pointer hover:bg-[#f0f0f0] dark:hover:bg-[#222] whitespace-nowrap transition-colors" type="button" onClick={() => setEditing(u)}><Pencil size={12} /> Ubah</button></span>
+              <span><button className="inline-flex items-center gap-[5px] h-8 px-[10px] rounded-[8px] border border-line bg-transparent text-ink font-semibold text-xs cursor-pointer hover:bg-[#f0f0f0] dark:hover:bg-[#222] whitespace-nowrap transition-colors" type="button" onClick={() => setEditing(u)}><Pencil size={12} /> Ubah</button></span>
             </div>
           ))}
         </div>
@@ -203,7 +203,7 @@ export function Admin() {
           {getPageNumbers(currentPage, totalPages).map((p, i) =>
             p === "ellipsis"
               ? <span key={`e${i}`} className="text-xs text-muted select-none">...</span>
-              : <button key={p} className={`inline-flex items-center justify-center h-8 min-w-[32px] px-[8px] rounded-[8px] text-xs font-semibold cursor-pointer transition-colors ${p === currentPage ? "bg-[var(--accent)] text-white" : "border border-line bg-transparent text-ink hover:bg-[#f0f0f0] dark:hover:bg-[#222]"}`} onClick={() => setOffset((p - 1) * PAGE_SIZE)}>{p}</button>
+              : <button key={p} className={`inline-flex items-center justify-center h-8 min-w-[32px] px-[8px] rounded-[8px] text-xs font-semibold cursor-pointer transition-colors ${p === currentPage ? "bg-green text-white" : "border border-line bg-transparent text-ink hover:bg-[#f0f0f0] dark:hover:bg-[#222]"}`} onClick={() => setOffset((p - 1) * PAGE_SIZE)}>{p}</button>
           )}
           <button className="inline-flex items-center justify-center h-8 min-w-[32px] px-[8px] rounded-[8px] border border-line bg-transparent text-xs text-ink font-semibold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#f0f0f0] dark:hover:bg-[#222] transition-colors" disabled={currentPage >= totalPages} onClick={() => setOffset(prev => prev + PAGE_SIZE)}>Selanjutnya</button>
         </div>
@@ -218,7 +218,7 @@ export function Admin() {
         </div>
         <div className="relative w-full sm:w-auto sm:min-w-[200px] order-last sm:order-none">
           <Search size={14} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-          <input className="w-full h-9 rounded-[8px] border border-line bg-transparent pl-[30px] pr-[10px] text-xs text-ink placeholder:text-muted outline-none focus:border-[var(--accent)] transition-colors" type="text" placeholder="Cari kelas..." value={classSearch} onChange={e => setClassSearch(e.target.value)} />
+          <input className="w-full h-9 rounded-[8px] border border-line bg-transparent pl-[30px] pr-[10px] text-xs text-ink placeholder:text-muted outline-none focus:border-green transition-colors" type="text" placeholder="Cari kelas..." value={classSearch} onChange={e => setClassSearch(e.target.value)} />
         </div>
       </div>
 
@@ -251,7 +251,7 @@ export function Admin() {
                 {classMembers.length === 0 && <p className="text-xs text-muted text-center py-[24px] m-0">Belum ada murid di kelas ini.</p>}
                 {classMembers.length > 0 && (
                   <div>
-                    <div className="grid grid-cols-[1fr_60px_80px_60px] items-center gap-3 px-[14px] py-[6px_10px] text-[10px] font-semibold text-muted border-b border-line">
+                    <div className="grid grid-cols-[1fr_60px_80px_60px] items-center gap-3 px-[14px] py-[6px_10px] text-xs font-semibold text-muted border-b border-line">
                       <span>MURID</span>
                       <span className="text-center">STREAK</span>
                       <span className="text-center">AYAT</span>
@@ -293,7 +293,7 @@ export function Admin() {
               const u = users.find(u => u.id === id);
               return <div key={id} className="py-[3px] flex items-center gap-2"><span className="w-[6px] h-[6px] rounded-full bg-red-300 flex-none" />{u?.displayName ?? `#${id}`}</div>;
             })}
-            {selected.size > 5 && <div className="text-muted mt-[6px] pt-[6px] border-t border-line text-[11px]">...dan {selected.size - 5} lainnya</div>}
+            {selected.size > 5 && <div className="text-muted mt-[6px] pt-[6px] border-t border-line text-xs">...dan {selected.size - 5} lainnya</div>}
           </div>
           <div className="flex items-center gap-[8px] justify-end pt-1">
             <button className="inline-flex items-center gap-[6px] h-9 px-[14px] rounded-[8px] border border-line bg-transparent text-ink font-semibold text-xs cursor-pointer hover:bg-[#f0f0f0] dark:hover:bg-[#222] transition-colors" type="button" onClick={() => setConfirmDelete(false)} disabled={deleting}>Batal</button>

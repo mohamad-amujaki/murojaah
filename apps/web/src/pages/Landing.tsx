@@ -47,9 +47,9 @@ export function LandingPage({ onLogin, onRegister }: { onLogin: () => void; onRe
     </section>
 
     <section className="landing-trust">
-      <span><ShieldCheck/> 5.000+ ayat siap dihafal</span>
-      <span><ShieldCheck/> Progres tak pernah hilang</span>
-      <span><ShieldCheck/> Tetap jalan walau offline</span>
+      <span><BookOpen/> 6.236 ayat dari 114 surah</span>
+      <span><ShieldCheck/> Progres tersimpan di akunmu</span>
+      <span><WifiOff/> Tetap jalan walau offline</span>
     </section>
 
     <section className="landing-section">

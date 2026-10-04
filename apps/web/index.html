@@ -15,41 +15,46 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@500;600&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@500;600&display=swap" /></noscript>
     <style>
-      html,body{margin:0;min-width:320px;min-height:100%;background:#f8f7f2}
-      #root{min-height:100vh}
-      .landing{background:#f8f7f2;min-height:100vh;display:flex;flex-direction:column}
-      .landing-nav{max-width:1160px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:20px 5vw;width:100%;box-sizing:border-box}
-      .brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;font-family:system-ui,-apple-system,sans-serif}
-      .brand span{color:#18332c}
-      .brand span span{color:#106b55}
-      .brandmark{width:38px;height:38px;border-radius:12px;background:#106b55;display:grid;place-items:center}
-      .brandmark svg{width:21px;color:#fff}
-      .landing-nav-actions{display:flex;align-items:center;gap:16px}
-      .icon-btn{border:0;background:transparent;cursor:pointer;width:38px;height:38px;display:grid;place-items:center;border-radius:9px;color:#42524c;font-size:18px;padding:0}
-      .link-btn{border:0;background:transparent;color:#106b55;font-weight:700;font-size:12px;cursor:pointer;font-family:system-ui,-apple-system,sans-serif}
-      .primary{border:0;background:#106b55;color:#fff;min-height:40px;padding:0 18px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;font-family:system-ui,-apple-system,sans-serif}
-      .landing-hero{max-width:1160px;margin:0 auto;padding:30px 5vw 60px;display:flex;align-items:center;gap:40px;width:100%;box-sizing:border-box}
-      .landing-hero-copy{flex:1;max-width:560px}
-      .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;border:1px solid;font-size:10px;font-weight:700;letter-spacing:.5px;font-family:system-ui,-apple-system,sans-serif}
-      .pill.dark{background:#def0e8;border-color:#cfe7dc;color:#106b55}
-      .pill svg{width:14px}
-      .landing-hero h1{font-size:38px;line-height:1.15;letter-spacing:-.8px;margin:18px 0 14px;color:#18332c;font-family:system-ui,-apple-system,sans-serif}
-      @media(max-width:560px){.landing-hero h1{font-size:28px}}
-      .landing-hero-copy>p{color:#42524c;font-size:14px;line-height:1.7;margin:0 0 22px;font-family:system-ui,-apple-system,sans-serif}
-      .landing-cta-row{display:flex;align-items:center;gap:18px;margin-bottom:14px}
-      .primary.large{min-height:50px;padding:0 26px;font-size:13px}
-      .safe{font-size:11px;color:#42524c;margin:0;font-family:system-ui,-apple-system,sans-serif}
-      .landing-hero-art{flex:1;max-width:340px;aspect-ratio:1;position:relative;display:grid;place-items:center}
-      .landing-hero-art .moon{position:absolute;width:230px;height:230px;border-radius:50%;background:#def0e8;color:#106b55;display:grid;place-items:center;font-size:60px}
-      .landing-hero-art .quran{width:150px;height:96px;display:grid;place-items:center;background:#def0e8;border-radius:20px}
-      .landing-hero-art .quran svg{width:60px;height:60px;color:#106b55}
-      @media(max-width:900px){.landing-hero{flex-direction:column;text-align:center}.landing-hero-copy{max-width:none}.landing-cta-row{justify-content:center;flex-wrap:wrap}}
-      html[data-theme="dark"],html[data-theme="dark"] body{background:#0e1613}
-      html[data-theme="dark"] .landing{background:#0e1613}
-      html[data-theme="dark"] .brand span{color:#eef3f0}
-      html[data-theme="dark"] .landing-hero h1{color:#eef3f0}
-      html[data-theme="dark"] .icon-btn{color:#aabcba}
-      [data-boot-retry]{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border:0;border-radius:11px;background:#106b55;color:#fff;min-height:44px;padding:0 20px;font:700 13px system-ui,-apple-system,sans-serif;cursor:pointer;z-index:100}
+      /* Layer pertama yang dideklarasikan = prioritas terendah, jadi style
+         shell pra-render ini tidak menimpa komponen app.css setelah React jalan. */
+      @layer shell {
+        html,body{margin:0;min-width:320px;min-height:100%;background:#f8f7f2}
+        #root{min-height:100vh}
+        .landing{background:#f8f7f2;min-height:100vh;display:flex;flex-direction:column}
+        .landing-nav{max-width:1160px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:20px 5vw;width:100%;box-sizing:border-box}
+        .brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .brand span{color:#18332c}
+        .brand span span{color:#106b55}
+        .brandmark{width:38px;height:38px;border-radius:12px;background:#106b55;display:grid;place-items:center}
+        .brandmark svg{width:21px;color:#fff}
+        .landing-nav-actions{display:flex;align-items:center;gap:16px}
+        .icon-btn{border:0;background:transparent;cursor:pointer;width:38px;height:38px;display:grid;place-items:center;border-radius:9px;color:#42524c;font-size:18px;padding:0}
+        .link-btn{border:0;background:transparent;color:#106b55;font-weight:700;font-size:12px;cursor:pointer;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .primary{border:0;background:#106b55;color:#fff;min-height:40px;padding:0 18px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .landing-hero{max-width:1160px;margin:0 auto;padding:30px 5vw 60px;display:flex;align-items:center;gap:40px;width:100%;box-sizing:border-box}
+        .landing-hero-copy{flex:1;max-width:560px}
+        .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;border:1px solid;font-size:10px;font-weight:700;letter-spacing:.5px;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .pill.dark{background:#def0e8;border-color:#cfe7dc;color:#106b55}
+        .pill svg{width:14px}
+        .landing-hero h1{font-size:38px;line-height:1.15;letter-spacing:-.8px;margin:18px 0 14px;color:#18332c;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        @media(max-width:560px){.landing-hero h1{font-size:28px}}
+        .landing-hero-copy>p{color:#42524c;font-size:14px;line-height:1.7;margin:0 0 22px;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .landing-cta-row{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+        .primary.large{min-height:50px;padding:0 26px;font-size:13px}
+        .safe{font-size:11px;color:#42524c;margin:0;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .landing-hero-art{flex:1;max-width:340px;aspect-ratio:1;position:relative;display:grid;place-items:center}
+        .landing-hero-art .moon{position:absolute;width:230px;height:230px;border-radius:50%;background:#def0e8;color:#106b55;display:grid;place-items:center;font-size:60px}
+        .landing-hero-art .quran{width:150px;height:96px;display:grid;place-items:center;background:#def0e8;border-radius:20px}
+        .landing-hero-art .quran svg{width:60px;height:60px;color:#106b55}
+        @media(max-width:900px){.landing-hero{flex-direction:column;text-align:center}.landing-hero-copy{max-width:none}.landing-cta-row{justify-content:center;flex-wrap:wrap}}
+        html[data-theme="dark"],html[data-theme="dark"] body{background:#0e1613}
+        html[data-theme="dark"] .landing{background:#0e1613}
+        html[data-theme="dark"] .brand span{color:#eef3f0}
+        html[data-theme="dark"] .landing-hero h1{color:#eef3f0}
+        html[data-theme="dark"] .icon-btn{color:#aabcba}
+        [data-boot-retry]{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border:0;border-radius:11px;background:#106b55;color:#fff;min-height:44px;padding:0 20px;font:700 13px Manrope,system-ui,-apple-system,sans-serif;cursor:pointer;z-index:100}
+    
+      }
     </style>
     <script>
       (function(){

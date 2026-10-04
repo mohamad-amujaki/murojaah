@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import type { UserRole } from "@murojaah/shared";
 import {
-  Bell, BookOpen, ChevronDown, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
+  BookOpen, ChevronDown, ChevronRight, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
 } from "lucide-react";
 import { Modal } from "./components/Modal";
 
@@ -85,7 +85,6 @@ export default function AuthenticatedApp() {
           {!online && <span className="offline"><WifiOff /> Offline</span>}
           {isActingAsChild && <button className="outline" onClick={() => switchProfile(loginUser.id)}>Kembali ke {loginUser.displayName}</button>}
           <button className="icon-btn" onClick={toggleTheme} aria-label={darkMode ? "Ganti ke mode terang" : "Ganti ke mode gelap"}>{darkMode ? <Sun /> : <Moon />}</button>
-          <button className="icon-btn notify" onClick={() => notify("Belum ada notifikasi baru")} aria-label="Notifikasi"><Bell /><i /></button>
           {!isActingAsChild && loginUser.role === "parent"
             ? <div className="role-select"><ShieldCheck /><select value={String(user.id)} onChange={e => handleProfileSelect(e.target.value)} aria-label="Pilih profil">
                 <option value={String(loginUser.id)}>{loginUser.displayName} (Saya)</option>
@@ -96,7 +95,7 @@ export default function AuthenticatedApp() {
         </div>
       </header>
       <div className="content">
-        <Suspense fallback={<div className="grid gap-5"><div className="w-1/3 h-5 rounded bg-line animate-pulse" /><div className="grid grid-cols-4 gap-[14px]"><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /></div><div className="grid grid-cols-2 gap-[14px]"><div className="h-40 rounded-[16px] bg-line animate-pulse" /><div className="h-40 rounded-[16px] bg-line animate-pulse" /></div></div>}>
+        <Suspense fallback={<div className="grid gap-5"><div className="w-1/3 h-5 rounded bg-line animate-pulse" /><div className="grid grid-cols-2 md:grid-cols-4 gap-[14px]"><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-[14px]"><div className="h-40 rounded-[16px] bg-line animate-pulse" /><div className="h-40 rounded-[16px] bg-line animate-pulse" /></div></div>}>
           {page === "home" && <HomePage go={go} />}
           {page === "admin" && <Admin />}
           {page === "practice" && <PracticePage />}
@@ -112,10 +111,10 @@ export default function AuthenticatedApp() {
       <p className="help-desc">Butuh bantuan, nemu bug, atau punya usulan fitur? Hubungi kami lewat salah satu saluran di bawah.</p>
       <div className="help-channels">
         <a href="mailto:mohamad.amujaki@gmail.com" className="help-channel" onClick={() => { setShowHelp(false); notify(`Email: mohamad.amujaki@gmail.com`); }}>
-          <span className="help-icon"><Mail /></span><div><b>Email</b><p>mohamad.amujaki@gmail.com</p><small>Laporan bug &amp; usulan fitur</small></div><ChevronDown style={{transform:"rotate(-90deg)",width:16}} />
+          <span className="help-icon"><Mail /></span><div><b>Email</b><p>mohamad.amujaki@gmail.com</p><small>Laporan bug &amp; usulan fitur</small></div><ChevronRight />
         </a>
         <a href="https://wa.me/6281315866766" target="_blank" rel="noopener noreferrer" className="help-channel" onClick={() => setShowHelp(false)}>
-          <span className="help-icon"><MessageCircle /></span><div><b>WhatsApp</b><p>+6281-315-866-766</p><small>Diskusi cepat &amp; pertanyaan</small></div><ChevronDown style={{transform:"rotate(-90deg)",width:16}} />
+          <span className="help-icon"><MessageCircle /></span><div><b>WhatsApp</b><p>+6281-315-866-766</p><small>Diskusi cepat &amp; pertanyaan</small></div><ChevronRight />
         </a>
       </div>
       <p className="help-footer">Kami menghargai setiap masukan untuk membuat Murojaah lebih baik.</p>
