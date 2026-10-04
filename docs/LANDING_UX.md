@@ -13,10 +13,10 @@ Satu tujuan konversi: **dapatkan pengunjung untuk mendaftar** (murid mandiri, at
 - Sticky tipis dengan `backdrop-filter: blur` saat scroll, transparan di atas hero.
 
 ### 2.2 Hero
-- Headline pendek berbasis manfaat, bukan fitur: **"Muraja'ah Al-Qur'an, sedikit demi sedikit, setiap hari."** (echo dari copy sidebar-tip yang sudah ada — konsisten dengan nada aplikasi).
+- Headline spesifik berbasis hasil, bukan janji: **"Ulang ayat yang paling rawan lupa, 10 menit sehari."** Hindari klaim absolut ("nggak akan hilang lagi") dan angka yang tidak bisa diverifikasi.
 - Sub-headline 1 kalimat: siapa produk ini untuk (murid, keluarga, guru tahfiz).
 - CTA ganda: **"Mulai Gratis"** (→ Daftar) sebagai primer, **"Sudah punya akun? Masuk"** sebagai teks link sekunder — jangan taruh dua tombol berbobot sama, itu memecah perhatian.
-- Visual kanan: reuse elemen dekoratif `.hero-art` (mushaf/moon/star) yang sudah ada di kartu hero dashboard — jaga konsistensi visual brand, bukan ilustrasi generik baru dari stock/AI.
+- Visual kanan: **cuplikan player latihan yang bisa dicoba** (`AyahDemo` di `Landing.tsx`, kelas `.ayah-demo`) — ayat Al-Ikhlas:1 dengan tombol sembunyikan teks dan tiga tanda hafalan. Pengunjung langsung melihat cara kerja produk, bukan ilustrasi dekoratif. Shell pra-render di `index.html` menyediakan placeholder dengan ukuran sama agar tidak ada lompatan layout.
 - Di bawah CTA: baris kepercayaan kecil, mis. "Dipakai untuk hafalan pribadi & kelas tahfiz" — jangan pakai angka palsu ("10.000+ pengguna") kalau belum benar ada datanya.
 
 ### 2.3 Social proof / kepercayaan (opsional, taruh tipis)
@@ -49,7 +49,7 @@ Logo kecil, link Masuk/Daftar, atribusi EQuran.id, tahun. Tidak perlu footer 5 k
 - **Above the fold harus menjawab 3 pertanyaan dalam 3 detik**: apa ini, untuk siapa, apa yang saya lakukan sekarang (klik apa).
 - **Satu CTA primer per section** — dua tombol setara berdampingan menurunkan conversion rate (paradox of choice); selalu ada 1 tombol solid + maksimal 1 link teks sekunder.
 - **Mobile-first** — mayoritas trafik landing page produk konsumer datang dari mobile; hero, kartu fitur, dan CTA harus dites di lebar 375px dulu, desktop menyusul (pola breakpoint di [app.css](../apps/web/src/app.css) sudah mencakup 560px/680px/820px/900px, lanjutkan pola itu).
-- **Kecepatan muat** — tidak ada gambar besar/video di atas fold; pakai elemen dekoratif CSS/SVG yang sudah ada (`.hero-art`), bukan foto stok berat.
+- **Kecepatan muat** — tidak ada gambar besar/video di atas fold; demo hero murni HTML/CSS dengan teks ayat dari `fallbackAyahs` (tanpa request jaringan).
 - **Aksesibilitas** — kontras teks di atas gradient hijau harus tetap ≥4.5:1 (putih di atas `#0c735b` sudah aman, sudah dipakai di `.hero-card`), semua tombol CTA harus punya target sentuh ≥44px (pola `.primary` yang ada sudah `min-height:44px`, pertahankan).
 
 ## 4. Struktur Routing yang Direkomendasikan

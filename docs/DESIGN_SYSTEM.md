@@ -1,10 +1,10 @@
 # Design System — Murojaah
 
-Sumber: [apps/web/src/app.css](../apps/web/src/app.css), [apps/web/index.html](../apps/web/index.html). Styling menggunakan Tailwind CSS v4 (`@tailwindcss/vite`) dengan `@theme` tokens + `@layer components` untuk CSS kustom; dokumen ini menstandarkan token yang sudah dipakai di kode agar konsisten saat menambah UI baru.
+Sumber: [apps/web/src/app.css](../apps/web/src/app.css), [apps/web/index.html](../apps/web/index.html). Styling menggunakan Tailwind CSS v4 (`@tailwindcss/vite`) dengan `@theme` tokens + `@layer components` untuk CSS kustom. Bagian pertama `@layer components` adalah desain asli (dipulihkan dari `styles.css` sebelum migrasi Tailwind, ditulis sebagai CSS biasa); bagian kedua berisi komponen yang ditambahkan setelahnya. Style pra-render di `index.html` dibungkus `@layer shell` (prioritas terendah) agar tidak menimpa komponen; dokumen ini menstandarkan token yang sudah dipakai di kode agar konsisten saat menambah UI baru.
 
 ## 1. Filosofi
 - Hangat, tenang, "islami-modern": hijau tua sebagai warna identitas, aksen emas untuk pencapaian/highlight, krem sebagai latar netral.
-- Kepadatan informasi tinggi tapi rapi (dashboard, kartu statistik) dengan tipografi kecil (minimum 10.5px pada teks sekunder — `text-xs` pada base 14px, lihat §3) dan white space konsisten lewat border-radius besar (10–22px).
+- Kepadatan informasi tinggi tapi rapi (dashboard, kartu statistik) dengan tipografi kecil (batas bawah **12px** — `text-xs` dioverride ke 12px di `@theme`, lihat §3) dan white space konsisten lewat border-radius besar (10–22px).
 - Animasi halus, dihormati preferensi pengguna (`prefers-reduced-motion` mematikan semua animasi/transisi).
 
 ## 2. Warna
@@ -12,7 +12,7 @@ Didefinisikan sebagai CSS custom properties di `:root` (light) dan `[data-theme=
 
 | Token | Light | Dark | Penggunaan |
 | --- | --- | --- | --- |
-| `--green` | `#106b55` | `#106b55` | Primer/brand — tombol utama, ikon aktif, progress bar |
+| `--green` | `#106b55` | `#2fa885` | Primer/brand — tombol utama, ikon aktif, progress bar (dark: lebih terang agar teks hijau terbaca; latar `.primary` di dark `#14806a`) |
 | `--deep` | `#084b3c` | — | Hijau lebih gelap — gradient hero, toast |
 | `--mint` | `#e8f4ef` | — | Latar lembut elemen aktif/ikon |
 | `--cream` | `#f8f7f2` | — | Latar belakang utama (dark: `#0e1613`) |
@@ -22,7 +22,7 @@ Didefinisikan sebagai CSS custom properties di `:root` (light) dan `[data-theme=
 | `--line` | `#d3ddd7` | `#2d3f38` | Border/divider |
 | `--surface` | `#fff` | `#1a2622` | Latar kartu/sheet |
 
-Token light/dark konsisten via CSS custom properties — kelas `text-ink`, `text-muted`, `border-line`, `bg-surface` otomatis menyesuaikan tanpa per-element override.
+Alias `--green`, `--muted`, `--line`, `--surface`, dst. dipetakan ke `--color-*` di `:root` sehingga CSS komponen dan inline style memakai nama yang sama. Token light/dark konsisten via CSS custom properties — kelas `text-ink`, `text-muted`, `border-line`, `bg-surface` otomatis menyesuaikan tanpa per-element override.
 
 Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — kandidat token baru bila dipakai berulang):
 - Oranye pencapaian/streak: `#f0884d`, `#ee864a`, `#f08d67`
@@ -36,8 +36,7 @@ Warna kontekstual tambahan (dipakai inline per komponen, belum ditokenkan — ka
 - Font UI: **Manrope** (400/500/600/700/800), fallback `system-ui, sans-serif`.
 - Font Arab: **Noto Naskh Arabic** (500/600), dipakai khusus di kelas `.arabic` untuk teks ayat.
 - Skala (setelah base 14px):
-  - `text-[10px]` (mikro: eyebrow, badge count) — kapital + letter-spacing lebar
-  - `text-xs` = 10.5px — label, metadata, navigasi
+  - `text-xs` = 12px (dioverride via `--text-xs`) — ukuran terkecil: label, metadata, navigasi. Jangan pakai `text-[10px]`/`text-[11px]`.
   - `text-sm` = 12.25px — deskripsi pendek
   - `text-base` = 14px — body copy utama
   - `text-lg` = 15.75px — heading kartu
@@ -74,13 +73,19 @@ Breakpoint `max-width` menurun, dari umum ke spesifik:
 
 | Viewport | Nav | Grid columns |
 | --- | --- | --- |
-| >1000px | Sidebar tetap 254px | goals-grid 4, badges 4, landing-features 4 |
-| ≤1000px | Sidebar drawer + **bottom-nav** muncul | goals-grid 3, badges 3 |
-| ≤900px | — | landing-features 2, landing-steps 1 |
+| >1000px | Sidebar tetap 254px (bisa di-collapse lewat tombol menu) | goals-grid 3, badges 4, stat-grid 4 |
+| ≤1000px | Sidebar drawer + **bottom-nav** muncul | goals-grid 2 (item terakhir full), badges 2 |
+| ≤900px | — | landing-steps 1, hero landing jadi kolom |
 | ≤860px | Auth page: visual ke atas, form ke bawah | — |
-| ≤820px | — | landing-features 3, arabic 36px, heading turun |
-| ≤680px | Sidebar diganti bottom-nav (4 item) | goals-grid 1, badges 2, semua grid single-col |
-| ≤560px | Landing nav links sembunyi | landing-features 1, h1 28px |
+| ≤680px | Topbar 62px | goals-grid 1, stat-grid 2, badges 1, mastery jadi 3 kolom di bawah label |
+| ≤560px | Landing: link "Masuk" di nav disembunyikan | h1 28px |
+
+`landing-features` memakai `repeat(auto-fit, minmax(220px, 1fr))`, jadi tidak butuh breakpoint.
+
+Aturan mobile wajib:
+- Input/select/textarea minimal 16px pada `pointer: coarse` (mencegah auto-zoom Safari iOS).
+- Elemen `position: fixed` di bawah (bottom-nav, toast) dan padding bawah `.content` menambahkan `env(safe-area-inset-bottom)` ke tingginya, bukan memotongnya.
+- Setiap halaman diuji di 375px tanpa scroll horizontal.
 
 Container konten padding horizontal `5vw` (desktop) → `14px` (mobile). Bottom-nav hadir di ≤1000px (bersamaan sidebar collapse), bukan hanya di mobile.
 

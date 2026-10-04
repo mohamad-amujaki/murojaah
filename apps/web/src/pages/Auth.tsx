@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, ChevronLeft, Mail, ShieldCheck } from "lucide-react";
+import { BookOpen, ChevronLeft, Mail, ShieldCheck, WifiOff } from "lucide-react";
 import type { UserRole } from "@murojaah/shared";
 import { useAuth } from "../lib/auth-context";
 import { useToast } from "../lib/toast-context";
@@ -88,9 +88,9 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: "
         </div>
       </form>
       <ul className="auth-dialog-trust">
-        <li><ShieldCheck /> 5.000+ ayat siap dihafal</li>
-        <li><ShieldCheck /> Progres tak pernah hilang</li>
-        <li><ShieldCheck /> Tetap jalan walau offline</li>
+        <li><BookOpen /> 6.236 ayat dari 114 surah</li>
+        <li><ShieldCheck /> Progres tersimpan di akunmu</li>
+        <li><WifiOff /> Tetap jalan walau offline</li>
       </ul>
     </>}
     {mode !== "forgot" && <p className="auth-switch">

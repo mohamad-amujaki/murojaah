@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { ayahProgress, ayahs, surahs, users } from "@murojaah/db";
 import type { RouteHandler } from "../lib/http";
 import { json, parseBody } from "../lib/http";
@@ -64,7 +64,8 @@ export const handleSuggestion: RouteHandler = async (request, url, env, ctx) => 
     .innerJoin(ayahs, eq(ayahProgress.ayahId, ayahs.id))
     .innerJoin(surahs, eq(ayahs.surahId, surahs.id))
     .where(and(eq(ayahProgress.userId, user.id), ne(ayahProgress.mastery, "Sudah hafal")))
-    .orderBy(asc(ayahProgress.lastPracticedAt))
+    // "Belum hafal" didahulukan dari "Perlu latihan", lalu yang paling lama tidak diulang.
+    .orderBy(sql`case when ${ayahProgress.mastery} = 'Belum hafal' then 0 else 1 end`, asc(ayahProgress.lastPracticedAt))
     .limit(1);
 
   if (!weakest) return json({ suggestion: null }, 200, {}, "no-store");

@@ -15,41 +15,42 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@500;600&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@500;600&display=swap" /></noscript>
     <style>
-      html,body{margin:0;min-width:320px;min-height:100%;background:#f8f7f2}
-      #root{min-height:100vh}
-      .landing{background:#f8f7f2;min-height:100vh;display:flex;flex-direction:column}
-      .landing-nav{max-width:1160px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:20px 5vw;width:100%;box-sizing:border-box}
-      .brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;font-family:system-ui,-apple-system,sans-serif}
-      .brand span{color:#18332c}
-      .brand span span{color:#106b55}
-      .brandmark{width:38px;height:38px;border-radius:12px;background:#106b55;display:grid;place-items:center}
-      .brandmark svg{width:21px;color:#fff}
-      .landing-nav-actions{display:flex;align-items:center;gap:16px}
-      .icon-btn{border:0;background:transparent;cursor:pointer;width:38px;height:38px;display:grid;place-items:center;border-radius:9px;color:#42524c;font-size:18px;padding:0}
-      .link-btn{border:0;background:transparent;color:#106b55;font-weight:700;font-size:12px;cursor:pointer;font-family:system-ui,-apple-system,sans-serif}
-      .primary{border:0;background:#106b55;color:#fff;min-height:40px;padding:0 18px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;font-family:system-ui,-apple-system,sans-serif}
-      .landing-hero{max-width:1160px;margin:0 auto;padding:30px 5vw 60px;display:flex;align-items:center;gap:40px;width:100%;box-sizing:border-box}
-      .landing-hero-copy{flex:1;max-width:560px}
-      .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;border:1px solid;font-size:10px;font-weight:700;letter-spacing:.5px;font-family:system-ui,-apple-system,sans-serif}
-      .pill.dark{background:#def0e8;border-color:#cfe7dc;color:#106b55}
-      .pill svg{width:14px}
-      .landing-hero h1{font-size:38px;line-height:1.15;letter-spacing:-.8px;margin:18px 0 14px;color:#18332c;font-family:system-ui,-apple-system,sans-serif}
-      @media(max-width:560px){.landing-hero h1{font-size:28px}}
-      .landing-hero-copy>p{color:#42524c;font-size:14px;line-height:1.7;margin:0 0 22px;font-family:system-ui,-apple-system,sans-serif}
-      .landing-cta-row{display:flex;align-items:center;gap:18px;margin-bottom:14px}
-      .primary.large{min-height:50px;padding:0 26px;font-size:13px}
-      .safe{font-size:11px;color:#42524c;margin:0;font-family:system-ui,-apple-system,sans-serif}
-      .landing-hero-art{flex:1;max-width:340px;aspect-ratio:1;position:relative;display:grid;place-items:center}
-      .landing-hero-art .moon{position:absolute;width:230px;height:230px;border-radius:50%;background:#def0e8;color:#106b55;display:grid;place-items:center;font-size:60px}
-      .landing-hero-art .quran{width:150px;height:96px;display:grid;place-items:center;background:#def0e8;border-radius:20px}
-      .landing-hero-art .quran svg{width:60px;height:60px;color:#106b55}
-      @media(max-width:900px){.landing-hero{flex-direction:column;text-align:center}.landing-hero-copy{max-width:none}.landing-cta-row{justify-content:center;flex-wrap:wrap}}
-      html[data-theme="dark"],html[data-theme="dark"] body{background:#0e1613}
-      html[data-theme="dark"] .landing{background:#0e1613}
-      html[data-theme="dark"] .brand span{color:#eef3f0}
-      html[data-theme="dark"] .landing-hero h1{color:#eef3f0}
-      html[data-theme="dark"] .icon-btn{color:#aabcba}
-      [data-boot-retry]{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border:0;border-radius:11px;background:#106b55;color:#fff;min-height:44px;padding:0 20px;font:700 13px system-ui,-apple-system,sans-serif;cursor:pointer;z-index:100}
+      /* Layer pertama yang dideklarasikan = prioritas terendah, jadi style
+         shell pra-render ini tidak menimpa komponen app.css setelah React jalan. */
+      @layer shell {
+        html,body{margin:0;min-width:320px;min-height:100%;background:#f8f7f2}
+        #root{min-height:100vh}
+        .landing{background:#f8f7f2;min-height:100vh;display:flex;flex-direction:column}
+        .landing-nav{max-width:1160px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:20px 5vw;width:100%;box-sizing:border-box}
+        .brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .brand span{color:#18332c}
+        .brand span span{color:#106b55}
+        .brandmark{width:38px;height:38px;border-radius:12px;background:#106b55;display:grid;place-items:center}
+        .brandmark svg{width:21px;color:#fff}
+        .landing-nav-actions{display:flex;align-items:center;gap:16px}
+        .icon-btn{border:0;background:transparent;cursor:pointer;width:38px;height:38px;display:grid;place-items:center;border-radius:9px;color:#42524c;font-size:18px;padding:0}
+        .link-btn{border:0;background:transparent;color:#106b55;font-weight:700;font-size:12px;cursor:pointer;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .primary{border:0;background:#106b55;color:#fff;min-height:40px;padding:0 18px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .landing-hero{max-width:1160px;margin:0 auto;padding:30px 5vw 60px;display:flex;align-items:center;gap:40px;width:100%;box-sizing:border-box}
+        .landing-hero-copy{flex:1;max-width:560px}
+        .landing-hero h1{font-size:38px;line-height:1.15;letter-spacing:-.8px;margin:18px 0 14px;color:#18332c;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        @media(max-width:560px){.landing-hero h1{font-size:28px}}
+        .landing-hero-copy>p{color:#42524c;font-size:14px;line-height:1.7;margin:0 0 22px;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .landing-cta-row{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+        .primary.large{min-height:50px;padding:0 26px;font-size:13px}
+        .eyebrow{display:block;font-size:12px;letter-spacing:1.5px;color:#106b55;font-weight:800;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        .ayah-demo{flex:1;max-width:420px;width:100%;min-height:330px;background:#fff;border:1px solid #d3ddd7;border-radius:20px}
+        .safe{font-size:11px;color:#42524c;margin:0;font-family:Manrope,system-ui,-apple-system,sans-serif}
+        @media(max-width:900px){.landing-hero{flex-direction:column;text-align:center}.landing-hero-copy{max-width:none}.landing-cta-row{justify-content:center;flex-wrap:wrap}}
+        html[data-theme="dark"],html[data-theme="dark"] body{background:#0e1613}
+        html[data-theme="dark"] .landing{background:#0e1613}
+        html[data-theme="dark"] .brand span{color:#eef3f0}
+        html[data-theme="dark"] .landing-hero h1{color:#eef3f0}
+        html[data-theme="dark"] .ayah-demo{background:#1a2622;border-color:#2d3f38}
+        html[data-theme="dark"] .icon-btn{color:#aabcba}
+        [data-boot-retry]{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border:0;border-radius:11px;background:#106b55;color:#fff;min-height:44px;padding:0 20px;font:700 13px Manrope,system-ui,-apple-system,sans-serif;cursor:pointer;z-index:100}
+    
+      }
     </style>
     <script>
       (function(){
@@ -74,19 +75,16 @@
         </header>
         <section class="landing-hero">
           <div class="landing-hero-copy">
-            <span class="pill dark"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> SEDIKIT TAPI KONSISTEN</span>
-            <h1>Hafalanmu nggak akan hilang lagi.</h1>
-            <p>Al-Qur'an mudah dihafal tapi gampang lupa. Murojaah bantu kamu — atau anakmu, atau muridmu — mengulang ayat yang tepat, di waktu yang tepat, tanpa drama.</p>
+            <span class="eyebrow">UNTUK MURID, ORANG TUA &amp; GURU TAHFIZ</span>
+            <h1>Ulang ayat yang paling rawan lupa, 10 menit sehari.</h1>
+            <p>Dengar per ayat, ulangi sampai lancar, lalu tandai mana yang belum hafal. Besok, Murojaah menyarankan ayat itu lebih dulu.</p>
             <div class="landing-cta-row">
               <button class="primary large" data-auth="register">Mulai Gratis</button>
               <button class="link-btn" data-auth="login">Sudah punya akun? Masuk</button>
             </div>
-            <p class="safe">Gratis selamanya untuk hafalan pribadi. Nggak perlu kartu kredit.</p>
+            <p class="safe">Gratis untuk hafalan pribadi.</p>
           </div>
-          <div class="landing-hero-art">
-            <div class="moon">✦</div>
-            <div class="quran"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
-          </div>
+          <div class="ayah-demo" aria-hidden="true"></div>
         </section>
       </div>
     </div>

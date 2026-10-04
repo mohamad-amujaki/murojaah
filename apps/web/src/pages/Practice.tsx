@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  BookOpen, Check, ChevronLeft, ChevronRight, Lock, Pause, Play,
-  Repeat2, ShieldCheck, Sparkles, Target, Volume2
+  AlertCircle, BookOpen, Check, ChevronLeft, ChevronRight, Clock, CloudOff, Home, Lock, Pause, Play,
+  Repeat2, RotateCw, ShieldCheck, Sparkles, Target, Volume2, Zap
 } from "lucide-react";
 import { getQuranSurah, getSurahs } from "../lib/api";
 import type { SurahResponse } from "../lib/api";
@@ -12,6 +12,7 @@ import { fallbackAyahs, surahs as fallbackSurahList } from "../types";
 import type { Ayah, Mastery } from "../types";
 import { useToast } from "../lib/toast-context";
 import { useAyahPlayer } from "../hooks/useAyahPlayer";
+import type { SessionSummary } from "../hooks/useAyahPlayer";
 
 const AL_IKHLAS: SurahResponse = { id: 112, latinName: "Al-Ikhlas", arabicName: "الإخلاص", meaning: "Ketulusan", ayahCount: 4 };
 const FALLBACK_SURAH_LIST: SurahResponse[] = fallbackSurahList.map(s => ({
@@ -25,6 +26,7 @@ export function PracticePage() {
   const [ayahs, setAyahs] = useState<Ayah[]>(fallbackAyahs);
   const [quranSource, setQuranSource] = useState("Menyiapkan data...");
   const [query, setQuery] = useState("");
+  const [summary, setSummary] = useState<SessionSummary | null>(null);
 
   const {
     started, playing, index, count, currentAyah, hidden, mastery, saving,
@@ -71,13 +73,44 @@ export function PracticePage() {
     return () => controller.abort();
   }, [selectedSurah.id]);
 
+  if (!started && summary) {
+    const marked = Object.entries(summary.marks).map(([no, m]) => ({ no: Number(no), m })).sort((x, y) => x.no - y.no);
+    const weak = marked.filter(x => x.m !== "Sudah hafal");
+    const repeatWeak = () => {
+      const from = Math.min(...weak.map(x => x.no)), to = Math.max(...weak.map(x => x.no));
+      setStart(from); setEnd(to); setSummary(null); startPractice(from - 1);
+    };
+    return <>
+      <PageTitle eyebrow="SESI SELESAI" title={`${selectedSurah.latinName} · Ayat ${summary.startAyah}–${summary.endAyah}`}
+        desc={summary.saved === "online" ? "Sesi tersimpan. Tanda hafalanmu dipakai untuk saran muraja'ah berikutnya."
+          : summary.saved === "offline" ? "Sesi tersimpan di perangkat dan akan dikirim otomatis saat online."
+          : "Sesi gagal disimpan di server maupun perangkat. Coba ulangi saat koneksi stabil."} />
+      <section className="card session-summary">
+        <div className="summary-stats">
+          <span><Repeat2 /><b>{summary.loopsDone}×</b><small>Putaran</small></span>
+          <span><Clock /><b>{summary.minutes} mnt</b><small>Durasi</small></span>
+          <span>{summary.saved === "online" ? <Zap /> : summary.saved === "offline" ? <CloudOff /> : <AlertCircle />}<b>{summary.xp !== null ? `+${summary.xp} XP` : summary.saved === "offline" ? "Menunggu" : "—"}</b><small>{summary.xp !== null ? "XP didapat" : "XP dihitung saat sinkron"}</small></span>
+        </div>
+        <h3>Ayat yang perlu diulang</h3>
+        {marked.length === 0 && <p className="summary-note">Kamu belum menandai ayat mana pun. Tandai hafalan tiap ayat agar Beranda bisa menyarankan ayat yang perlu diulang.</p>}
+        {marked.length > 0 && weak.length === 0 && <p className="summary-note">Semua ayat yang kamu tandai sudah hafal. Barakallahu fiik!</p>}
+        {weak.length > 0 && <ul className="weak-list">{weak.map(x => <li key={x.no}><span className="ayah-number">{x.no}</span>Ayat {x.no}<em className={x.m === "Belum hafal" ? "mastery-0 active" : "mastery-1 active"}>{x.m}</em></li>)}</ul>}
+        <div className="summary-actions">
+          {weak.length > 0 && <button className="primary" onClick={repeatWeak}><RotateCw /> Ulangi ayat yang belum lancar</button>}
+          <button className="outline" onClick={() => setSummary(null)}><BookOpen /> Latihan surah lain</button>
+          <button className="link-btn" onClick={() => { location.hash = "home"; }}><Home /> Ke Beranda</button>
+        </div>
+      </section>
+    </>;
+  }
+
   if (!started) {
     return (
       <>
         <PageTitle eyebrow="RUANG LATIHAN" title="Mau hafalan apa hari ini?" desc="Pilih surah, atur sesi, lalu mulai." />
         <section className="two-col">
           <div className="card picker">
-            <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => { setSelectedSurah(s); notify(`${s.latinName} siap dilatih`) }} />
+            <SurahPicker surahs={surahList} query={query} onQueryChange={setQuery} selectedId={selectedSurah.id} onSelect={s => setSelectedSurah(s)} />
           </div>
           <div className="card settings-card">
             <div className="selected-surah">
@@ -202,6 +235,7 @@ export function PracticePage() {
               <button
                 key={i}
                 className={mastery === m ? "active" : ""}
+                aria-pressed={mastery === m}
                 onClick={() => handleMastery(selectedSurah.id, a.no, m)}
               >
                 {i === 0 ? <Target /> : i === 1 ? <Sparkles /> : <Check />}{m}
@@ -209,7 +243,7 @@ export function PracticePage() {
             ))}
           </div>
         </div>
-        <button className="primary full" disabled={saving} onClick={() => finish(selectedSurah.id)}>
+        <button className="primary full" disabled={saving} onClick={() => finish(selectedSurah.id).then(setSummary)}>
           <Sparkles /> {saving ? "Menyimpan..." : "Selesaikan sesi"}
         </button>
       </div>

@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import type { UserRole } from "@murojaah/shared";
 import {
-  Bell, BookOpen, ChevronDown, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
+  BookOpen, ChevronDown, ChevronRight, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
 } from "lucide-react";
 import { Modal } from "./components/Modal";
+import { NotificationBell } from "./components/NotificationBell";
 
 const AddChildModal = lazy(() => import("./components/AddChildModal").then(m => ({ default: m.AddChildModal })));
 import { nav, pageFromHash } from "./types";
@@ -63,7 +64,7 @@ export default function AuthenticatedApp() {
 
   const handleProfileSelect = async (value: string) => {
     if (value === "__add_child__") { setShowAddChild(true); return; }
-    await switchProfile(Number(value)).catch(err => notify(err instanceof Error ? err.message : "Gagal berpindah profil."));
+    await switchProfile(Number(value)).catch(err => notify(err instanceof Error ? err.message : "Gagal berpindah profil.", "error"));
   };
 
   return <ToastProvider><div className={collapsed ? "app-shell sidebar-collapsed" : "app-shell"}>
@@ -71,21 +72,21 @@ export default function AuthenticatedApp() {
       <div className="brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span><button className="icon-btn close-menu" onClick={() => setMenu(false)} aria-label="Tutup menu"><X /></button></div>
       <div className="profile-mini"><div className="avatar">{initials(user.displayName)}</div><div><b>{user.displayName}</b><span><i /> {role}</span></div></div>
       <nav>{visibleNav.map(item => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => go(item.id)}><item.icon />{item.label}</button>)}</nav>
-      <div className="sidebar-tip"><Sparkles /><b>Sedikit demi sedikit</b><p>Latihan 10 menit setiap hari lebih baik daripada sekali seminggu.</p></div>
-      <button className="help" onClick={() => setShowHelp(true)}><CircleHelp /> Pusat Bantuan</button>
+      {role !== "Admin" && <div className="sidebar-tip"><Sparkles /><b>Sedikit demi sedikit</b><p>Latihan 10 menit setiap hari lebih baik daripada sekali seminggu.</p></div>}
+      <button className="help" onClick={() => { setMenu(false); setShowHelp(true); }}><CircleHelp /> Pusat Bantuan</button>
       <button className="help" onClick={() => logout()}><LogOut /> Keluar</button>
       <p className="safe">Konten &amp; audio Al-Qur'an: EQuran.id</p>
     </aside>
     {menu && <button className="backdrop" onClick={() => setMenu(false)} aria-label="Tutup menu" />}
     <main className="main">
       <header className="topbar">
-        <button className="icon-btn menu-btn" onClick={toggleSidebar} aria-label={collapsed ? "Buka menu" : "Tutup menu"}><Menu /></button>
+        <button className="icon-btn menu-btn" onClick={toggleSidebar} aria-label="Buka atau tutup menu"><Menu /></button>
         <div className="mobile-logo">Muro<span>jaah</span></div>
         <div className="top-actions">
           {!online && <span className="offline"><WifiOff /> Offline</span>}
           {isActingAsChild && <button className="outline" onClick={() => switchProfile(loginUser.id)}>Kembali ke {loginUser.displayName}</button>}
+          {user.role === "student" && <NotificationBell page={page} go={go} />}
           <button className="icon-btn" onClick={toggleTheme} aria-label={darkMode ? "Ganti ke mode terang" : "Ganti ke mode gelap"}>{darkMode ? <Sun /> : <Moon />}</button>
-          <button className="icon-btn notify" onClick={() => notify("Belum ada notifikasi baru")} aria-label="Notifikasi"><Bell /><i /></button>
           {!isActingAsChild && loginUser.role === "parent"
             ? <div className="role-select"><ShieldCheck /><select value={String(user.id)} onChange={e => handleProfileSelect(e.target.value)} aria-label="Pilih profil">
                 <option value={String(loginUser.id)}>{loginUser.displayName} (Saya)</option>
@@ -96,7 +97,7 @@ export default function AuthenticatedApp() {
         </div>
       </header>
       <div className="content">
-        <Suspense fallback={<div className="grid gap-5"><div className="w-1/3 h-5 rounded bg-line animate-pulse" /><div className="grid grid-cols-4 gap-[14px]"><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /></div><div className="grid grid-cols-2 gap-[14px]"><div className="h-40 rounded-[16px] bg-line animate-pulse" /><div className="h-40 rounded-[16px] bg-line animate-pulse" /></div></div>}>
+        <Suspense fallback={<div className="grid gap-5"><div className="w-1/3 h-5 rounded bg-line animate-pulse" /><div className="grid grid-cols-2 md:grid-cols-4 gap-[14px]"><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /><div className="h-20 rounded-[14px] bg-line animate-pulse" /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-[14px]"><div className="h-40 rounded-[16px] bg-line animate-pulse" /><div className="h-40 rounded-[16px] bg-line animate-pulse" /></div></div>}>
           {page === "home" && <HomePage go={go} />}
           {page === "admin" && <Admin />}
           {page === "practice" && <PracticePage />}
@@ -112,16 +113,16 @@ export default function AuthenticatedApp() {
       <p className="help-desc">Butuh bantuan, nemu bug, atau punya usulan fitur? Hubungi kami lewat salah satu saluran di bawah.</p>
       <div className="help-channels">
         <a href="mailto:mohamad.amujaki@gmail.com" className="help-channel" onClick={() => { setShowHelp(false); notify(`Email: mohamad.amujaki@gmail.com`); }}>
-          <span className="help-icon"><Mail /></span><div><b>Email</b><p>mohamad.amujaki@gmail.com</p><small>Laporan bug &amp; usulan fitur</small></div><ChevronDown style={{transform:"rotate(-90deg)",width:16}} />
+          <span className="help-icon"><Mail /></span><div><b>Email</b><p>mohamad.amujaki@gmail.com</p><small>Laporan bug &amp; usulan fitur</small></div><ChevronRight />
         </a>
         <a href="https://wa.me/6281315866766" target="_blank" rel="noopener noreferrer" className="help-channel" onClick={() => setShowHelp(false)}>
-          <span className="help-icon"><MessageCircle /></span><div><b>WhatsApp</b><p>+6281-315-866-766</p><small>Diskusi cepat &amp; pertanyaan</small></div><ChevronDown style={{transform:"rotate(-90deg)",width:16}} />
+          <span className="help-icon"><MessageCircle /></span><div><b>WhatsApp</b><p>+6281-315-866-766</p><small>Diskusi cepat &amp; pertanyaan</small></div><ChevronRight />
         </a>
       </div>
       <p className="help-footer">Kami menghargai setiap masukan untuk membuat Murojaah lebih baik.</p>
       </div>
     </Modal>}
-    {showRoleSetup && <div className="auth-modal-backdrop" onClick={()=>{}}><div className="auth-modal"><form className="card auth-card" onSubmit={async e => { e.preventDefault(); setRoleSetupBusy(true); try { await updateProfile({ role: roleSetupValue }); setShowRoleSetup(false); const url = new URL(location.href); url.searchParams.delete("role_setup"); history.replaceState({}, "", url.href); notify(`Peran berhasil diatur: ${ROLE_LABEL[roleSetupValue]}`); } catch (err) { notify(err instanceof Error ? err.message : "Gagal mengatur peran."); } finally { setRoleSetupBusy(false); } }}>
+    {showRoleSetup && <div className="auth-modal-backdrop" onClick={()=>{}}><div className="auth-modal"><form className="card auth-card" onSubmit={async e => { e.preventDefault(); setRoleSetupBusy(true); try { await updateProfile({ role: roleSetupValue }); setShowRoleSetup(false); const url = new URL(location.href); url.searchParams.delete("role_setup"); history.replaceState({}, "", url.href); notify(`Peran berhasil diatur: ${ROLE_LABEL[roleSetupValue]}`); } catch (err) { notify(err instanceof Error ? err.message : "Gagal mengatur peran.", "error"); } finally { setRoleSetupBusy(false); } }}>
       <h1>Atur Peran</h1>
       <p className="auth-subtitle">Terima kasih sudah mendaftar! Kamu ini siapa?</p>
       <div className="role-cards">
