@@ -173,24 +173,30 @@ export function Admin() {
 
       {users.length > 0 && (
         <div>
-          <div className="grid grid-cols-[20px_1fr_1fr_70px_70px_auto] items-center gap-3 px-[14px] py-[7px_14px] text-xs font-semibold text-muted border-b border-line bg-[#fafafa] dark:bg-[#111]">
-            <span><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4 cursor-pointer accent-green" /></span>
+          <div className="grid grid-cols-[20px_1fr_auto] md:grid-cols-[20px_1fr_1fr_70px_70px_auto] items-center gap-3 px-[14px] py-[7px_14px] text-xs font-semibold text-muted border-b border-line bg-[#fafafa] dark:bg-[#111]">
+            <span><input type="checkbox" checked={selectAll} onChange={handleSelectAll} aria-label="Pilih semua pengguna" className="w-4 h-4 cursor-pointer accent-green" /></span>
             <span>PENGGUNA</span>
-            <span>PERAN</span>
-            <span>STATUS</span>
-            <span>TARGET</span>
+            <span className="hidden md:block">PERAN</span>
+            <span className="hidden md:block">STATUS</span>
+            <span className="hidden md:block">TARGET</span>
             <span></span>
           </div>
           {users.map(u => (
-            <div className="grid grid-cols-[20px_1fr_1fr_70px_70px_auto] items-center gap-3 px-[14px] py-[10px] text-xs border-b border-line last:border-0 hover:bg-[#f7f7f7] dark:hover:bg-[#181818] transition-colors" key={u.id}>
-              <span><input type="checkbox" checked={selected.has(u.id)} onChange={() => handleSelect(u.id)} className="w-4 h-4 cursor-pointer accent-green" /></span>
-              <span className="font-semibold truncate">{u.displayName}</span>
-              <span><span className={`inline-block rounded-full text-xs font-semibold px-[8px] py-[2px] ${ROLE_COLORS[u.role]}`}>{ROLE_LABEL[u.role]}</span></span>
-              <span className="flex items-center gap-[5px]">
+            <div className="grid grid-cols-[20px_1fr_auto] md:grid-cols-[20px_1fr_1fr_70px_70px_auto] items-center gap-3 px-[14px] py-[10px] text-xs border-b border-line last:border-0 hover:bg-[#f7f7f7] dark:hover:bg-[#181818] transition-colors" key={u.id}>
+              <span><input type="checkbox" checked={selected.has(u.id)} onChange={() => handleSelect(u.id)} aria-label={`Pilih ${u.displayName}`} className="w-4 h-4 cursor-pointer accent-green" /></span>
+              <span className="min-w-0">
+                <span className="block font-semibold truncate">{u.displayName}</span>
+                <span className="md:hidden flex items-center gap-2 mt-1 text-muted">
+                  <span className={`inline-block rounded-full font-semibold px-[8px] py-[1px] ${ROLE_COLORS[u.role]}`}>{ROLE_LABEL[u.role]}</span>
+                  {u.status === "active" ? "Aktif" : "Nonaktif"} · {u.dailyTarget} mnt
+                </span>
+              </span>
+              <span className="hidden md:block"><span className={`inline-block rounded-full text-xs font-semibold px-[8px] py-[2px] ${ROLE_COLORS[u.role]}`}>{ROLE_LABEL[u.role]}</span></span>
+              <span className="hidden md:flex items-center gap-[5px]">
                 <span className={`w-[7px] h-[7px] rounded-full ${u.status === "active" ? "bg-green-500" : "bg-red-400"}`} />
                 <span className="text-muted">{u.status === "active" ? "Aktif" : "Nonaktif"}</span>
               </span>
-              <span className="text-muted">{u.dailyTarget} mnt</span>
+              <span className="hidden md:block text-muted">{u.dailyTarget} mnt</span>
               <span><button className="inline-flex items-center gap-[5px] h-8 px-[10px] rounded-[8px] border border-line bg-transparent text-ink font-semibold text-xs cursor-pointer hover:bg-[#f0f0f0] dark:hover:bg-[#222] whitespace-nowrap transition-colors" type="button" onClick={() => setEditing(u)}><Pencil size={12} /> Ubah</button></span>
             </div>
           ))}

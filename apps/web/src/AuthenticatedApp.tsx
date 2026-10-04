@@ -71,15 +71,15 @@ export default function AuthenticatedApp() {
       <div className="brand"><span className="brandmark"><BookOpen /></span><span>Muro<span>jaah</span></span><button className="icon-btn close-menu" onClick={() => setMenu(false)} aria-label="Tutup menu"><X /></button></div>
       <div className="profile-mini"><div className="avatar">{initials(user.displayName)}</div><div><b>{user.displayName}</b><span><i /> {role}</span></div></div>
       <nav>{visibleNav.map(item => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => go(item.id)}><item.icon />{item.label}</button>)}</nav>
-      <div className="sidebar-tip"><Sparkles /><b>Sedikit demi sedikit</b><p>Latihan 10 menit setiap hari lebih baik daripada sekali seminggu.</p></div>
-      <button className="help" onClick={() => setShowHelp(true)}><CircleHelp /> Pusat Bantuan</button>
+      {role !== "Admin" && <div className="sidebar-tip"><Sparkles /><b>Sedikit demi sedikit</b><p>Latihan 10 menit setiap hari lebih baik daripada sekali seminggu.</p></div>}
+      <button className="help" onClick={() => { setMenu(false); setShowHelp(true); }}><CircleHelp /> Pusat Bantuan</button>
       <button className="help" onClick={() => logout()}><LogOut /> Keluar</button>
       <p className="safe">Konten &amp; audio Al-Qur'an: EQuran.id</p>
     </aside>
     {menu && <button className="backdrop" onClick={() => setMenu(false)} aria-label="Tutup menu" />}
     <main className="main">
       <header className="topbar">
-        <button className="icon-btn menu-btn" onClick={toggleSidebar} aria-label={collapsed ? "Buka menu" : "Tutup menu"}><Menu /></button>
+        <button className="icon-btn menu-btn" onClick={toggleSidebar} aria-label="Buka atau tutup menu"><Menu /></button>
         <div className="mobile-logo">Muro<span>jaah</span></div>
         <div className="top-actions">
           {!online && <span className="offline"><WifiOff /> Offline</span>}

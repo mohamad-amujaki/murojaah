@@ -603,10 +603,28 @@ select:focus-visible {
   .landing-hero-copy>p{color:var(--muted);font-size:14px;line-height:1.7;margin:0 0 22px}
   .landing-cta-row{display:flex;align-items:center;gap:18px;margin-bottom:14px}
   .primary.large{min-height:50px;padding:0 26px;font-size:13px}
-  .landing-hero-art{flex:1;max-width:340px;aspect-ratio:1;position:relative;display:grid;place-items:center;animation:float-art 4.5s ease-in-out infinite}
-  .landing-hero-art .moon{position:absolute;width:230px;height:230px;border-radius:50%;background:var(--mint);color:var(--green)}
-  .landing-hero-art .quran{width:150px;height:96px}
-  .landing-hero-art .quran svg{width:60px;height:60px}
+  /* Hero landing: cuplikan player latihan yang bisa dicoba. */
+  .ayah-demo{flex:1;max-width:420px;width:100%;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 22px;box-shadow:0 18px 50px #163e2b14;text-align:center}
+  .ayah-demo-head{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left}
+  .ayah-demo-head small{display:block;font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--green)}
+  .ayah-demo-head b{display:block;font-size:14px;margin-top:2px}
+  .ayah-demo-head .outline{min-height:36px;flex:none}
+  .ayah-demo-arabic{font-family:"Noto Naskh Arabic",serif;font-size:34px;line-height:1.9;margin:18px 0 4px;transition:filter .25s ease}
+  .ayah-demo-arabic.is-hidden{filter:blur(9px);user-select:none}
+  .ayah-demo-latin{font-size:13px;color:var(--green);font-style:italic;margin:0}
+  .ayah-demo-meaning{font-size:12px;color:var(--muted);margin:4px 0 0}
+  .ayah-demo-loop{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:16px 0 14px}
+  .ayah-demo-loop svg{width:14px}
+  .ayah-demo-loop b{color:var(--ink)}
+  .ayah-demo-loop .progress{margin-left:6px}
+  .ayah-demo-mastery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .ayah-demo-mastery button{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:52px;padding:6px 4px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);font-size:12px;line-height:1.2}
+  .ayah-demo-mastery svg{width:15px}
+  .ayah-demo-mastery button.active{border-color:var(--green);color:var(--green);background:var(--mint);font-weight:700}
+  .landing-hero-copy .eyebrow{display:block}
+  .landing-hero-copy .safe{justify-content:flex-start}
+  @media(max-width:900px){.landing-hero-copy .safe{justify-content:center}}
+  .auth-modal .brand{font-size:18px}
   .landing-trust{max-width:1160px;margin:auto;padding:0 5vw 50px;display:flex;flex-wrap:wrap;gap:14px 28px;color:var(--muted);font-size:12px;font-weight:600}
   .landing-trust span{display:flex;align-items:center;gap:6px}
   .landing-trust svg{width:15px;color:var(--green)}
@@ -682,6 +700,25 @@ select:focus-visible {
   h1,h2,h3{font-weight:800;letter-spacing:-.01em}
   /* Shell pra-render memakai flex; section landing harus tetap selebar max-width-nya. */
   .landing{display:block}
+  /* Dashboard guru: baris statistik selebar penuh, tabel murid + kartu kelas di bawahnya. */
+  .dashboard-grid>.dash-top{grid-column:1/-1}
+  .dashboard-grid>.table-card{min-width:0}
+  .week-single{margin-top:15px}
+  .welcome+.support{margin-top:0;margin-bottom:15px}
+  .admin-link{justify-content:center;margin-top:15px}
+  /* Input di dalam .search tidak boleh mewarisi gaya input form .auth-card. */
+  .auth-card label.search{display:flex}
+  .auth-card .search input{border:0;height:auto;margin:0;padding:0;background:transparent;box-shadow:none}
+  .auth-modal-close{z-index:3}
+  .auth-modal .brand{padding-left:40px;padding-right:40px}
+  .help-modal>*{min-width:0}
+  .help-channel p{overflow-wrap:anywhere}
+  @media(max-width:680px){
+    .top-actions{gap:6px;min-width:0}
+    .role-select{min-width:0}
+    .role-select select{max-width:104px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+    .mobile-logo{flex:none;margin:0 8px}
+  }
   .mastery-inline button svg{width:14px;height:14px;flex:none}
   @media(max-width:680px){
     div.mastery-inline{flex-direction:column;align-items:stretch}
@@ -705,7 +742,7 @@ select:focus-visible {
   .class-list{list-style:none;margin:12px 0 0;padding:0}
   .class-list li{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:12px;font-weight:600}
   .class-list svg{width:14px;flex:none;color:var(--muted)}
-  .join-class-btn{justify-content:center;margin-top:15px}
+  .join-class-btn{justify-content:center}
   .dialog-card{max-width:400px;margin:0 auto}
   .dialog-card h3{font-size:15px;margin:0 0 6px}
   .dialog-card p{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.5}
@@ -979,7 +1016,7 @@ select:focus-visible {
   }
 
   .surah-list button>span:first-child {
-    @apply flex-none text-xs text-muted font-bold w-5
+    @apply flex-none text-xs text-muted font-bold min-w-[30px] w-auto px-1
   }
 
   .surah-list button>div {

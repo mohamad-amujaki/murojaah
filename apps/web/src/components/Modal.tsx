@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
@@ -31,10 +32,12 @@ export function Modal({ onClose, children }: { onClose: () => void; children: Re
     };
   }, [onClose]);
 
-  return <div className="auth-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+  // Portal ke body: section induk punya animasi transform yang membuat position:fixed
+  // terkurung di dalam section, bukan viewport.
+  return createPortal(<div className="auth-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
     <div className="auth-modal" ref={modalRef} onClick={e => e.stopPropagation()}>
       <button type="button" className="icon-btn auth-modal-close" onClick={onClose} aria-label="Tutup"><X/></button>
       {children}
     </div>
-  </div>;
+  </div>, document.body);
 }

@@ -1,19 +1,49 @@
 import { useState } from "react";
-import { BookOpen, Moon, ShieldCheck, Sparkles, Sun, Trophy, Users, WifiOff } from "lucide-react";
+import { BookOpen, Check, Eye, EyeOff, Lightbulb, Moon, Repeat2, ShieldCheck, Sparkles, Sun, Target, Users, WifiOff } from "lucide-react";
 import { getTheme, setTheme } from "../lib/theme";
+import { fallbackAyahs } from "../types";
+import type { Mastery } from "../types";
 
 const FEATURES = [
-  { icon: BookOpen, title: "Latihan yang beneran nempel", desc: "Pilih surah, atur jumlah pengulangan & kecepatan audio, sembunyikan teks untuk uji hafalanmu." },
-  { icon: Trophy, title: "Progres yang bikin nagih", desc: "XP, streak harian, dan lencana yang terbuka otomatis seiring konsistensi latihanmu." },
-  { icon: Users, title: "Satu akun, sekeluarga saling dukung", desc: "Satu akun orang tua, banyak profil anak, kirim pesan dukungan langsung ke anak." },
-  { icon: WifiOff, title: "Jalan terus walau sinyal mati", desc: "Sesi latihan tetap tersimpan tanpa koneksi internet dan tersinkron otomatis." },
+  { icon: Repeat2, title: "Dengar & ulang per ayat", desc: "Pilih surah dan rentang ayat, atur jumlah pengulangan dan kecepatan audio. Sembunyikan teks untuk menguji hafalan." },
+  { icon: Lightbulb, title: "Saran muraja'ah harian", desc: "Tandai tiap ayat: belum hafal, perlu latihan, atau sudah hafal. Beranda menyarankan ayat yang paling perlu diulang." },
+  { icon: Users, title: "Orang tua & guru ikut memantau", desc: "Satu akun orang tua untuk beberapa profil anak. Guru membuat kelas, memberi tugas, dan melihat progres murid." },
+  { icon: WifiOff, title: "Tetap jalan tanpa sinyal", desc: "Sesi latihan tersimpan di perangkat saat offline dan tersinkron otomatis begitu kembali online." },
 ];
 
 const STEPS = [
-  { n: 1, title: "Gabung dalam 30 detik", desc: "Buat akun dengan email atau Google. Atur peranmu (murid, guru, atau orang tua) setelah masuk." },
-  { n: 2, title: "Atur sesi", desc: "Pilih surah, rentang ayat, dan jumlah pengulangan sesuai ritmemu." },
-  { n: 3, title: "Latihan konsisten", desc: "Pantau progres, dapatkan XP & lencana setiap kali menyelesaikan sesi." },
+  { n: 1, title: "Buat akun", desc: "Daftar dengan email atau Google, lalu pilih peran: murid, guru, atau orang tua." },
+  { n: 2, title: "Pilih surah & rentang ayat", desc: "Atur jumlah pengulangan dan kecepatan audio sesuai ritmemu." },
+  { n: 3, title: "Ulangi, tandai, ulangi lagi", desc: "Tandai ayat yang belum lancar. Besok, Beranda menyarankan ayat itu lebih dulu." },
 ];
+
+const MASTERY: { label: Mastery; icon: typeof Target }[] = [
+  { label: "Belum hafal", icon: Target },
+  { label: "Perlu latihan", icon: Sparkles },
+  { label: "Sudah hafal", icon: Check },
+];
+
+/** Cuplikan player latihan yang bisa dicoba langsung — menunjukkan produknya, bukan ilustrasi. */
+function AyahDemo() {
+  const ayah = fallbackAyahs[0];
+  const [hidden, setHidden] = useState(false);
+  const [mastery, setMastery] = useState<Mastery>("Perlu latihan");
+  return <figure className="ayah-demo" aria-label="Contoh layar latihan Murojaah">
+    <div className="ayah-demo-head">
+      <div><small>Sedang menghafal</small><b>Al-Ikhlas · Ayat 1–4</b></div>
+      <button type="button" className="outline" onClick={() => setHidden(h => !h)} aria-pressed={hidden}>
+        {hidden ? <Eye /> : <EyeOff />}{hidden ? "Tampilkan" : "Sembunyikan"}
+      </button>
+    </div>
+    <p className={hidden ? "ayah-demo-arabic is-hidden" : "ayah-demo-arabic"} lang="ar" dir="rtl">{ayah.arabic}</p>
+    <p className="ayah-demo-latin">{hidden ? "Coba lafalkan dari ingatan…" : ayah.latin}</p>
+    {!hidden && <p className="ayah-demo-meaning">“{ayah.meaning}”</p>}
+    <div className="ayah-demo-loop"><Repeat2 /><span>Putaran <b>3</b>/5</span><span className="progress"><i style={{ width: "60%" }} /></span></div>
+    <div className="ayah-demo-mastery" role="group" aria-label="Tandai hafalan ayat ini">
+      {MASTERY.map(m => <button type="button" key={m.label} className={mastery === m.label ? "active" : ""} aria-pressed={mastery === m.label} onClick={() => setMastery(m.label)}><m.icon />{m.label}</button>)}
+    </div>
+  </figure>;
+}
 
 export function LandingPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: () => void }) {
   const [darkMode, setDarkMode] = useState(() => getTheme() === "dark");
@@ -30,20 +60,16 @@ export function LandingPage({ onLogin, onRegister }: { onLogin: () => void; onRe
 
     <section className="landing-hero">
       <div className="landing-hero-copy">
-        <span className="pill dark"><Sparkles/> SEDIKIT TAPI KONSISTEN</span>
-        <h1>Hafalanmu nggak akan hilang lagi.</h1>
-        <p>Al-Qur'an mudah dihafal tapi gampang lupa. Murojaah bantu kamu — atau anakmu, atau muridmu — mengulang ayat yang tepat, di waktu yang tepat, tanpa drama.</p>
+        <span className="eyebrow">UNTUK MURID, ORANG TUA & GURU TAHFIZ</span>
+        <h1>Ulang ayat yang paling rawan lupa, 10 menit sehari.</h1>
+        <p>Dengar per ayat, ulangi sampai lancar, lalu tandai mana yang belum hafal. Besok, Murojaah menyarankan ayat itu lebih dulu.</p>
         <div className="landing-cta-row">
           <button className="primary large" onClick={onRegister}>Mulai Gratis</button>
           <button className="link-btn" onClick={onLogin}>Sudah punya akun? Masuk</button>
         </div>
-        <p className="safe">Gratis selamanya untuk hafalan pribadi. Nggak perlu kartu kredit.</p>
+        <p className="safe">Gratis untuk hafalan pribadi.</p>
       </div>
-      <div className="landing-hero-art">
-        <div className="moon">✦</div>
-        <div className="quran"><BookOpen /></div>
-        <i className="star s1">✦</i><i className="star s2">✦</i>
-      </div>
+      <AyahDemo />
     </section>
 
     <section className="landing-trust">
@@ -53,7 +79,7 @@ export function LandingPage({ onLogin, onRegister }: { onLogin: () => void; onRe
     </section>
 
     <section className="landing-section">
-      <h2>Dibangun buat yang serius menghafal, bukan sekadar niat</h2>
+      <h2>Yang Murojaah kerjakan untukmu</h2>
       <div className="landing-features">
         {FEATURES.map(f => <div className="card landing-feature" key={f.title}>
           <span className="goal-icon green"><f.icon/></span>
@@ -75,8 +101,8 @@ export function LandingPage({ onLogin, onRegister }: { onLogin: () => void; onRe
     </section>
 
     <section className="landing-closing">
-      <h2>Ayat pertamamu hari ini, dimulai dari sekarang.</h2>
-      <p>Gratis, tanpa kartu kredit, kurang dari semenit.</p>
+      <h2>Mulai dari satu surah pendek hari ini.</h2>
+      <p>Gratis untuk hafalan pribadi. Daftar kurang dari semenit.</p>
       <button className="primary light large" onClick={onRegister}>Daftar Gratis</button>
     </section>
 
