@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Award, BarChart3, BookOpen, Check, ChevronRight, Flame, Heart, Play, Plus, Repeat2, Sparkles, Target, Trophy, Users, Zap } from "lucide-react";
+import { AlertCircle, Award, BarChart3, BookOpen, Check, ChevronRight, Flame, Heart, Play, Plus, Repeat2, RotateCw, Sparkles, Target, Trophy, Users, Zap } from "lucide-react";
 import { Goal } from "../components/Goal";
 import { Stat } from "../components/Stat";
 import { StatsTable } from "../components/StatsTable";
@@ -7,6 +7,7 @@ import { CreateClassModal } from "../components/CreateClassModal";
 import { CreateAssignmentModal } from "../components/CreateAssignmentModal";
 import { Modal } from "../components/Modal";
 import { SendEncouragementModal } from "../components/SendEncouragementModal";
+import { AddChildModal } from "../components/AddChildModal";
 import type { StatsResponse } from "@murojaah/shared";
 import type { AdminStatsResponse, ClassMember, ClassResponse, AssignmentResponse, EncouragementResponse, Suggestion, SurahResponse } from "../lib/api";
 import { getAdminStats, getAssignments, getChildStats, getClassMembers, getClasses, getEncouragements, getMyStats, getSuggestion, getSurahs, joinClass, markEncouragementRead, removeClassMember } from "../lib/api";
@@ -111,8 +112,8 @@ function TeacherSection() {
       <div className="card-head"><div><h3>Progres murid</h3><p>{selected?selected.name:"Belum ada kelas"}</p></div>
         {classes.length>1 && <select value={selected?.id} onChange={e=>setSelected(classes.find(c=>c.id===+e.target.value)??null)}>{classes.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>}
       </div>
-      {!selected && <p className="empty-state">Kamu belum punya kelas. Buat kelas untuk mulai memantau murid.</p>}
-      {selected && members.length===0 && <p className="empty-state">Belum ada murid yang bergabung. Bagikan kode: <b>{selected.joinCode}</b></p>}
+      {!selected && <div className="empty-state"><p>Kamu belum punya kelas. Buat kelas, lalu bagikan kodenya ke murid.</p><button className="primary" onClick={()=>setShowCreateClass(true)}><Plus/> Buat kelas</button></div>}
+      {selected && members.length===0 && <p className="empty-state">Belum ada murid di kelas ini. Minta murid memasukkan kode <b>{selected.joinCode}</b> lewat tombol "Gabung kelas" di Beranda mereka.</p>}
       {members.length>0 && <StatsTable nameHeader="MURID" rows={members.map(m=>({
         id: m.id, name: m.displayName, ayahsMastered: m.ayahsMastered, streak: m.streak, totalXp: m.totalXp,
         action: <button className="outline danger btn-sm" onClick={()=>setConfirmRemove({id:m.id,name:m.displayName})}>Hapus</button>,
@@ -135,6 +136,7 @@ function ParentSection() {
   const { children: kids } = useAuth();
   const [childStats,setChildStats]=useState<Record<number,StatsResponse>>({});
   const [showEncouragement,setShowEncouragement]=useState(false);
+  const [showAddChild,setShowAddChild]=useState(false);
   useEffect(()=>{
     if (kids.length === 0) return;
     Promise.all(kids.map(child =>
@@ -148,28 +150,29 @@ function ParentSection() {
   const totalXp = Object.values(childStats).reduce((s,st)=>s+st.totalXp,0);
 
   return <section className="role-section">
-    <div className="dash-top">
+    {kids.length > 0 && <div className="dash-top">
       <div className="stat-grid">
         <Stat icon={Users} value={String(kids.length)} label="Profil anak"/>
         <Stat icon={Trophy} value={String(totalXp)} label="Total XP anak"/>
         <Stat icon={Flame} value={kids.length?`${Math.round(Object.values(childStats).reduce((s,st)=>s+st.streak,0)/Math.max(Object.keys(childStats).length,1))} hari`:"0 hari"} label="Rata-rata streak"/>
         <Stat icon={BookOpen} value={String(Object.values(childStats).reduce((s,st)=>s+st.ayahsMastered,0))} label="Total ayat dikuasai"/>
       </div>
-    </div>
+    </div>}
     <section className="card table-card">
       <div className="card-head"><div><h3>Progres anak</h3><p>{kids.length} profil</p></div></div>
-      {kids.length===0 && <p className="empty-state">Belum ada profil anak. Tambah lewat menu profil di sidebar.</p>}
+      {kids.length===0 && <div className="empty-state"><p>Belum ada profil anak. Tambahkan profil untuk mulai memantau hafalannya.</p><button className="primary" onClick={()=>setShowAddChild(true)}><Plus/> Tambah profil anak</button></div>}
       {kids.length>0 && <StatsTable nameHeader="ANAK" rows={kids.map(child=>{const s=childStats[child.id];return {
         id: child.id, name: child.displayName,
         meta: child.birthDate && <small className="child-meta">{calculateAge(child.birthDate)} tahun • {child.gender==="P"?"Perempuan":"Laki-laki"}</small>,
         ayahsMastered: s?.ayahsMastered??"\u2026", streak: s?.streak??"\u2026", totalXp: s?.totalXp??"\u2026",
       };})} />}
     </section>
-    <div className="card encourage-card">
+    {kids.length > 0 && <div className="card encourage-card">
       <p>Pesanmu akan muncul di beranda anak saat mereka membuka aplikasi.</p>
       <button className="primary full" disabled={kids.length===0} onClick={()=>setShowEncouragement(true)}><Heart/> Kirim Dukungan</button>
-    </div>
+    </div>}
     {showEncouragement && <SendEncouragementModal kids={kids} onClose={()=>setShowEncouragement(false)}/>}
+    {showAddChild && <AddChildModal onClose={()=>setShowAddChild(false)}/>}
   </section>;
 }
 
@@ -193,7 +196,6 @@ function AdminSection() {
 }
 
 export function HomePage({ go }: { go: (p: Page) => void }) {
-  const notify = useToast();
   const { user } = useAuth();
   const firstName = user?.displayName.split(" ")[0] ?? "";
   const [assignments, setAssignments] = useState<AssignmentResponse[]>([]);
@@ -202,18 +204,24 @@ export function HomePage({ go }: { go: (p: Page) => void }) {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // Bagian yang gagal dimuat dikumpulkan jadi satu banner (bukan 5 toast yang saling menimpa).
+  const [failed, setFailed] = useState<string[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
   const surahName = (surahId: number) => surahList.find(s => s.id === surahId)?.latinName ?? `Surah #${surahId}`;
   useEffect(() => {
     const student = user?.role === "student";
     const admin = user?.role === "admin";
+    const errors: string[] = [];
+    const fail = (part: string) => () => { errors.push(part); };
+    setLoaded(false);
     Promise.all([
-      student && getAssignments().then(res => setAssignments(res.assignments)).catch(() => { setAssignments([]); notify("Gagal memuat tugas."); }),
-      student && getEncouragements().then(res => setEncouragements(res.encouragements)).catch(() => { setEncouragements([]); notify("Gagal memuat pesan dukungan."); }),
-      !admin && getSurahs().then(setSurahList).catch(() => { setSurahList([]); notify("Gagal memuat daftar surah."); }),
-      !admin && getMyStats().then(setStats).catch(() => { setStats(null); notify("Gagal memuat statistik."); }),
-      !admin && getSuggestion().then(res => setSuggestion(res.suggestion)).catch(() => { setSuggestion(null); notify("Gagal memuat saran latihan."); }),
-    ]).then(() => setLoaded(true));
-  }, [user?.id]);
+      student && getAssignments().then(res => setAssignments(res.assignments)).catch(fail("tugas")),
+      student && getEncouragements().then(res => setEncouragements(res.encouragements)).catch(fail("pesan dukungan")),
+      !admin && getSurahs().then(setSurahList).catch(fail("daftar surah")),
+      !admin && getMyStats().then(setStats).catch(fail("statistik")),
+      !admin && getSuggestion().then(res => setSuggestion(res.suggestion)).catch(fail("saran latihan")),
+    ]).then(() => { setFailed(errors); setLoaded(true); });
+  }, [user?.id, reloadKey]);
   const startSuggested = () => {
     if (suggestion) sessionStorage.setItem("suggestedPractice", JSON.stringify(suggestion));
     go("practice");
@@ -237,17 +245,26 @@ export function HomePage({ go }: { go: (p: Page) => void }) {
   const ayahsMastered = stats?.ayahsMastered ?? 0;
   const dailyTarget = user?.dailyTarget ?? 10;
   const hasPracticeHistory = stats && (stats.totalDurationSeconds > 0 || stats.totalRepetitions > 0);
-  const isNewUser = loaded && !hasPracticeHistory;
+  // Jangan anggap pengguna baru hanya karena statistik gagal dimuat.
+  const isNewUser = loaded && !failed.includes("statistik") && !hasPracticeHistory;
   const streakCount = stats?.streak ?? 0;
   const role: Role = (ROLE_LABEL[user?.role ?? "student"] as Role) ?? "Murid";
 
+  // Kalimat sapaan mengikuti kondisi nyata, bukan pujian generik.
+  const practicedToday = todayMinutes > 0 || (weeklyChart.at(-1)?.xp ?? 0) > 0;
+  const practiceStatusText = !stats ? "Yuk lanjutkan muraja'ah hari ini."
+    : todayMinutes >= dailyTarget ? `Target ${dailyTarget} menit hari ini tercapai. Barakallahu fiik!`
+    : practicedToday ? `Tinggal ${dailyTarget - todayMinutes} menit lagi untuk target hari ini.`
+    : streakCount > 0 ? `Latihan hari ini menjaga streak ${streakCount} harimu tetap menyala.`
+    : stats.lastPracticedAt ? "Streak terhenti. Satu sesi hari ini memulainya lagi."
+    : "Belum ada latihan hari ini. 5 ayat saja sudah cukup.";
   const isStudent = role === "Murid";
   const isAdmin = role === "Admin";
   const welcomeText = isAdmin ? "Ringkasan aktivitas platform Murojaah."
     : role === "Guru" ? "Pantau progres murid di kelasmu, lalu lanjutkan hafalanmu sendiri."
     : role === "Orang Tua" ? "Lihat perkembangan hafalan anak-anakmu dan kirim dukungan."
     : isNewUser ? "Siap memulai perjalanan hafalan? Setup-nya cuma semenit."
-    : "Siap menambah hafalan hari ini? Kamu hebat karena terus berusaha.";
+    : practiceStatusText;
   const activeAssignments = assignments.filter(a => a.status === "active").length;
 
   const practiceHero = isNewUser ? <section className="hero-card"><div className="hero-copy"><span className="pill"><Sparkles /> Langkah pertama</span><h2>Pilih surah pertamamu</h2><p>Pilih surah dan rentang ayat, atur jumlah pengulangan, lalu mulai dengar & ulangi.</p><button className="primary light" onClick={() => go("practice")}><BookOpen /> Mulai Hafalan Pertama</button></div></section>
@@ -261,26 +278,27 @@ export function HomePage({ go }: { go: (p: Page) => void }) {
     {!isStudent && <div className="section-title"><div><h2>Hafalan pribadimu</h2><p>Latihan muraja'ah untuk dirimu sendiri</p></div></div>}
     {practiceHero}
     {!isNewUser && <>
-      <div className="section-title"><div><h2>Target & tonggak</h2><p>Target harian {dailyTarget} menit, plus tonggak berikutnya</p></div><button onClick={() => go("achievements")}>Pencapaian <ChevronRight /></button></div>
+      {stats && <><div className="section-title"><div><h2>Target & tonggak</h2><p>Target harian {dailyTarget} menit, plus tonggak berikutnya</p></div><button onClick={() => go("achievements")}>Pencapaian <ChevronRight /></button></div>
       <section className="goals-grid">
         <Goal icon={BookOpen} color="green" title={`Latihan ${dailyTarget} menit`} subtitle={`Hari ini: ${todayMinutes} menit`} value={Math.min(todayMinutes, dailyTarget)} max={dailyTarget} />
         <Goal icon={Repeat2} color="gold" title={`${totalRepetitions} pengulangan`} subtitle={`Berikutnya: ${nextMilestone(totalRepetitions)}`} value={totalRepetitions} max={nextMilestone(totalRepetitions)} />
         <Goal icon={Target} color="purple" title={`${ayahsMastered} ayat dikuasai`} subtitle={`Berikutnya: ${nextMilestone(ayahsMastered)} ayat`} value={ayahsMastered} max={nextMilestone(ayahsMastered)} />
-      </section>
+      </section></>}
       {isStudent ? <section className="two-col">
         <div className="card"><div className="card-head"><div><h3>Tugas dari guru</h3><p>Dari kelas yang kamu ikuti</p></div>{activeAssignments > 0 && <span className="count">{activeAssignments} tugas</span>}</div>
-          {assignments.length===0 && <p className="empty-state">Belum ada tugas dari guru.</p>}
+          {assignments.length===0 && <p className="empty-state">Belum ada tugas. Tugas dari guru muncul di sini setelah kamu gabung kelasnya.</p>}
           {assignments.map(task=><div className={`assignment ${task.status==="completed"?"done":""}`} key={task.id}><span className="task-icon">{task.status==="completed"?<Check/>:<BookOpen />}</span><div><b>Muraja'ah {surahName(task.surahId)}</b><p>Ayat {task.startAyah}–{task.endAyah} • Ulangi {task.targetLoops}×</p><small>{formatDue(task.dueAt)} {task.status==="completed"?"• Selesai":""}</small></div><button onClick={() => go("practice")} aria-label={`Latihan ${surahName(task.surahId)}`}><ChevronRight /></button></div>)}
         </div>
-        {weekCard}
-      </section> : <section className="week-single">{weekCard}</section>}
+        {stats && weekCard}
+      </section> : stats && <section className="week-single">{weekCard}</section>}
     </>}
   </>;
 
   return <>
     <section className="welcome"><div><span className="eyebrow">{todayLabel}</span><h1>Assalamu'alaikum, {firstName}!</h1><p>{welcomeText}</p></div>
-      {!isAdmin && (streakCount > 0 ? <div className="streak"><span><Flame /></span><div><b>{streakCount} hari</b><small>Streak saat ini</small></div></div>
+      {!isAdmin && stats && (streakCount > 0 ? <div className="streak"><span><Flame /></span><div><b>{streakCount} hari</b><small>Streak saat ini</small></div></div>
       : !isNewUser && <div className="streak idle"><span><Flame /></span><b>Belum ada streak</b></div>)}</section>
+    {failed.length > 0 && <div className="load-error" role="alert"><AlertCircle /><p>Gagal memuat {failed.join(", ")}. Periksa koneksi internetmu.</p><button className="outline" onClick={() => setReloadKey(k => k + 1)}><RotateCw /> Coba lagi</button></div>}
     {isStudent && latestEncouragement && <section className="support"><div className="parent-avatar">{latestEncouragement.parentName[0]}</div><div><span><Heart /> PESAN DARI {latestEncouragement.parentName.toUpperCase()}</span><p>"{latestEncouragement.message}"</p></div></section>}
     {role === "Guru" && <TeacherSection />}
     {role === "Orang Tua" && <ParentSection />}

@@ -4,6 +4,7 @@ import {
   BookOpen, ChevronDown, ChevronRight, CircleHelp, LogOut, Mail, Menu, MessageCircle, Moon, ShieldCheck, Sparkles, Sun, WifiOff, X
 } from "lucide-react";
 import { Modal } from "./components/Modal";
+import { NotificationBell } from "./components/NotificationBell";
 
 const AddChildModal = lazy(() => import("./components/AddChildModal").then(m => ({ default: m.AddChildModal })));
 import { nav, pageFromHash } from "./types";
@@ -63,7 +64,7 @@ export default function AuthenticatedApp() {
 
   const handleProfileSelect = async (value: string) => {
     if (value === "__add_child__") { setShowAddChild(true); return; }
-    await switchProfile(Number(value)).catch(err => notify(err instanceof Error ? err.message : "Gagal berpindah profil."));
+    await switchProfile(Number(value)).catch(err => notify(err instanceof Error ? err.message : "Gagal berpindah profil.", "error"));
   };
 
   return <ToastProvider><div className={collapsed ? "app-shell sidebar-collapsed" : "app-shell"}>
@@ -84,6 +85,7 @@ export default function AuthenticatedApp() {
         <div className="top-actions">
           {!online && <span className="offline"><WifiOff /> Offline</span>}
           {isActingAsChild && <button className="outline" onClick={() => switchProfile(loginUser.id)}>Kembali ke {loginUser.displayName}</button>}
+          {user.role === "student" && <NotificationBell page={page} go={go} />}
           <button className="icon-btn" onClick={toggleTheme} aria-label={darkMode ? "Ganti ke mode terang" : "Ganti ke mode gelap"}>{darkMode ? <Sun /> : <Moon />}</button>
           {!isActingAsChild && loginUser.role === "parent"
             ? <div className="role-select"><ShieldCheck /><select value={String(user.id)} onChange={e => handleProfileSelect(e.target.value)} aria-label="Pilih profil">
@@ -120,7 +122,7 @@ export default function AuthenticatedApp() {
       <p className="help-footer">Kami menghargai setiap masukan untuk membuat Murojaah lebih baik.</p>
       </div>
     </Modal>}
-    {showRoleSetup && <div className="auth-modal-backdrop" onClick={()=>{}}><div className="auth-modal"><form className="card auth-card" onSubmit={async e => { e.preventDefault(); setRoleSetupBusy(true); try { await updateProfile({ role: roleSetupValue }); setShowRoleSetup(false); const url = new URL(location.href); url.searchParams.delete("role_setup"); history.replaceState({}, "", url.href); notify(`Peran berhasil diatur: ${ROLE_LABEL[roleSetupValue]}`); } catch (err) { notify(err instanceof Error ? err.message : "Gagal mengatur peran."); } finally { setRoleSetupBusy(false); } }}>
+    {showRoleSetup && <div className="auth-modal-backdrop" onClick={()=>{}}><div className="auth-modal"><form className="card auth-card" onSubmit={async e => { e.preventDefault(); setRoleSetupBusy(true); try { await updateProfile({ role: roleSetupValue }); setShowRoleSetup(false); const url = new URL(location.href); url.searchParams.delete("role_setup"); history.replaceState({}, "", url.href); notify(`Peran berhasil diatur: ${ROLE_LABEL[roleSetupValue]}`); } catch (err) { notify(err instanceof Error ? err.message : "Gagal mengatur peran.", "error"); } finally { setRoleSetupBusy(false); } }}>
       <h1>Atur Peran</h1>
       <p className="auth-subtitle">Terima kasih sudah mendaftar! Kamu ini siapa?</p>
       <div className="role-cards">

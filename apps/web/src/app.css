@@ -480,6 +480,8 @@ select:focus-visible {
   .bottom-nav{display:none}
   .toast{position:fixed;right:25px;bottom:25px;background:var(--deep);color:#fff;padding:13px 18px;border-radius:12px;display:flex;gap:9px;align-items:center;z-index:60;box-shadow:0 10px 30px #0003;font-size:12px;animation:slide .25s}
   .toast svg{width:17px}
+  .toast.error{background:#8f3b27}
+  .toast svg{flex:none}
   .backdrop{display:none}
   @media(max-width:1000px) {
     .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(67px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);display:flex;z-index:25;padding-bottom:env(safe-area-inset-bottom)}
@@ -754,6 +756,47 @@ select:focus-visible {
   .primary.danger{background:#b8583d}
   .primary.danger:hover:not(:disabled){box-shadow:0 9px 22px #b8583d30}
   .btn-sm{min-height:32px;padding:0 10px}
+  div.empty-state p{margin:0 0 12px}
+  /* Notifikasi murid */
+  .notify i{width:auto;min-width:17px;height:17px;padding:0 4px;top:4px;right:3px;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;color:#fff;background:#c0573a;border:2px solid var(--surface);border-radius:20px}
+  [data-theme="dark"] .notify{background:#1d2b26}
+  .notif-panel{max-width:440px}
+  .notif-panel h3{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+  .notif-panel ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .notif-panel li>button,.notif-message{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:left;color:inherit}
+  .notif-panel li>button:hover{background:var(--mint)}
+  .notif-panel li div{flex:1;min-width:0}
+  .notif-panel li b{display:block;font-size:13px}
+  .notif-panel li p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .notif-panel li>button>svg{width:16px;color:var(--muted);flex:none}
+  .notif-icon{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:10px;background:var(--mint);color:var(--green)}
+  .notif-icon.gold{background:#fff3d8;color:#b67c14}
+  .notif-icon svg{width:16px}
+  [data-theme="dark"] .notif-icon.gold{background:#3a2f14;color:#e7c25f}
+  /* Ringkasan sesi latihan */
+  .session-summary{max-width:640px}
+  .summary-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px}
+  .summary-stats span{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 8px;border-radius:12px;background:var(--mint);text-align:center}
+  .summary-stats svg{width:18px;color:var(--green)}
+  .summary-stats b{font-size:16px}
+  .summary-stats small{font-size:12px;color:var(--muted)}
+  .session-summary h3{font-size:14px;margin:0 0 8px}
+  .summary-note{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.6}
+  .weak-list{list-style:none;margin:0 0 16px;padding:0}
+  .weak-list li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px;font-weight:600}
+  .weak-list .ayah-number{position:static;width:28px;height:28px;flex:none}
+  .weak-list em{margin-left:auto;font-style:normal;font-size:12px;padding:3px 9px;border-radius:20px;border:1px solid}
+  .summary-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .summary-actions .link-btn{display:inline-flex;align-items:center;gap:5px}
+  .summary-actions svg{width:15px}
+  @media(max-width:680px){.summary-actions>*{flex:1 1 100%;justify-content:center}}
+  .load-error{display:flex;align-items:center;gap:10px;margin-bottom:15px;padding:12px 14px;border:1px solid #f3d2c4;background:#fff5f1;border-radius:12px;color:#8f3b27;font-size:12px}
+  .load-error>svg{width:18px;flex:none}
+  .load-error p{flex:1;margin:0}
+  .load-error .outline{flex:none;color:#8f3b27;border-color:#f0c4b4}
+  [data-theme="dark"] .load-error{background:#3a2418;border-color:#4a3327;color:#f0a683}
+  [data-theme="dark"] .load-error .outline{color:#f0a683;border-color:#5a3a2c}
+  div.empty-state .primary{margin:0 auto}
   .encourage-card p{font-size:12px;color:var(--muted);margin:0 0 12px;text-align:center}
   .sidebar-collapsed .sidebar {
     transform: translateX(-100%)

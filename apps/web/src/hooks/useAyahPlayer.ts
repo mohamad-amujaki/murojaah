@@ -3,6 +3,19 @@ import { useToast } from "../lib/toast-context";
 import { saveAyahProgress } from "../lib/api";
 import type { Ayah, Mastery } from "../types";
 
+export interface SessionSummary {
+  surahId: number;
+  startAyah: number;
+  endAyah: number;
+  loopsDone: number;
+  minutes: number;
+  /** null bila sesi belum terkirim (tersimpan offline atau gagal). */
+  xp: number | null;
+  saved: "online" | "offline" | "failed";
+  /** Tanda hafalan yang diberikan selama sesi ini, per nomor ayat. */
+  marks: Record<number, Mastery>;
+}
+
 export function useAyahPlayer(ayahs: Ayah[]) {
   const notify = useToast();
   const [started, setStarted] = useState(false);
@@ -14,7 +27,8 @@ export function useAyahPlayer(ayahs: Ayah[]) {
   const [count, setCount] = useState(1);
   const [speed, setSpeed] = useState("1");
   const [hidden, setHidden] = useState(false);
-  const [mastery, setMastery] = useState<Mastery>("Perlu latihan");
+  // Tanda hafalan per nomor ayat untuk sesi berjalan (bukan satu nilai untuk semua ayat).
+  const [marks, setMarks] = useState<Record<number, Mastery>>({});
   const [audioCycle, setAudioCycle] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -74,6 +88,7 @@ export function useAyahPlayer(ayahs: Ayah[]) {
   const startPractice = useCallback((startIndex: number) => {
     setIndex(startIndex);
     setCount(1);
+    setMarks({});
     sessionStartedAt.current = Date.now();
     setStarted(true);
   }, []);
@@ -89,33 +104,38 @@ export function useAyahPlayer(ayahs: Ayah[]) {
     setSpeed(s);
   }, [playing]);
 
-  const finish = useCallback(async (surahId: number) => {
+  const finish = useCallback(async (surahId: number): Promise<SessionSummary> => {
     audio.current?.pause();
     setSaving(true);
     const duration = Math.max(1, Math.round((Date.now() - sessionStartedAt.current) / 1000));
     const { completePractice } = await import("../lib/api");
     const { addPendingSession } = await import("../lib/offline-queue");
-    const payload = { surahId, startAyah: start, endAyah: end, loops: loops === "∞" ? count : Number(loops), duration, clientId: crypto.randomUUID() };
-    try { const result = await completePractice(payload); notify(`${result.message} +${result.xp} XP`); }
-    catch {
-      try { await addPendingSession(payload); notify("Sesi tersimpan di perangkat. Akan disinkronkan saat online."); }
-      catch { notify("Sesi latihan gagal disimpan."); }
-    }
-    finally { setSaving(false); setPlaying(false); setStarted(false); setCount(1); }
-  }, [start, end, loops, count, notify]);
+    const loopsDone = loops === "∞" ? count : Number(loops);
+    const payload = { surahId, startAyah: start, endAyah: end, loops: loopsDone, duration, clientId: crypto.randomUUID() };
+    const base = { surahId, startAyah: start, endAyah: end, loopsDone, minutes: Math.max(1, Math.round(duration / 60)), marks };
+    try {
+      const result = await completePractice(payload);
+      return { ...base, xp: result.xp, saved: "online" };
+    } catch {
+      try { await addPendingSession(payload); return { ...base, xp: null, saved: "offline" }; }
+      catch { return { ...base, xp: null, saved: "failed" }; }
+    } finally { setSaving(false); setPlaying(false); setStarted(false); setCount(1); }
+  }, [start, end, loops, count, marks]);
 
   const handleMastery = useCallback(async (surahId: number, ayahNo: number, m: Mastery) => {
-    setMastery(m);
-    try { await saveAyahProgress(surahId, ayahNo, m); } catch { /* ignore */ }
-  }, []);
+    setMarks(prev => ({ ...prev, [ayahNo]: m }));
+    try { await saveAyahProgress(surahId, ayahNo, m); }
+    catch { notify("Tanda hafalan gagal disimpan. Periksa koneksi internet."); }
+  }, [notify]);
 
   const currentAyah = ayahs[index];
+  const mastery: Mastery | undefined = currentAyah ? marks[currentAyah.no] : undefined;
 
   return {
     started, playing, index, count, currentAyah,
     hidden, mastery, saving,
     start, setStart, end, setEnd, setIndex, loops, setLoops, speed, setSpeed, changeSpeed,
     startPractice, stopPractice, move, toggle, finish,
-    setHidden, setMastery, handleMastery,
+    setHidden, handleMastery,
   };
 }
